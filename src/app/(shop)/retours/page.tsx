@@ -1,0 +1,95 @@
+import Link from 'next/link'
+import { RotateCcw, CheckCircle2, XCircle, Clock, MessageSquare } from 'lucide-react'
+
+export const metadata = { title: 'Retours & Remboursements — BRICELO' }
+
+const eligible = [
+  'Produit défectueux ou endommagé à la livraison',
+  'Produit non conforme à la description',
+  'Mauvaise taille ou couleur envoyée',
+  'Produit manquant dans la commande',
+]
+
+const nonEligible = [
+  'Produits ouverts ou utilisés (hors défaut)',
+  'Produits périssables (alimentation)',
+  'Articles personnalisés ou sur mesure',
+  'Retour après 7 jours de réception',
+  'Produit endommagé par l\'acheteur',
+]
+
+const processSteps = [
+  { Icon: MessageSquare, title: 'Signalez le problème', desc: 'Contactez notre support dans les 7 jours suivant la réception via votre espace commandes ou notre page contact.' },
+  { Icon: Clock,         title: 'Traitement sous 48h', desc: 'Notre équipe examine votre demande et vous contacte pour valider le retour et organiser la récupération du colis.' },
+  { Icon: RotateCcw,     title: 'Renvoi du produit', desc: 'Emballez soigneusement le produit dans son emballage d\'origine avec tous les accessoires et factures.' },
+  { Icon: CheckCircle2,  title: 'Remboursement', desc: 'Après réception et vérification, le remboursement est effectué sous 5 à 10 jours ouvrables sur votre moyen de paiement initial.' },
+]
+
+export default function RetoursPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <div className="mb-10">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-navy-900)] mb-3">
+          Retours & Remboursements
+        </h1>
+        <p className="text-[var(--color-slate-500)]">
+          Votre satisfaction est notre priorité. Vous avez <strong>7 jours</strong> après réception pour retourner un produit non conforme.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+        <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5">
+          <h2 className="font-bold text-emerald-800 mb-3 flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5" /> Retours acceptés
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {eligible.map((e) => (
+              <li key={e} className="flex items-start gap-2 text-sm text-emerald-700">
+                <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" /> {e}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+          <h2 className="font-bold text-red-800 mb-3 flex items-center gap-2">
+            <XCircle className="h-5 w-5" /> Non éligibles au retour
+          </h2>
+          <ul className="flex flex-col gap-2">
+            {nonEligible.map((n) => (
+              <li key={n} className="flex items-start gap-2 text-sm text-red-700">
+                <XCircle className="h-4 w-4 shrink-0 mt-0.5" /> {n}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <h2 className="text-xl font-extrabold text-[var(--color-navy-900)] mb-6">Comment procéder ?</h2>
+      <div className="flex flex-col gap-4 mb-10">
+        {processSteps.map(({ Icon, title, desc }, i) => (
+          <div key={title} className="flex gap-4 bg-white border border-[var(--color-slate-200)] rounded-2xl p-5 shadow-sm">
+            <div className="shrink-0 flex flex-col items-center gap-1">
+              <div className="h-10 w-10 rounded-full bg-[var(--color-navy-900)] flex items-center justify-center">
+                <Icon className="h-5 w-5 text-[var(--color-accent)]" />
+              </div>
+              {i < processSteps.length - 1 && <div className="flex-1 w-0.5 bg-[var(--color-slate-200)] mt-1 min-h-4" />}
+            </div>
+            <div>
+              <p className="font-bold text-[var(--color-navy-900)]">{title}</p>
+              <p className="text-sm text-[var(--color-slate-500)] mt-1">{desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-[var(--color-navy-900)] rounded-2xl p-6 text-center">
+        <p className="text-white font-bold mb-1">Un problème avec votre commande ?</p>
+        <p className="text-white/60 text-sm mb-4">Notre équipe est disponible 7j/7 pour vous aider.</p>
+        <Link href="/contact"
+          className="inline-flex items-center gap-2 px-6 py-2.5 bg-[var(--color-accent)] text-[var(--color-navy-900)] font-bold rounded-lg text-sm hover:opacity-90 transition-opacity">
+          Contacter le support
+        </Link>
+      </div>
+    </div>
+  )
+}
