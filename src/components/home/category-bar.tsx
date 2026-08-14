@@ -6,6 +6,7 @@ import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { CategoryIcon } from '@/components/ui/category-icon'
 import { useLanguage } from '@/components/providers/language-provider'
+import { CATEGORY_SLUG_EN } from '@/lib/i18n/categories'
 
 interface Category {
   id: string
@@ -20,7 +21,7 @@ interface Props {
 }
 
 export function CategoryBar({ categories, activeSlug }: Props) {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   function scroll(dir: 'left' | 'right') {
@@ -60,7 +61,7 @@ export function CategoryBar({ categories, activeSlug }: Props) {
                     : 'text-[var(--color-slate-600)] hover:bg-[var(--color-slate-100)] hover:text-[var(--color-navy-900)]',
                 )}>
                 <CategoryIcon slug={cat.slug} size="xs" className="shadow-none" />
-                {cat.name}
+                {lang === 'en' ? (CATEGORY_SLUG_EN[cat.slug] ?? cat.name) : cat.name}
               </Link>
             )
           })}

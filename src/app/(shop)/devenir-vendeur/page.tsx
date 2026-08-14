@@ -251,7 +251,7 @@ export default function DevenirVendeurPage() {
 
       <div className="bg-[var(--color-navy-900)] rounded-2xl p-8 text-center">
         <p className="text-white text-xl font-black mb-2">
-          {fr ? 'À très vite, nous vous attendons déjà…' : 'See you soon — we're already waiting for you…'}
+          {fr ? 'À très vite, nous vous attendons déjà…' : "See you soon — we're already waiting for you…"}
         </p>
         <p className="text-white/60 text-sm mb-6">
           {fr

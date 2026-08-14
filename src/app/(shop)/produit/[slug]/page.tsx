@@ -9,11 +9,19 @@ import { TrackProductView } from '@/components/product/track-product-view'
 import { ProductCard } from '@/components/product/product-card'
 import { RecentlyViewed } from '@/components/home/recently-viewed'
 import { Badge } from '@/components/ui/badge'
-import { Avatar } from '@/components/ui/avatar'
 import { formatPrice, formatDate } from '@/lib/utils'
-import { Star, Store, ShieldCheck, Truck, BadgeCheck, Headphones, RefreshCw } from 'lucide-react'
+import { Star } from 'lucide-react'
 import { PromoTimer } from '@/components/ui/promo-timer'
 import Link from 'next/link'
+import {
+  ProductBreadcrumb,
+  ProductCategoryBadge,
+  ProductRatingLine,
+  ProductStockStatus,
+  ProductGuarantees,
+  ProductStoreLink,
+  ProductDescriptionHeading,
+} from '@/components/product/product-page-client'
 
 interface PageProps { params: Promise<{ slug: string }> }
 
@@ -77,21 +85,7 @@ export default async function ProductPage({ params }: PageProps) {
       <TrackProductView product={product} />
 
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-[var(--color-slate-500)] mb-6">
-        <Link href="/" className="hover:text-[var(--color-accent)]">Accueil</Link>
-        <span>/</span>
-        <Link href="/catalogue" className="hover:text-[var(--color-accent)]">Catalogue</Link>
-        {product.category && (
-          <>
-            <span>/</span>
-            <Link href={`/catalogue?categorie=${product.category.slug}`} className="hover:text-[var(--color-accent)]">
-              {product.category.name}
-            </Link>
-          </>
-        )}
-        <span>/</span>
-        <span className="text-[var(--color-navy-900)] truncate max-w-[200px]">{product.name}</span>
-      </nav>
+      <ProductBreadcrumb product={product as any} />
 
       {/* Produit principal */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white rounded-[var(--radius-2xl)] p-6 sm:p-8 border border-[var(--color-slate-200)]">
@@ -100,23 +94,10 @@ export default async function ProductPage({ params }: PageProps) {
         <div className="flex flex-col gap-5">
           {/* En-tête */}
           <div>
-            {product.category && (
-              <Link href={`/catalogue?categorie=${product.category.slug}`}>
-                <Badge variant="default" className="mb-2">{product.category.name}</Badge>
-              </Link>
-            )}
+            {product.category && <ProductCategoryBadge category={product.category as any} />}
             <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-navy-900)] leading-tight">{product.name}</h1>
-
-            {/* Note */}
             {product.review_count > 0 && (
-              <div className="flex items-center gap-2 mt-2">
-                <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map((s) => (
-                    <Star key={s} className={`h-4 w-4 ${s <= Math.round(product.rating) ? 'fill-[var(--color-accent)] text-[var(--color-accent)]' : 'text-[var(--color-slate-300)]'}`} />
-                  ))}
-                </div>
-                <span className="text-sm text-[var(--color-slate-500)]">{product.rating.toFixed(1)} ({product.review_count} avis)</span>
-              </div>
+              <ProductRatingLine rating={product.rating} count={product.review_count} />
             )}
           </div>
 
@@ -136,58 +117,24 @@ export default async function ProductPage({ params }: PageProps) {
 
           {/* Stock */}
           <div className="flex items-center gap-2 text-sm">
-            {product.stock > 0
-              ? <span className="text-green-600 font-medium">✓ En stock ({product.stock} disponible{product.stock > 1 ? 's' : ''})</span>
-              : <span className="text-[var(--color-danger)] font-medium">✗ Rupture de stock</span>
-            }
+            <ProductStockStatus stock={product.stock} />
           </div>
 
           {/* Add to cart */}
           <AddToCartSection product={product as any} />
 
           {/* Garanties */}
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            {[
-              { icon: ShieldCheck,  label: 'Paiement sécurisé',      sub: 'Via CinetPay' },
-              { icon: Truck,        label: 'Livraison à partir de 3h', sub: 'Douala & Yaoundé' },
-              { icon: BadgeCheck,   label: 'Produits authentiques',   sub: '100% garantis' },
-              { icon: Headphones,   label: 'Service après-vente',     sub: 'Bricelo SAV Agréé' },
-              { icon: RefreshCw,    label: 'Retour facile',           sub: 'Sous 7 jours' },
-            ].map(({ icon: Icon, label, sub }) => (
-              <div key={label} className="flex items-center gap-2 bg-[var(--color-slate-50)] rounded-[var(--radius-lg)] p-2.5">
-                <Icon className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
-                <div>
-                  <p className="text-[11px] font-semibold text-[var(--color-navy-900)] leading-tight">{label}</p>
-                  <p className="text-[10px] text-[var(--color-slate-500)]">{sub}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ProductGuarantees />
 
           {/* Vendeur */}
-          {product.store && (
-            <Link href={`/boutique/${product.store.slug}`}
-              className="flex items-center gap-3 p-3 bg-[var(--color-slate-50)] rounded-[var(--radius-lg)] hover:bg-[var(--color-slate-100)] transition-colors border border-[var(--color-slate-200)]">
-              <Avatar src={product.store.logo_url} name={product.store.name} size="md" />
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[var(--color-navy-900)]">{product.store.name}</p>
-                {product.store.review_count > 0 && (
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <Star className="h-3 w-3 fill-[var(--color-accent)] text-[var(--color-accent)]" />
-                    <span className="text-xs text-[var(--color-slate-500)]">{product.store.rating.toFixed(1)} ({product.store.review_count} avis)</span>
-                  </div>
-                )}
-              </div>
-              <Store className="h-4 w-4 text-[var(--color-slate-400)]" />
-            </Link>
-          )}
+          {product.store && <ProductStoreLink store={product.store as any} />}
         </div>
       </div>
 
       {/* Description */}
       {product.description && (
         <div className="mt-8 bg-white rounded-[var(--radius-2xl)] p-6 sm:p-8 border border-[var(--color-slate-200)]">
-          <h2 className="text-lg font-bold text-[var(--color-navy-900)] mb-4">Description</h2>
+          <ProductDescriptionHeading />
           <div className="prose prose-sm max-w-none text-[var(--color-slate-700)] leading-relaxed whitespace-pre-line">
             {product.description}
           </div>

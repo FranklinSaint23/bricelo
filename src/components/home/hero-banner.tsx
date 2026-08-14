@@ -12,12 +12,12 @@ import type { Translations } from '@/lib/i18n/translations'
 
 /* ── CONFIG STATIQUE (photos, couleurs, icônes) ────────────────────────── */
 const slideConfigs = [
-  { id:1, photo:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1400&q=85&auto=format&fit=crop', bgColor:'#0a0e17', photoPos:'70% center', overlay:'linear-gradient(105deg, rgba(8,10,18,0.97) 38%, rgba(8,10,18,0.12) 78%)', accent:'#FFC107', BadgeIcon:Smartphone, badgeText:'TECH & MOBILE', href:'/catalogue?categorie=telephones-tablettes', textKey:'1' as const },
+  { id:1, photo:'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=1400&q=85&auto=format&fit=crop', bgColor:'#0a0e17', photoPos:'70% center', overlay:'linear-gradient(105deg, rgba(8,10,18,0.97) 38%, rgba(8,10,18,0.12) 78%)', accent:'#FFC107', BadgeIcon:Smartphone, badgeText:'TECH & MOBILE', href:'/catalogue?categorie=telephones-tablettes', textKey:'1' as const },
   { id:2, photo:'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=85&auto=format&fit=crop', bgColor:'#1a0505', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(90,5,5,0.97) 38%, rgba(90,5,5,0.12) 78%)', accent:'#FFD700', BadgeIcon:Zap, badgeText:'FLASH SALE', href:'/catalogue', textKey:'2' as const },
-  { id:3, photo:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1400&q=85&auto=format&fit=crop', bgColor:'#0a1a12', photoPos:'60% center', overlay:'linear-gradient(105deg, rgba(0,40,20,0.97) 38%, rgba(0,40,20,0.10) 78%)', accent:'#A5D6A7', BadgeIcon:ShoppingBag, badgeText:'NEW COLLECTION', href:'/catalogue?categorie=mode-vetements', textKey:'3' as const },
-  { id:4, photo:'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1400&q=85&auto=format&fit=crop', bgColor:'#050e1a', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(5,14,40,0.97) 38%, rgba(5,14,40,0.12) 78%)', accent:'#90CAF9', BadgeIcon:Laptop, badgeText:'HIGH-TECH', href:'/catalogue?categorie=electronique', textKey:'4' as const },
-  { id:5, photo:'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1400&q=85&auto=format&fit=crop', bgColor:'#0f1a06', photoPos:'60% center', overlay:'linear-gradient(105deg, rgba(15,30,5,0.97) 38%, rgba(15,30,5,0.10) 78%)', accent:'#C8E6C9', BadgeIcon:ShoppingCart, badgeText:'FOOD', href:'/catalogue?categorie=alimentation', textKey:'5' as const },
-  { id:6, photo:'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1400&q=85&auto=format&fit=crop', bgColor:'#0d0a1f', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(20,10,60,0.97) 38%, rgba(20,10,60,0.12) 78%)', accent:'#CE93D8', BadgeIcon:Store, badgeText:'SELLERS', href:'/devenir-vendeur', textKey:'6' as const },
+  { id:3, photo:'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1400&q=85&auto=format&fit=crop', bgColor:'#0a1a12', photoPos:'60% center', overlay:'linear-gradient(105deg, rgba(0,40,20,0.97) 38%, rgba(0,40,20,0.10) 78%)', accent:'#A5D6A7', BadgeIcon:ShoppingBag, badgeText:'NEW COLLECTION', href:'/catalogue?categorie=mode-vetements', textKey:'3' as const },
+  { id:4, photo:'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=1400&q=85&auto=format&fit=crop', bgColor:'#050e1a', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(5,14,40,0.97) 38%, rgba(5,14,40,0.12) 78%)', accent:'#90CAF9', BadgeIcon:Laptop, badgeText:'HIGH-TECH', href:'/catalogue?categorie=electronique', textKey:'4' as const },
+  { id:5, photo:'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=1400&q=85&auto=format&fit=crop', bgColor:'#0f1a06', photoPos:'60% center', overlay:'linear-gradient(105deg, rgba(15,30,5,0.97) 38%, rgba(15,30,5,0.10) 78%)', accent:'#C8E6C9', BadgeIcon:ShoppingCart, badgeText:'FOOD', href:'/catalogue?categorie=alimentation', textKey:'5' as const },
+  { id:6, photo:'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1400&q=85&auto=format&fit=crop', bgColor:'#0d0a1f', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(20,10,60,0.97) 38%, rgba(20,10,60,0.12) 78%)', accent:'#CE93D8', BadgeIcon:Store, badgeText:'SELLERS', href:'/devenir-vendeur', textKey:'6' as const },
 ]
 
 type SlideText = { headline: string; sub: string; extra: string; ctaLabel: string }
@@ -33,8 +33,8 @@ const slideTexts: Record<string, SlideTextFn> = {
 }
 
 const sideBannerConfigs = [
-  { id:1, photo:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(120,5,5,0.88) 0%, rgba(60,2,2,0.70) 100%)', Icon:Plug, href:'/catalogue?categorie=electromenager', badge:'DU 08 AU 22 AOÛT' },
-  { id:2, photo:'https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)', Icon:Gamepad2, href:'/catalogue?categorie=electronique', badge: null },
+  { id:1, photo:'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(120,5,5,0.88) 0%, rgba(60,2,2,0.70) 100%)', Icon:Plug, href:'/catalogue?categorie=electromenager', badge:'DU 08 AU 22 AOÛT' },
+  { id:2, photo:'https://images.unsplash.com/photo-1593104547489-5cfb3839a3b5?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)', Icon:Gamepad2, href:'/catalogue?categorie=electronique', badge: null },
 ]
 
 /* ── COMPOSANT ───────────────────────────────────────────────────────────── */

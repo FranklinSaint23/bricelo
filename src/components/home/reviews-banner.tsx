@@ -6,15 +6,18 @@ import { Avatar } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
 
+const UP = (id: string) =>
+  `https://images.unsplash.com/${id}?w=96&h=96&q=80&auto=format&fit=crop&crop=face`
+
 const reviews = [
-  { name: 'Kamga Bertrand', email: 'k.bertrand@gmail.com', rating: 5, product: 'Smartphone Samsung Galaxy A55', comment: 'Livraison ultra rapide, le produit est exactement comme décrit. Service client très réactif. Je recommande BRICELO à tous mes amis !' },
-  { name: 'Tchoupo Sandrine', email: 's.tchoupo@yahoo.fr', rating: 5, product: 'Climatiseur MIDEA 1.5CV', comment: 'Excellent service ! La climatisation est arrivée bien emballée et fonctionne parfaitement. Le livreur était très sympa.' },
-  { name: 'Nguele Patrick', email: 'nguele.p@gmail.com', rating: 4, product: 'Téléviseur LG 43 pouces', comment: 'Bonne expérience globale. Le TV est top, image magnifique. J\'aurais juste souhaité une livraison un peu plus rapide mais ça reste acceptable.' },
-  { name: 'Biya Cécile', email: 'cecile.biya@hotmail.com', rating: 5, product: 'Robe de soirée élégante', comment: 'Wow ! La robe est encore plus belle en vrai qu\'en photo. La qualité est au rendez-vous et le prix est vraiment imbattable. Merci BRICELO !' },
-  { name: 'Essama Daniel', email: 'd.essama@gmail.com', rating: 5, product: 'Réfrigérateur Samsung 300L', comment: 'Je suis vraiment satisfait de mon achat. Le frigo est parfait, silencieux et économique. La mise en place a été faite par les livreurs, chapeau !' },
-  { name: 'Mbassi Lydie', email: 'lydie.mbassi@gmail.com', rating: 4, product: 'Set de casseroles inox', comment: 'Très bon rapport qualité-prix. Les casseroles sont solides et élégantes. Je suis contente de mon achat sur BRICELO.' },
-  { name: 'Fouda Roméo', email: 'r.fouda@gmail.com', rating: 5, product: 'Chaussures Nike Air Max', comment: 'Authenticité garantie, j\'ai vérifié ! La paire est arrivée en 2 jours à Douala. BRICELO est fiable, je reviendrai pour mes prochains achats.' },
-  { name: 'Ateba Christelle', email: 'c.ateba@outlook.com', rating: 5, product: 'iPhone 15 Pro Max', comment: 'Téléphone 100% original, livré en moins de 3 jours. Emballage parfait. Le service client a répondu à toutes mes questions rapidement. Top !' },
+  { name: 'Kamga Bertrand',   email: 'k.bertrand@gmail.com',    avatar: UP('photo-1507003211169-0a1dd7228f2d'), rating: 5, product: 'Smartphone Samsung Galaxy A55',  comment: "Livraison ultra rapide, le produit est exactement comme décrit. Service client très réactif. Je recommande BRICELO à tous mes amis !" },
+  { name: 'Tchoupo Sandrine', email: 's.tchoupo@yahoo.fr',       avatar: UP('photo-1531746020798-e6953c6e8e04'), rating: 5, product: 'Climatiseur MIDEA 1.5CV',         comment: "Excellent service ! La climatisation est arrivée bien emballée et fonctionne parfaitement. Le livreur était très sympa." },
+  { name: 'Nguele Patrick',   email: 'nguele.p@gmail.com',       avatar: UP('photo-1539571696357-5a69c17a67c6'), rating: 4, product: 'Téléviseur LG 43 pouces',         comment: "Bonne expérience globale. Le TV est top, image magnifique. J'aurais juste souhaité une livraison un peu plus rapide mais ça reste acceptable." },
+  { name: 'Biya Cécile',      email: 'cecile.biya@hotmail.com',  avatar: UP('photo-1573497019940-1c28c88b4f3e'), rating: 5, product: 'Robe de soirée élégante',          comment: "Wow ! La robe est encore plus belle en vrai qu'en photo. La qualité est au rendez-vous et le prix est vraiment imbattable. Merci BRICELO !" },
+  { name: 'Essama Daniel',    email: 'd.essama@gmail.com',       avatar: UP('photo-1506794778202-cad84cf45f1d'), rating: 5, product: 'Réfrigérateur Samsung 300L',      comment: "Je suis vraiment satisfait de mon achat. Le frigo est parfait, silencieux et économique. La mise en place a été faite par les livreurs, chapeau !" },
+  { name: 'Mbassi Lydie',     email: 'lydie.mbassi@gmail.com',   avatar: UP('photo-1580489944761-15a19d654956'), rating: 4, product: 'Set de casseroles inox',           comment: "Très bon rapport qualité-prix. Les casseroles sont solides et élégantes. Je suis contente de mon achat sur BRICELO." },
+  { name: 'Fouda Roméo',      email: 'r.fouda@gmail.com',        avatar: UP('photo-1521119989659-a83eee488004'), rating: 5, product: 'Chaussures Nike Air Max',          comment: "Authenticité garantie, j'ai vérifié ! La paire est arrivée en 2 jours à Douala. BRICELO est fiable, je reviendrai pour mes prochains achats." },
+  { name: 'Ateba Christelle', email: 'c.ateba@outlook.com',      avatar: UP('photo-1488426862026-3ee34a7d66df'), rating: 5, product: 'iPhone 15 Pro Max',                comment: "Téléphone 100% original, livré en moins de 3 jours. Emballage parfait. Le service client a répondu à toutes mes questions rapidement. Top !" },
 ]
 
 function Stars({ rating }: { rating: number }) {
@@ -70,7 +73,7 @@ export function ReviewsBanner() {
 
             {/* Reviewer */}
             <div className="flex items-center gap-3 mt-5 pt-5 border-t border-white/10">
-              <Avatar name={r.name} size="md" />
+              <Avatar src={r.avatar} name={r.name} size="md" />
               <div>
                 <p className="text-white font-semibold text-sm">{r.name}</p>
                 <p className="text-white/40 text-xs">{r.email}</p>
