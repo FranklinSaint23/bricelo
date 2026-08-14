@@ -9,7 +9,6 @@ import { useLanguage } from '@/components/providers/language-provider'
 
 type Order = {
   id: string
-  order_number: string
   status: string
   total: number
   created_at: string
@@ -88,7 +87,7 @@ export function OrdersListView({ orders }: { orders: Order[] }) {
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-bold text-[var(--color-navy-900)] text-sm">#{order.order_number}</span>
+                    <span className="font-bold text-[var(--color-navy-900)] text-sm">#{order.id.slice(0, 8).toUpperCase()}</span>
                     <Badge variant={STATUS_VARIANTS[order.status] ?? 'default'}>
                       {STATUS_LABELS[order.status] ?? order.status}
                     </Badge>

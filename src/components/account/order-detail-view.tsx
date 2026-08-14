@@ -16,7 +16,6 @@ type OrderItem = {
 
 type Order = {
   id: string
-  order_number: string
   status: string
   total: number
   subtotal: number
@@ -81,7 +80,7 @@ export function OrderDetailView({ order }: { order: Order }) {
       <div className="flex items-start justify-between mb-6 gap-3">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-[var(--color-navy-900)]">
-            {fr ? 'Commande' : 'Order'} #{order.order_number}
+            {fr ? 'Commande' : 'Order'} #{order.id.slice(0, 8).toUpperCase()}
           </h1>
           <p className="text-sm text-[var(--color-slate-500)] mt-0.5">
             {fr ? 'Passée le' : 'Placed on'}{' '}
