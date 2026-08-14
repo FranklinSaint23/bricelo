@@ -1,84 +1,89 @@
+'use client'
+
 import { ChevronDown } from 'lucide-react'
-
-export const metadata = { title: 'Questions fréquentes — BRICELO' }
-
-const faqs = [
-  {
-    section: 'Acheter sur BRICELO',
-    items: [
-      {
-        q: 'Comment passer une commande ?',
-        a: "Choisissez votre produit, cliquez sur « Ajouter au panier » ou « Acheter maintenant », puis sélectionnez votre mode de paiement (Orange Money, MTN MoMo ou espèces) et validez. Vous recevrez une confirmation par e-mail.",
-      },
-      {
-        q: 'Dois-je créer un compte pour commander ?',
-        a: "Non. BRICELO accepte les commandes invité — vous pouvez acheter sans créer de compte. Cependant, un compte vous permet de suivre vos commandes, sauvegarder vos adresses et accéder à vos favoris.",
-      },
-      {
-        q: 'Comment puis-je suivre ma commande ?',
-        a: 'Connectez-vous et rendez-vous dans « Mes commandes ». Vous y trouverez le statut en temps réel de chaque commande.',
-      },
-      {
-        q: 'Quels moyens de paiement sont acceptés ?',
-        a: 'Nous acceptons Orange Money, MTN Mobile Money et le paiement en espèces à la livraison (Cash on Delivery). Les paiements mobiles sont validés automatiquement ; le cash est validé par notre équipe après livraison.',
-      },
-    ],
-  },
-  {
-    section: 'Livraison',
-    items: [
-      {
-        q: 'Quels sont les délais de livraison ?',
-        a: 'À Douala et Yaoundé, la livraison est possible en 3 heures pour les commandes urgentes. Dans les autres villes, comptez 1 à 4 jours ouvrables selon la localisation.',
-      },
-      {
-        q: 'Combien coûte la livraison ?',
-        a: "Les frais de livraison varient selon la distance et le poids. Ils vous sont affichés clairement lors du passage en caisse, avant de confirmer votre commande.",
-      },
-      {
-        q: 'Livrez-vous partout au Cameroun ?',
-        a: 'Oui. Nous livrons dans toutes les grandes villes du Cameroun. La livraison express (3h) est disponible uniquement à Douala et Yaoundé.',
-      },
-    ],
-  },
-  {
-    section: 'Retours & Remboursements',
-    items: [
-      {
-        q: 'Puis-je retourner un article ?',
-        a: "Oui. Vous disposez de 7 jours après réception pour retourner un article défectueux ou non conforme à la description. Consultez notre politique de retour pour les conditions détaillées.",
-      },
-      {
-        q: 'Comment obtenir un remboursement ?',
-        a: "Signalez le problème via votre espace client ou contactez notre service client. Après vérification, le remboursement est effectué sur votre moyen de paiement initial sous 5 à 10 jours ouvrables.",
-      },
-    ],
-  },
-  {
-    section: 'Vendre sur BRICELO',
-    items: [
-      {
-        q: 'Comment devenir vendeur sur BRICELO ?',
-        a: "Remplissez le formulaire de candidature vendeur. Notre équipe examinera votre dossier sous 48h. Une fois approuvé, vous créez votre boutique et ajoutez vos produits librement.",
-      },
-      {
-        q: 'Quelles sont les commissions appliquées ?',
-        a: "Les commissions varient de 5% à 13% selon la catégorie produit, plus 500 FCFA de packing fees par article. Consultez la grille complète sur la page « Comment devenir vendeur ».",
-      },
-      {
-        q: 'Est-ce que BRICELO est gratuit pour les vendeurs ?',
-        a: "L'inscription est gratuite. BRICELO prélève uniquement une commission sur chaque vente réalisée — pas de frais mensuels ni d'abonnement.",
-      },
-    ],
-  },
-]
+import { useLanguage } from '@/components/providers/language-provider'
 
 export default function FaqPage() {
+  const { t, lang } = useLanguage()
+
+  const faqs = lang === 'fr' ? [
+    {
+      section: 'Acheter sur BRICELO',
+      items: [
+        { q: 'Comment passer une commande ?', a: "Choisissez votre produit, cliquez sur « Ajouter au panier » ou « Acheter maintenant », puis sélectionnez votre mode de paiement (Orange Money, MTN MoMo ou espèces) et validez. Vous recevrez une confirmation par e-mail." },
+        { q: 'Dois-je créer un compte pour commander ?', a: "Non. BRICELO accepte les commandes invité — vous pouvez acheter sans créer de compte. Cependant, un compte vous permet de suivre vos commandes, sauvegarder vos adresses et accéder à vos favoris." },
+        { q: 'Comment puis-je suivre ma commande ?', a: 'Connectez-vous et rendez-vous dans « Mes commandes ». Vous y trouverez le statut en temps réel de chaque commande.' },
+        { q: 'Quels moyens de paiement sont acceptés ?', a: 'Nous acceptons Orange Money, MTN Mobile Money et le paiement en espèces à la livraison (Cash on Delivery). Les paiements mobiles sont validés automatiquement ; le cash est validé par notre équipe après livraison.' },
+      ],
+    },
+    {
+      section: 'Livraison',
+      items: [
+        { q: 'Quels sont les délais de livraison ?', a: 'À Douala et Yaoundé, la livraison est possible en 3 heures pour les commandes urgentes. Dans les autres villes, comptez 1 à 4 jours ouvrables selon la localisation.' },
+        { q: 'Combien coûte la livraison ?', a: "Les frais de livraison varient selon la distance et le poids. Ils vous sont affichés clairement lors du passage en caisse, avant de confirmer votre commande." },
+        { q: 'Livrez-vous partout au Cameroun ?', a: 'Oui. Nous livrons dans toutes les grandes villes du Cameroun. La livraison express (3h) est disponible uniquement à Douala et Yaoundé.' },
+      ],
+    },
+    {
+      section: 'Retours & Remboursements',
+      items: [
+        { q: 'Puis-je retourner un article ?', a: "Oui. Vous disposez de 7 jours après réception pour retourner un article défectueux ou non conforme à la description. Consultez notre politique de retour pour les conditions détaillées." },
+        { q: 'Comment obtenir un remboursement ?', a: "Signalez le problème via votre espace client ou contactez notre service client. Après vérification, le remboursement est effectué sur votre moyen de paiement initial sous 5 à 10 jours ouvrables." },
+      ],
+    },
+    {
+      section: 'Vendre sur BRICELO',
+      items: [
+        { q: 'Comment devenir vendeur sur BRICELO ?', a: "Remplissez le formulaire de candidature vendeur. Notre équipe examinera votre dossier sous 48h. Une fois approuvé, vous créez votre boutique et ajoutez vos produits librement." },
+        { q: 'Quelles sont les commissions appliquées ?', a: "Les commissions varient de 5% à 13% selon la catégorie produit, plus 500 FCFA de packing fees par article. Consultez la grille complète sur la page « Comment devenir vendeur »." },
+        { q: 'Est-ce que BRICELO est gratuit pour les vendeurs ?', a: "L'inscription est gratuite. BRICELO prélève uniquement une commission sur chaque vente réalisée — pas de frais mensuels ni d'abonnement." },
+      ],
+    },
+  ] : [
+    {
+      section: 'Buying on BRICELO',
+      items: [
+        { q: 'How do I place an order?', a: 'Choose your product, click "Add to cart" or "Buy now", then select your payment method (Orange Money, MTN MoMo or cash) and confirm. You will receive a confirmation by email.' },
+        { q: 'Do I need an account to order?', a: 'No. BRICELO accepts guest orders — you can buy without creating an account. However, an account lets you track orders, save addresses and access your wishlist.' },
+        { q: 'How can I track my order?', a: 'Sign in and go to "My orders". You will find the real-time status of each order there.' },
+        { q: 'What payment methods are accepted?', a: 'We accept Orange Money, MTN Mobile Money and cash on delivery. Mobile payments are validated automatically; cash is validated by our team upon delivery.' },
+      ],
+    },
+    {
+      section: 'Delivery',
+      items: [
+        { q: 'What are the delivery times?', a: 'In Douala and Yaoundé, delivery is possible within 3 hours for urgent orders. In other cities, allow 1 to 4 business days depending on the location.' },
+        { q: 'How much does delivery cost?', a: 'Delivery fees vary depending on distance and weight. They are clearly displayed at checkout before you confirm your order.' },
+        { q: 'Do you deliver across Cameroon?', a: 'Yes. We deliver to all major cities in Cameroon. Express delivery (3h) is only available in Douala and Yaoundé.' },
+      ],
+    },
+    {
+      section: 'Returns & Refunds',
+      items: [
+        { q: 'Can I return an item?', a: 'Yes. You have 7 days after receiving your order to return a defective or incorrectly described item. See our return policy for full conditions.' },
+        { q: 'How do I get a refund?', a: 'Report the issue through your account or contact our support team. After verification, the refund is issued to your original payment method within 5–10 business days.' },
+      ],
+    },
+    {
+      section: 'Selling on BRICELO',
+      items: [
+        { q: 'How do I become a seller on BRICELO?', a: 'Fill in the vendor application form. Our team will review your application within 48 hours. Once approved, you create your store and list your products freely.' },
+        { q: 'What commissions are charged?', a: 'Commissions range from 5% to 13% depending on product category, plus a 500 FCFA packing fee per item. See the full grid on the "How to become a seller" page.' },
+        { q: 'Is BRICELO free for sellers?', a: 'Registration is free. BRICELO only takes a commission on each sale made — no monthly fees or subscriptions.' },
+      ],
+    },
+  ]
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <title>{lang === 'fr' ? 'Questions fréquentes — BRICELO' : 'FAQ — BRICELO'}</title>
       <div className="mb-10">
-        <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-navy-900)] mb-3">Questions fréquentes</h1>
-        <p className="text-[var(--color-slate-500)]">Trouvez rapidement les réponses à vos questions sur BRICELO.</p>
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-navy-900)] mb-3">
+          {lang === 'fr' ? 'Questions fréquentes' : 'Frequently Asked Questions'}
+        </h1>
+        <p className="text-[var(--color-slate-500)]">
+          {lang === 'fr' ? 'Trouvez rapidement les réponses à vos questions sur BRICELO.' : 'Find quick answers to your questions about BRICELO.'}
+        </p>
       </div>
 
       <div className="flex flex-col gap-10">

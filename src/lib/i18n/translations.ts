@@ -22,10 +22,10 @@ export const fr = {
   closeMenu: 'Fermer le menu',
 
   // ── Ticker promo bar ──
-  ticker1: 'Livraison rapide partout au Cameroun — entre 1 et 4 jours',
+  ticker1: 'Livraison rapide partout au Cameroun - entre 1 et 4 jours',
   ticker2: 'Paiement sécurisé via Orange Money & MTN Mobile Money',
-  ticker3: 'Retour sous 10 jours — remboursement sans questions',
-  ticker4: 'Ouvrez votre boutique sur BRICELO — 100% gratuit',
+  ticker3: 'Retour sous 10 jours - remboursement sans questions',
+  ticker4: 'Ouvrez votre boutique sur BRICELO - 100% gratuit',
   ticker5: 'Vendeurs vérifiés · Produits garantis · Support 7j/7',
 
   // ── Hero Banner ──

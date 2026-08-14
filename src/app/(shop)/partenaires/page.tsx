@@ -1,40 +1,64 @@
+'use client'
+
 import Link from 'next/link'
 import { Truck, MapPin, CheckCircle2, Package, Clock, TrendingUp } from 'lucide-react'
-
-export const metadata = { title: 'Devenir partenaire logistique — BRICELO' }
-
-const avantages = [
-  { Icon: TrendingUp, title: 'Revenus réguliers',   desc: 'Gagnez à chaque livraison. Plus vous livrez, plus vous gagnez.' },
-  { Icon: Clock,      title: 'Horaires flexibles',  desc: 'Travaillez selon vos disponibilités, en journée ou en soirée.' },
-  { Icon: MapPin,     title: 'Votre secteur',       desc: 'Opérez dans votre quartier ou votre ville selon votre choix.' },
-  { Icon: Package,    title: 'Outils fournis',      desc: "Application mobile de gestion des livraisons fournie par BRICELO." },
-]
-
-const conditions = [
-  'Être majeur et résider au Cameroun',
-  'Posséder un véhicule (moto, tricycle ou voiture)',
-  'Avoir un permis de conduire en cours de validité',
-  "Disposer d'un smartphone avec connexion internet",
-  'Être disponible au minimum 20h par semaine',
-  'Avoir une bonne connaissance de votre secteur de livraison',
-]
-
-const process = [
-  { num: '01', title: 'Soumettez votre candidature', desc: 'Remplissez le formulaire ci-dessous avec vos informations et votre secteur de livraison.' },
-  { num: '02', title: 'Entretien téléphonique',      desc: 'Notre équipe vous contacte sous 48h pour un entretien de 15 minutes.' },
-  { num: '03', title: 'Formation',                   desc: 'Une formation courte vous présente l\'application de livraison et les procédures BRICELO.' },
-  { num: '04', title: 'Démarrez les livraisons',     desc: 'Vous êtes activé sur la plateforme et commencez à recevoir des missions dans votre secteur.' },
-]
+import { useLanguage } from '@/components/providers/language-provider'
 
 export default function PartenairesPage() {
+  const { lang } = useLanguage()
+  const fr = lang === 'fr'
+
+  const avantages = fr ? [
+    { Icon: TrendingUp, title: 'Revenus réguliers',  desc: 'Gagnez à chaque livraison. Plus vous livrez, plus vous gagnez.' },
+    { Icon: Clock,      title: 'Horaires flexibles', desc: 'Travaillez selon vos disponibilités, en journée ou en soirée.' },
+    { Icon: MapPin,     title: 'Votre secteur',      desc: 'Opérez dans votre quartier ou votre ville selon votre choix.' },
+    { Icon: Package,    title: 'Outils fournis',     desc: "Application mobile de gestion des livraisons fournie par BRICELO." },
+  ] : [
+    { Icon: TrendingUp, title: 'Regular income',    desc: 'Earn on every delivery. The more you deliver, the more you earn.' },
+    { Icon: Clock,      title: 'Flexible hours',    desc: 'Work according to your availability, day or evening.' },
+    { Icon: MapPin,     title: 'Your area',         desc: 'Operate in your neighbourhood or city of your choice.' },
+    { Icon: Package,    title: 'Tools provided',    desc: "BRICELO provides a mobile app to manage your deliveries." },
+  ]
+
+  const conditions = fr ? [
+    'Être majeur et résider au Cameroun',
+    'Posséder un véhicule (moto, tricycle ou voiture)',
+    'Avoir un permis de conduire en cours de validité',
+    "Disposer d'un smartphone avec connexion internet",
+    'Être disponible au minimum 20h par semaine',
+    'Avoir une bonne connaissance de votre secteur de livraison',
+  ] : [
+    'Be of legal age and reside in Cameroon',
+    'Own a vehicle (motorbike, tricycle or car)',
+    'Hold a valid driving licence',
+    'Have a smartphone with internet access',
+    'Be available for a minimum of 20 hours per week',
+    'Have good knowledge of your delivery area',
+  ]
+
+  const process = fr ? [
+    { num: '01', title: 'Soumettez votre candidature', desc: 'Remplissez le formulaire ci-dessous avec vos informations et votre secteur de livraison.' },
+    { num: '02', title: 'Entretien téléphonique',      desc: 'Notre équipe vous contacte sous 48h pour un entretien de 15 minutes.' },
+    { num: '03', title: 'Formation',                   desc: "Une formation courte vous présente l'application de livraison et les procédures BRICELO." },
+    { num: '04', title: 'Démarrez les livraisons',     desc: 'Vous êtes activé sur la plateforme et commencez à recevoir des missions dans votre secteur.' },
+  ] : [
+    { num: '01', title: 'Submit your application', desc: 'Fill in the form below with your information and your delivery area.' },
+    { num: '02', title: 'Phone interview',          desc: 'Our team contacts you within 48 hours for a 15-minute interview.' },
+    { num: '03', title: 'Training',                 desc: 'A short training session introduces you to the delivery app and BRICELO procedures.' },
+    { num: '04', title: 'Start delivering',         desc: 'You are activated on the platform and begin receiving missions in your area.' },
+  ]
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+      <title>{fr ? 'Devenir partenaire logistique — BRICELO' : 'Become a logistics partner — BRICELO'}</title>
       <div className="mb-10">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-navy-900)] mb-3">
-          Devenir partenaire logistique
+          {fr ? 'Devenir partenaire logistique' : 'Become a logistics partner'}
         </h1>
         <p className="text-[var(--color-slate-500)] text-lg">
-          Rejoignez le réseau de livreurs BRICELO et gagnez de l'argent en livrant dans votre ville.
+          {fr
+            ? "Rejoignez le réseau de livreurs BRICELO et gagnez de l'argent en livrant dans votre ville."
+            : "Join the BRICELO delivery network and earn money delivering in your city."}
         </p>
       </div>
 
@@ -51,7 +75,9 @@ export default function PartenairesPage() {
       </div>
 
       <div className="bg-white border border-[var(--color-slate-200)] rounded-2xl p-6 mb-8 shadow-sm">
-        <h2 className="font-extrabold text-[var(--color-navy-900)] mb-4">Conditions requises</h2>
+        <h2 className="font-extrabold text-[var(--color-navy-900)] mb-4">
+          {fr ? 'Conditions requises' : 'Requirements'}
+        </h2>
         <ul className="flex flex-col gap-2.5">
           {conditions.map((c) => (
             <li key={c} className="flex items-start gap-2 text-sm text-[var(--color-slate-700)]">
@@ -62,7 +88,9 @@ export default function PartenairesPage() {
         </ul>
       </div>
 
-      <h2 className="text-xl font-extrabold text-[var(--color-navy-900)] mb-5">Comment ça marche ?</h2>
+      <h2 className="text-xl font-extrabold text-[var(--color-navy-900)] mb-5">
+        {fr ? 'Comment ça marche ?' : 'How does it work?'}
+      </h2>
       <div className="flex flex-col gap-4 mb-10">
         {process.map(({ num, title, desc }) => (
           <div key={num} className="flex gap-4 bg-[var(--color-slate-50)] border border-[var(--color-slate-200)] rounded-2xl p-5">
@@ -79,11 +107,17 @@ export default function PartenairesPage() {
 
       <div className="bg-[var(--color-navy-900)] rounded-2xl p-8 text-center">
         <Truck className="h-10 w-10 text-[var(--color-accent)] mx-auto mb-3" />
-        <p className="text-white font-extrabold text-xl mb-2">Prêt à rejoindre l'aventure ?</p>
-        <p className="text-white/60 text-sm mb-6">Envoyez votre candidature et notre équipe vous répondra sous 48h.</p>
+        <p className="text-white font-extrabold text-xl mb-2">
+          {fr ? "Prêt à rejoindre l'aventure ?" : 'Ready to join the adventure?'}
+        </p>
+        <p className="text-white/60 text-sm mb-6">
+          {fr
+            ? 'Envoyez votre candidature et notre équipe vous répondra sous 48h.'
+            : 'Send your application and our team will get back to you within 48 hours.'}
+        </p>
         <Link href="/contact"
           className="inline-flex items-center gap-2 px-8 py-3 bg-[var(--color-accent)] text-[var(--color-navy-900)] font-bold rounded-xl hover:opacity-90 transition-opacity text-sm">
-          Postuler comme livreur
+          {fr ? 'Postuler comme livreur' : 'Apply as a delivery partner'}
         </Link>
       </div>
     </div>
