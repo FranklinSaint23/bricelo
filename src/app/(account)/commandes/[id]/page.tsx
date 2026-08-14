@@ -13,7 +13,7 @@ export default async function OrderDetailPage({ params }: Props) {
   const { data: order } = await supabase
     .from('orders')
     .select(`
-      id, order_number, status, total_amount, subtotal, shipping_amount, created_at,
+      id, order_number, status, total, subtotal, shipping_cost, created_at,
       shipping_address,
       order_items (
         id, quantity, unit_price,

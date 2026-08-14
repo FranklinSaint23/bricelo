@@ -11,7 +11,7 @@ type Order = {
   id: string
   order_number: string
   status: string
-  total_amount: number
+  total: number
   created_at: string
   order_items: { count: number }[]
   preview_images: string[]
@@ -102,7 +102,7 @@ export function OrdersListView({ orders }: { orders: Order[] }) {
 
                 {/* Total + arrow */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <span className="font-bold text-[var(--color-navy-900)] text-sm">{formatPrice(order.total_amount)}</span>
+                  <span className="font-bold text-[var(--color-navy-900)] text-sm">{formatPrice(order.total)}</span>
                   <ChevronRight className="h-4 w-4 text-[var(--color-slate-400)] group-hover:text-[var(--color-accent)] transition-colors" />
                 </div>
               </Link>

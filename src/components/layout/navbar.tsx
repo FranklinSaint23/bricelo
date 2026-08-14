@@ -137,7 +137,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
     const t = setInterval(() => {
       setTickerIdx(i => (i + 1) % TICKER_COUNT)
       setTickerKey(k => k + 1)
-    }, 4000)
+    }, 3000)
     return () => clearInterval(t)
   }, [])
 

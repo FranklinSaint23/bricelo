@@ -18,9 +18,9 @@ type Order = {
   id: string
   order_number: string
   status: string
-  total_amount: number
+  total: number
   subtotal: number
-  shipping_amount: number
+  shipping_cost: number
   created_at: string
   shipping_address: Record<string, string> | null
   order_items: OrderItem[]
@@ -195,11 +195,11 @@ export function OrderDetailView({ order }: { order: Order }) {
             </div>
             <div className="flex justify-between text-sm text-[var(--color-slate-600)]">
               <span>{fr ? 'Livraison' : 'Delivery'}</span>
-              <span>{order.shipping_amount > 0 ? formatPrice(order.shipping_amount) : (fr ? 'Gratuite' : 'Free')}</span>
+              <span>{order.shipping_cost > 0 ? formatPrice(order.shipping_cost) : (fr ? 'Gratuite' : 'Free')}</span>
             </div>
             <div className="flex justify-between font-bold text-[var(--color-navy-900)] pt-2 border-t border-[var(--color-slate-200)] mt-1">
               <span>Total</span>
-              <span>{formatPrice(order.total_amount)}</span>
+              <span>{formatPrice(order.total)}</span>
             </div>
           </div>
         </div>

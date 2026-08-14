@@ -10,7 +10,7 @@ export default async function OrdersPage() {
   const { data: orders } = await supabase
     .from('orders')
     .select(`
-      id, order_number, status, total_amount, created_at,
+      id, order_number, status, total, created_at,
       order_items(count),
       preview:order_items(product:products(images))
     `)
