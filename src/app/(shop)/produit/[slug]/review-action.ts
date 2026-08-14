@@ -17,25 +17,22 @@ export async function submitReview(
   const { data: { user } } = await supabase.auth.getUser()
 
   async function doInsert(withName: boolean) {
-    const base = {
+    const base: Record<string, unknown> = {
       product_id: productId,
       user_id: user?.id ?? null,
       rating,
       comment: comment.trim() || null,
       is_visible: true,
     }
+    if (withName) base.reviewer_name = reviewerName.trim()
 
     if (user) {
-      return supabase
-        .from('reviews')
-        .upsert(
-          withName ? { ...base, reviewer_name: reviewerName.trim() } : base,
-          { onConflict: 'product_id,user_id' },
-        )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (supabase.from('reviews') as any)
+        .upsert(base, { onConflict: 'product_id,user_id' })
     } else {
-      return supabase
-        .from('reviews')
-        .insert(withName ? { ...base, reviewer_name: reviewerName.trim() } : base)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (supabase.from('reviews') as any).insert(base)
     }
   }
 
