@@ -34,7 +34,7 @@ const slideTexts: Record<string, SlideTextFn> = {
 
 const sideBannerConfigs = [
   { id:1, photo:'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(120,5,5,0.88) 0%, rgba(60,2,2,0.70) 100%)', Icon:Plug, href:'/catalogue?categorie=electromenager', badge:'DU 08 AU 22 AOÛT' },
-  { id:2, photo:'https://images.unsplash.com/photo-1593104547489-5cfb3839a3b5?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)', Icon:Gamepad2, href:'/catalogue?categorie=electronique', badge: null },
+  { id:2, photo:'https://images.unsplash.com/photo-1603145733146-ae562a55031e?w=1400&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)', Icon:Gamepad2, href:'/catalogue?categorie=electronique', badge: null },
 ]
 
 /* ── COMPOSANT ───────────────────────────────────────────────────────────── */
