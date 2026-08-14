@@ -6,6 +6,7 @@ import { Heart, ShoppingCart, Star } from 'lucide-react'
 import { useState } from 'react'
 import { cn, formatPrice } from '@/lib/utils'
 import { PromoTimer } from '@/components/ui/promo-timer'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { Product } from '@/types'
 
 interface ProductCardProps {
@@ -15,6 +16,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   const [wished, setWished] = useState(false)
+  const { t } = useLanguage()
 
   const discount = product.compare_at_price && product.compare_at_price > product.price
     ? Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)
@@ -45,7 +47,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         {product.stock === 0 && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
             <span className="bg-[var(--color-slate-700)] text-white text-[11px] font-semibold px-3 py-1 rounded-full">
-              Épuisé
+              {t.outOfStock}
             </span>
           </div>
         )}
@@ -64,7 +66,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
           {product.is_new && !discount && !product.promotion_label && (
             <span className="bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">
-              Nouveau
+              {t.newBadge}
             </span>
           )}
         </div>
@@ -79,7 +81,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
               ? 'bg-red-50 text-red-500 !opacity-100'
               : 'bg-white/80 text-[var(--color-slate-400)] hover:text-red-400',
           )}
-          aria-label="Favoris"
+          aria-label={t.addToWishlist}
         >
           <Heart className={cn('h-3.5 w-3.5', wished && 'fill-current')} />
         </button>
@@ -87,7 +89,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         {/* Hover bar */}
         {product.stock > 0 && (
           <div className="absolute bottom-0 inset-x-0 bg-[var(--color-navy-900)]/90 text-white text-xs font-semibold py-2 flex items-center justify-center gap-1.5 translate-y-full group-hover:translate-y-0 transition-transform duration-200 pointer-events-none">
-            <ShoppingCart className="h-3 w-3" /> Voir le produit
+            <ShoppingCart className="h-3 w-3" /> {t.viewProduct}
           </div>
         )}
       </Link>
@@ -139,7 +141,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         )}
 
         {product.stock > 0 && product.stock <= 5 && (
-          <p className="text-[10px] text-[var(--color-danger)] mt-1">Plus que {product.stock} en stock</p>
+          <p className="text-[10px] text-[var(--color-danger)] mt-1">{t.lowStock(product.stock)}</p>
         )}
       </div>
     </div>

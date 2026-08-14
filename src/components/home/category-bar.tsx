@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { CategoryIcon } from '@/components/ui/category-icon'
+import { useLanguage } from '@/components/providers/language-provider'
 
 interface Category {
   id: string
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function CategoryBar({ categories, activeSlug }: Props) {
+  const { t } = useLanguage()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   function scroll(dir: 'left' | 'right') {
@@ -44,7 +46,7 @@ export function CategoryBar({ categories, activeSlug }: Props) {
                 ? 'bg-[var(--color-navy-900)] text-white'
                 : 'text-[var(--color-slate-600)] hover:bg-[var(--color-slate-100)] hover:text-[var(--color-navy-900)]',
             )}>
-            Tout voir
+            {t.seeAll}
           </Link>
 
           {categories.map((cat) => {

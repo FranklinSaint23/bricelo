@@ -8,10 +8,12 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardBody } from '@/components/ui/card'
+import { useLanguage } from '@/components/providers/language-provider'
 
 function LoginForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/'
+  const { t } = useLanguage()
 
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -26,7 +28,7 @@ function LoginForm() {
     const supabase = createClient()
     const { error: err } = await supabase.auth.signInWithPassword({ email, password })
     if (err) {
-      setError(err.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : err.message)
+      setError(t.loginError)
       setLoading(false)
       return
     }
@@ -38,7 +40,7 @@ function LoginForm() {
       <CardBody className="p-6">
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
-            label="Adresse e-mail"
+            label={t.email}
             type="email"
             placeholder="vous@exemple.com"
             value={email}
@@ -50,7 +52,7 @@ function LoginForm() {
 
           <div className="flex flex-col gap-1.5">
             <Input
-              label="Mot de passe"
+              label={t.password}
               type={showPwd ? 'text' : 'password'}
               placeholder="••••••••"
               value={password}
@@ -62,9 +64,10 @@ function LoginForm() {
             <button
               type="button"
               onClick={() => setShowPwd(!showPwd)}
-              className="self-end text-xs text-[var(--color-slate-500)] hover:text-[var(--color-accent)] transition-colors"
+              className="self-end text-xs text-[var(--color-slate-500)] hover:text-[var(--color-accent)] transition-colors flex items-center gap-1"
             >
-              {showPwd ? 'Masquer' : 'Afficher'} le mot de passe
+              {showPwd ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+              {showPwd ? (t.password + ' …') : t.password}
             </button>
           </div>
 
@@ -76,12 +79,12 @@ function LoginForm() {
 
           <div className="flex justify-end">
             <Link href="/forgot-password" className="text-sm text-[var(--color-accent)] hover:underline">
-              Mot de passe oublié ?
+              {t.forgotPassword}
             </Link>
           </div>
 
           <Button type="submit" loading={loading} className="w-full" size="lg">
-            Se connecter
+            {t.loginBtn}
           </Button>
         </form>
       </CardBody>
@@ -90,21 +93,22 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const { t } = useLanguage()
   return (
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">Connexion</h1>
-        <p className="text-sm text-[var(--color-slate-500)] mt-1">Bienvenue sur BRICELO.com</p>
+        <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">{t.loginTitle}</h1>
+        <p className="text-sm text-[var(--color-slate-500)] mt-1">{t.loginSub}</p>
       </div>
 
-      <Suspense fallback={<div className="h-64 bg-white rounded-[var(--radius-lg)] animate-pulse" />}>
+      <Suspense fallback={<div className="h-64 bg-[var(--color-surface)] rounded-[var(--radius-lg)] animate-pulse" />}>
         <LoginForm />
       </Suspense>
 
       <p className="text-center text-sm text-[var(--color-slate-500)] mt-6">
-        Pas encore de compte ?{' '}
+        {t.noAccount}{' '}
         <Link href="/register" className="text-[var(--color-accent)] font-medium hover:underline">
-          S'inscrire gratuitement
+          {t.signUpLink}
         </Link>
       </p>
     </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ShoppingCart, Minus, Plus, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/store/cart-store'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { Product, ProductVariant } from '@/types'
 
 interface Props { product: Product }
@@ -16,6 +17,7 @@ export function AddToCartSection({ product }: Props) {
   const router = useRouter()
   const addItem  = useCartStore((s) => s.addItem)
   const clearCart = useCartStore((s) => s.clearCart)
+  const { t } = useLanguage()
 
   const variants  = product.variants ?? []
   const groupedVariants = variants.reduce<Record<string, ProductVariant[]>>((acc, v) => {
@@ -71,6 +73,7 @@ export function AddToCartSection({ product }: Props) {
       ))}
 
       {/* Quantité */}
+      <p className="text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wide">{t.quantity}</p>
       <div className="flex items-center border border-[var(--color-slate-200)] rounded-[var(--radius-md)] overflow-hidden w-fit">
         <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-10 w-10 flex items-center justify-center hover:bg-[var(--color-slate-100)] transition-colors">
           <Minus className="h-3.5 w-3.5" />
@@ -91,7 +94,7 @@ export function AddToCartSection({ product }: Props) {
           variant={added ? 'secondary' : 'primary'}
         >
           <ShoppingCart className="h-4 w-4" />
-          {added ? 'Ajouté !' : outOfStock ? 'Rupture de stock' : 'Ajouter au panier'}
+          {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
         </Button>
 
         <Button
@@ -102,7 +105,7 @@ export function AddToCartSection({ product }: Props) {
           variant="outline"
         >
           <Zap className="h-4 w-4" />
-          Acheter maintenant
+          {t.buyNow}
         </Button>
       </div>
     </div>

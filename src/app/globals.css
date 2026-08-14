@@ -54,9 +54,30 @@
 :root {
   --background: #ffffff;
   --foreground: var(--color-navy-900);
+  --color-surface: #ffffff;
+  --color-surface-raised: var(--color-slate-100);
+  --color-text-primary: var(--color-navy-900);
+  --color-text-muted: var(--color-slate-500);
+  --color-text-subtle: var(--color-slate-400);
   --muted: var(--color-slate-100);
   --muted-foreground: var(--color-slate-500);
   --border: var(--color-slate-200);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --background: #060d17;
+  --foreground: #cbd5e1;
+  --color-surface: #0d1b2e;
+  --color-surface-raised: #162540;
+  --color-text-primary: #e2e8f0;
+  --color-text-muted: #8da3bf;
+  --color-text-subtle: #6b82a3;
+  --muted: #162540;
+  --muted-foreground: #8da3bf;
+  --border: #264063;
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.4), 0 1px 2px -1px rgb(0 0 0 / 0.3);
+  --shadow-card-hover: 0 4px 12px 0 rgb(0 0 0 / 0.5);
 }
 
 body {
@@ -64,6 +85,78 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Dark mode overrides ── */
+
+/* White surfaces become dark */
+[data-theme="dark"] .bg-white {
+  background-color: var(--color-surface);
+}
+
+/* Slate light backgrounds */
+[data-theme="dark"] .bg-\[var\(--color-slate-100\)\],
+[data-theme="dark"] .bg-\[var\(--color-slate-50\)\] {
+  background-color: var(--color-surface-raised);
+}
+
+[data-theme="dark"] .hover\:bg-\[var\(--color-slate-50\)\]:hover,
+[data-theme="dark"] .hover\:bg-\[var\(--color-slate-100\)\]:hover {
+  background-color: var(--color-surface-raised);
+}
+
+/* Navy text on white surfaces → light */
+[data-theme="dark"] .text-\[var\(--color-navy-900\)\] {
+  color: var(--color-text-primary);
+}
+[data-theme="dark"] .text-\[var\(--color-navy-800\)\],
+[data-theme="dark"] .text-\[var\(--color-navy-700\)\] {
+  color: var(--color-text-primary);
+}
+
+/* Slate text colors */
+[data-theme="dark"] .text-\[var\(--color-slate-700\)\],
+[data-theme="dark"] .text-\[var\(--color-slate-600\)\] {
+  color: var(--color-text-muted);
+}
+[data-theme="dark"] .text-\[var\(--color-slate-500\)\],
+[data-theme="dark"] .text-\[var\(--color-slate-400\)\] {
+  color: var(--color-text-subtle);
+}
+
+/* Borders */
+[data-theme="dark"] .border-\[var\(--color-slate-200\)\],
+[data-theme="dark"] .border-\[var\(--color-slate-100\)\],
+[data-theme="dark"] .border-\[var\(--color-slate-300\)\] {
+  border-color: var(--border);
+}
+[data-theme="dark"] .border-b.border-\[var\(--color-slate-200\)\],
+[data-theme="dark"] .border-t.border-\[var\(--color-slate-100\)\] {
+  border-color: var(--border);
+}
+
+/* Form controls */
+[data-theme="dark"] input:not([type="radio"]):not([type="checkbox"]),
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background-color: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  border-color: var(--border);
+}
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: var(--color-text-subtle);
+}
+
+/* Amber info boxes in dark mode */
+[data-theme="dark"] .bg-amber-50 {
+  background-color: #1a1400;
+}
+[data-theme="dark"] .border-amber-200 {
+  border-color: #5c4a00;
+}
+[data-theme="dark"] .text-amber-800 {
+  color: #fcd34d;
 }
 
 * {

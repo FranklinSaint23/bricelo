@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Star, ArrowRight } from 'lucide-react'
 import { cn, formatPrice } from '@/lib/utils'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { Product } from '@/types'
 
 type P = Product & { promotion_label?: string | null; is_new?: boolean }
@@ -12,6 +13,7 @@ type P = Product & { promotion_label?: string | null; is_new?: boolean }
 interface Props { products: P[] }
 
 export function FeaturedBannerMobile({ products }: Props) {
+  const { t } = useLanguage()
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
   const touchStartX = useRef(0)
@@ -62,7 +64,7 @@ export function FeaturedBannerMobile({ products }: Props) {
           {/* Badges */}
           <div className="absolute top-3 left-3 flex gap-1.5">
             {product.is_new && (
-              <span className="bg-[var(--color-accent)] text-[var(--color-navy-900)] text-[10px] font-bold px-2 py-0.5 rounded-full">NOUVEAU</span>
+              <span className="bg-[var(--color-accent)] text-[var(--color-navy-900)] text-[10px] font-bold px-2 py-0.5 rounded-full">{t.newBadge.toUpperCase()}</span>
             )}
             {discountPct && (
               <span className="bg-[var(--color-danger)] text-white text-[10px] font-bold px-2 py-0.5 rounded-full">-{discountPct}%</span>
@@ -75,7 +77,7 @@ export function FeaturedBannerMobile({ products }: Props) {
 
         {/* Content */}
         <div className="p-4 bg-[var(--color-navy-950)]">
-          <p className="text-white/50 text-[10px] font-semibold uppercase tracking-widest mb-1">Produit vedette</p>
+          <p className="text-white/50 text-[10px] font-semibold uppercase tracking-widest mb-1">{t.featuredProductsTitle}</p>
           <h3 className="text-white font-bold text-base leading-snug line-clamp-2">{product.name}</h3>
 
           <div className="flex items-center justify-between mt-3">
@@ -96,7 +98,7 @@ export function FeaturedBannerMobile({ products }: Props) {
           </div>
 
           <div className="mt-3 flex items-center gap-1.5 text-[var(--color-accent)] text-sm font-semibold">
-            Voir le produit <ArrowRight className="h-3.5 w-3.5" />
+            {t.viewProduct} <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </div>
       </Link>

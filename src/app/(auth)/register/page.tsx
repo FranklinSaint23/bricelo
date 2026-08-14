@@ -8,9 +8,11 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardBody } from '@/components/ui/card'
+import { useLanguage } from '@/components/providers/language-provider'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const { t, lang } = useLanguage()
   const [fullName, setFullName] = useState('')
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
@@ -22,7 +24,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setError(null)
     if (password.length < 8) {
-      setError('Le mot de passe doit contenir au moins 8 caractères.')
+      setError(lang === 'fr' ? 'Le mot de passe doit contenir au moins 8 caractères.' : 'Password must be at least 8 characters.')
       return
     }
     setLoading(true)
@@ -45,13 +47,16 @@ export default function RegisterPage() {
     return (
       <div className="w-full max-w-md text-center">
         <div className="text-5xl mb-4">📬</div>
-        <h2 className="text-xl font-bold text-[var(--color-navy-900)] mb-2">Vérifiez votre e-mail</h2>
+        <h2 className="text-xl font-bold text-[var(--color-navy-900)] mb-2">
+          {lang === 'fr' ? 'Vérifiez votre e-mail' : 'Check your email'}
+        </h2>
         <p className="text-sm text-[var(--color-slate-500)]">
-          Un lien de confirmation vous a été envoyé à <strong>{email}</strong>.
-          Cliquez dessus pour activer votre compte.
+          {lang === 'fr'
+            ? <>Un lien de confirmation vous a été envoyé à <strong>{email}</strong>. Cliquez dessus pour activer votre compte.</>
+            : <>A confirmation link was sent to <strong>{email}</strong>. Click it to activate your account.</>}
         </p>
         <Link href="/login" className="inline-block mt-6 text-sm text-[var(--color-accent)] hover:underline">
-          Retour à la connexion
+          {t.loginLink}
         </Link>
       </div>
     )
@@ -60,15 +65,15 @@ export default function RegisterPage() {
   return (
     <div className="w-full max-w-md">
       <div className="text-center mb-8">
-        <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">Créer un compte</h1>
-        <p className="text-sm text-[var(--color-slate-500)] mt-1">Rejoignez BRICELO.com gratuitement</p>
+        <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">{t.registerTitle}</h1>
+        <p className="text-sm text-[var(--color-slate-500)] mt-1">{t.registerSub}</p>
       </div>
 
       <Card>
         <CardBody className="p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <Input
-              label="Nom complet"
+              label={t.fullName.replace(' *', '')}
               type="text"
               placeholder="Jean Dupont"
               value={fullName}
@@ -77,7 +82,7 @@ export default function RegisterPage() {
               required
             />
             <Input
-              label="Adresse e-mail"
+              label={t.email}
               type="email"
               placeholder="vous@exemple.com"
               value={email}
@@ -87,15 +92,15 @@ export default function RegisterPage() {
               autoComplete="email"
             />
             <Input
-              label="Mot de passe"
+              label={t.password}
               type="password"
-              placeholder="8 caractères minimum"
+              placeholder={lang === 'fr' ? '8 caractères minimum' : 'At least 8 characters'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               icon={<Lock className="h-4 w-4" />}
               required
               autoComplete="new-password"
-              helper="Au moins 8 caractères"
+              helper={lang === 'fr' ? 'Au moins 8 caractères' : 'At least 8 characters'}
             />
 
             {error && (
@@ -105,22 +110,22 @@ export default function RegisterPage() {
             )}
 
             <Button type="submit" loading={loading} className="w-full" size="lg">
-              Créer mon compte
+              {t.registerBtn}
             </Button>
 
             <p className="text-xs text-center text-[var(--color-slate-400)]">
-              En vous inscrivant, vous acceptez nos{' '}
-              <Link href="/cgv" className="underline">CGV</Link> et notre{' '}
-              <Link href="/confidentialite" className="underline">politique de confidentialité</Link>.
+              {lang === 'fr'
+                ? <>En vous inscrivant, vous acceptez nos <Link href="/cgv" className="underline">CGV</Link> et notre <Link href="/confidentialite" className="underline">politique de confidentialité</Link>.</>
+                : <>By signing up, you agree to our <Link href="/cgv" className="underline">Terms</Link> and <Link href="/confidentialite" className="underline">Privacy Policy</Link>.</>}
             </p>
           </form>
         </CardBody>
       </Card>
 
       <p className="text-center text-sm text-[var(--color-slate-500)] mt-6">
-        Déjà un compte ?{' '}
+        {t.hasAccount}{' '}
         <Link href="/login" className="text-[var(--color-accent)] font-medium hover:underline">
-          Se connecter
+          {t.loginLink}
         </Link>
       </p>
     </div>

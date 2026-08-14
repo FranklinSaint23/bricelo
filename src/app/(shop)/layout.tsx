@@ -22,7 +22,7 @@ export default async function ShopLayout({ children }: { children: React.ReactNo
   return (
     <>
       <Navbar user={navUser} />
-      <main className="flex-1 bg-[var(--color-slate-100)]">
+      <main className="flex-1 bg-[var(--color-surface-raised)]">
         {children}
       </main>
       <Footer />

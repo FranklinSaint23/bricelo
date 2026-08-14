@@ -6,12 +6,16 @@ import { useRouter } from 'next/navigation'
 import {
   Search, ShoppingCart, Bell, User, Menu, X, ChevronDown,
   Phone, MessageCircle, Grid3X3, HelpCircle, UserPlus,
+  Truck, CreditCard, Store, RefreshCw, CheckCircle2,
+  Sun, Moon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
 import { CategoryIcon } from '@/components/ui/category-icon'
 import { createClient } from '@/lib/supabase/client'
 import { useCartStore } from '@/store/cart-store'
+import { useTheme } from '@/components/providers/theme-provider'
+import { useLanguage } from '@/components/providers/language-provider'
 
 type NavUser = { full_name: string | null; avatar_url: string | null; role: string }
 
@@ -20,13 +24,8 @@ interface NavbarProps {
   notifCount?: number
 }
 
-const tickerItems = [
-  { icon: '🚚', text: 'Livraison rapide partout au Cameroun — entre 1 et 4 jours' },
-  { icon: '💳', text: 'Paiement sécurisé via Orange Money & MTN Mobile Money' },
-  { icon: '🔄', text: 'Retour sous 10 jours — remboursement sans questions' },
-  { icon: '🏪', text: 'Ouvrez votre boutique sur BRICELO — 100% gratuit' },
-  { icon: '✅', text: 'Vendeurs vérifiés · Produits garantis · Support 7j/7' },
-]
+const TICKER_ICONS = [Truck, CreditCard, RefreshCw, Store, CheckCircle2]
+const TICKER_COUNT = TICKER_ICONS.length
 
 const categories = [
   {
@@ -95,12 +94,22 @@ const categories = [
 export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   const router = useRouter()
   const cartCount = useCartStore((s) => s.itemCount())
+  const { theme, toggle: toggleTheme } = useTheme()
+  const { lang, t, toggle: toggleLang } = useLanguage()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [authUser, setAuthUser]       = useState<NavUser | null>(initialUser ?? null)
   const [tickerIdx, setTickerIdx]     = useState(0)
   const [tickerKey, setTickerKey]     = useState(0)
   const [openCat, setOpenCat]         = useState<string | null>(null)
+
+  const tickerItems = [
+    { icon: TICKER_ICONS[0], text: t.ticker1 },
+    { icon: TICKER_ICONS[1], text: t.ticker2 },
+    { icon: TICKER_ICONS[2], text: t.ticker3 },
+    { icon: TICKER_ICONS[3], text: t.ticker4 },
+    { icon: TICKER_ICONS[4], text: t.ticker5 },
+  ]
 
   useEffect(() => {
     const supabase = createClient()
@@ -126,7 +135,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   /* Ticker cycle */
   useEffect(() => {
     const t = setInterval(() => {
-      setTickerIdx(i => (i + 1) % tickerItems.length)
+      setTickerIdx(i => (i + 1) % TICKER_COUNT)
       setTickerKey(k => k + 1)
     }, 4000)
     return () => clearInterval(t)
@@ -134,6 +143,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
 
   const user = authUser
   const ticker = tickerItems[tickerIdx]
+  const TickerIcon = ticker.icon
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -148,7 +158,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
         {/* Message animé */}
         <div className="flex-1 overflow-hidden px-4 flex items-center">
           <span key={tickerKey} className="ticker-up text-[11px] text-white/80 font-medium whitespace-nowrap overflow-hidden text-ellipsis block">
-            <span className="text-[var(--color-accent)] mr-2">{ticker.icon}</span>
+            <TickerIcon className="inline h-3.5 w-3.5 text-[var(--color-accent)] mr-2" />
             {ticker.text}
           </span>
         </div>
@@ -159,13 +169,13 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
           </a>
           <span className="text-white/20">|</span>
           <a href="/contact" className="flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors whitespace-nowrap">
-            <MessageCircle className="h-3 w-3" /> Aide
+            <MessageCircle className="h-3 w-3" /> {t.help}
           </a>
         </div>
       </div>
 
-      {/* ── 2. BARRE PRINCIPALE — blanche ── */}
-      <div className="bg-white border-b border-[var(--color-slate-200)]">
+      {/* ── 2. BARRE PRINCIPALE ── */}
+      <div className="bg-[var(--color-surface)] border-b border-[var(--color-slate-200)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 lg:gap-5 py-2.5">
 
@@ -183,12 +193,12 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               type="search"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un produit, une boutique…"
+              placeholder={t.search}
               className="flex-1 h-10 px-4 text-sm border border-[var(--color-slate-300)] border-r-0 rounded-l-md focus:outline-none focus:border-[var(--color-navy-900)] text-[var(--color-navy-900)] placeholder:text-[var(--color-slate-400)]"
             />
             <button type="submit"
               className="h-10 px-5 bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-950)] text-white font-bold text-xs rounded-r-md transition-colors shrink-0 tracking-wide">
-              RECHERCHER
+              {t.searchBtn}
             </button>
           </form>
 
@@ -201,26 +211,26 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                 <button className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[var(--color-slate-100)] transition-colors">
                   <Avatar src={user.avatar_url} name={user.full_name} size="sm" />
                   <div className="hidden lg:block text-left">
-                    <p className="text-[10px] text-[var(--color-slate-400)] leading-none">Mon compte</p>
-                    <p className="text-xs font-semibold text-[var(--color-navy-900)] max-w-[90px] truncate">{user.full_name ?? 'Compte'}</p>
+                    <p className="text-[10px] text-[var(--color-slate-400)] leading-none">{t.myAccount}</p>
+                    <p className="text-xs font-semibold text-[var(--color-navy-900)] max-w-[90px] truncate">{user.full_name ?? t.myAccount}</p>
                   </div>
                   <ChevronDown className="h-3 w-3 text-[var(--color-slate-400)] hidden lg:block" />
                 </button>
                 <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-lg border border-[var(--color-slate-200)] py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150 z-50">
                   <div className="px-4 py-2.5 border-b border-[var(--color-slate-100)]">
-                    <p className="text-sm font-semibold text-[var(--color-navy-900)] truncate">{user.full_name ?? 'Mon compte'}</p>
+                    <p className="text-sm font-semibold text-[var(--color-navy-900)] truncate">{user.full_name ?? t.myAccount}</p>
                   </div>
-                  <Link href="/profil"    className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">Mon profil</Link>
-                  <Link href="/commandes" className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">Mes commandes</Link>
+                  <Link href="/profil"    className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">{t.myProfile}</Link>
+                  <Link href="/commandes" className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">{t.myOrders}</Link>
                   {(user.role === 'vendor' || user.role === 'admin') && (
-                    <Link href="/vendeur" className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">Espace vendeur</Link>
+                    <Link href="/vendeur" className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">{t.vendorSpace}</Link>
                   )}
                   {user.role === 'admin' && (
-                    <Link href="/admin" className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">Administration</Link>
+                    <Link href="/admin" className="flex px-4 py-2 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)]">{t.administration}</Link>
                   )}
                   <hr className="my-1 border-[var(--color-slate-100)]" />
                   <form action="/api/auth/signout" method="post">
-                    <button className="w-full text-left px-4 py-2 text-sm text-[var(--color-danger)] hover:bg-[var(--color-slate-50)]">Déconnexion</button>
+                    <button className="w-full text-left px-4 py-2 text-sm text-[var(--color-danger)] hover:bg-[var(--color-slate-50)]">{t.logout}</button>
                   </form>
                 </div>
               </div>
@@ -228,11 +238,11 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               <div className="hidden md:flex items-center gap-2">
                 <Link href="/login"
                   className="h-9 px-3 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 border border-[var(--color-slate-300)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-50)] transition-colors">
-                  <User className="h-3.5 w-3.5" /> Connexion
+                  <User className="h-3.5 w-3.5" /> {t.login}
                 </Link>
                 <Link href="/register"
                   className="h-9 px-3 text-xs font-bold rounded-md inline-flex items-center bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] transition-colors">
-                  S'inscrire
+                  {t.register}
                 </Link>
               </div>
             )}
@@ -250,6 +260,34 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               </Link>
             )}
 
+            {/* Langue — desktop */}
+            <button
+              onClick={toggleLang}
+              aria-label="Changer de langue"
+              className="hidden md:flex items-center gap-1 h-9 px-2.5 rounded-md border border-[var(--color-slate-300)] hover:bg-[var(--color-slate-100)] transition-colors text-xs font-bold text-[var(--color-navy-900)]"
+            >
+              <span className="text-sm leading-none">{lang === 'fr' ? '🇬🇧' : '🇫🇷'}</span>
+              <span>{lang === 'fr' ? 'EN' : 'FR'}</span>
+            </button>
+
+            {/* Thème — desktop */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? t.lightMode : t.darkMode}
+              className="hidden md:flex p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
+            {/* Langue — mobile (juste avant le panier) */}
+            <button
+              onClick={toggleLang}
+              aria-label="Changer de langue"
+              className="flex md:hidden p-2 rounded-md hover:bg-[var(--color-slate-100)] transition-colors text-base leading-none"
+            >
+              {lang === 'fr' ? '🇬🇧' : '🇫🇷'}
+            </button>
+
             {/* Panier */}
             <Link href="/panier" aria-label="Panier"
               className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-[var(--color-slate-100)] transition-colors">
@@ -261,14 +299,24 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                   </span>
                 )}
               </div>
-              <span className="hidden lg:block text-xs font-semibold text-[var(--color-navy-900)]">Panier</span>
+              <span className="hidden lg:block text-xs font-semibold text-[var(--color-navy-900)]">{t.cart}</span>
             </Link>
 
-            {/* Mobile: Aide + S'inscrire près du panier */}
+            {/* Mobile: Aide */}
             <a href="/contact" aria-label="Aide"
               className="flex md:hidden p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors">
               <HelpCircle className="h-5 w-5" />
             </a>
+
+            {/* Thème — mobile */}
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? t.lightMode : t.darkMode}
+              className="flex md:hidden p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+
             {!user && (
               <Link href="/register" aria-label="Créer un compte"
                 className="flex md:hidden p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors">
@@ -294,7 +342,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                 type="search"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Rechercher un produit…"
+                placeholder={t.searchMobile}
                 className="flex-1 h-10 px-3 text-sm border border-[var(--color-slate-300)] border-r-0 rounded-l-md focus:outline-none focus:border-[var(--color-navy-900)] text-[var(--color-navy-900)] placeholder:text-[var(--color-slate-400)]"
               />
               <button type="submit"
@@ -312,7 +360,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
           <Link href="/catalogue"
             className="flex items-center gap-2 px-4 py-2 bg-[var(--color-navy-950)] text-white text-xs font-bold shrink-0 hover:bg-black/40 transition-colors">
             <Grid3X3 className="h-3.5 w-3.5" />
-            <span>Toutes les catégories</span>
+            <span>{t.allCategories}</span>
           </Link>
           <div className="w-px bg-white/10 shrink-0" />
           <nav className="flex items-center overflow-x-auto scrollbar-hide">
@@ -329,12 +377,12 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
 
       {/* ── MENU MOBILE ── */}
       {mobileOpen && (
-        <div className="md:hidden bg-white border-t border-[var(--color-slate-200)] shadow-xl max-h-[calc(100dvh-112px)] overflow-y-auto">
+        <div className="md:hidden bg-[var(--color-surface)] border-t border-[var(--color-slate-200)] shadow-xl max-h-[calc(100dvh-112px)] overflow-y-auto">
 
           {/* Catégories verticales avec accordéon */}
           <div className="border-b border-[var(--color-slate-100)]">
             <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-[var(--color-slate-400)] uppercase tracking-widest">
-              Toutes les catégories
+              {t.allCategories}
             </p>
             {categories.map(({ href, slug, label, sub }) => (
               <div key={href}>
@@ -370,7 +418,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               <div className="h-9 w-9 rounded-xl bg-[var(--color-navy-900)] flex items-center justify-center shrink-0">
                 <Grid3X3 className="h-4 w-4 text-white" />
               </div>
-              <span className="flex-1 text-sm font-semibold text-[var(--color-navy-900)]">Tout le catalogue</span>
+              <span className="flex-1 text-sm font-semibold text-[var(--color-navy-900)]">{t.allCatalog}</span>
             </Link>
           </div>
 
@@ -380,11 +428,11 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               <div className="flex gap-2">
                 <Link href="/login" onClick={() => setMobileOpen(false)}
                   className="flex-1 h-10 text-sm font-semibold rounded-md flex items-center justify-center border border-[var(--color-slate-300)] text-[var(--color-navy-900)]">
-                  Connexion
+                  {t.login}
                 </Link>
                 <Link href="/register" onClick={() => setMobileOpen(false)}
                   className="flex-1 h-10 text-sm font-bold rounded-md flex items-center justify-center bg-[var(--color-accent)] text-[var(--color-navy-900)]">
-                  S'inscrire
+                  {t.register}
                 </Link>
               </div>
             ) : (
@@ -397,10 +445,10 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                   </div>
                 </div>
                 {[
-                  { href: '/profil', label: 'Mon profil' },
-                  { href: '/commandes', label: 'Mes commandes' },
-                  ...(user.role === 'vendor' || user.role === 'admin' ? [{ href: '/vendeur', label: 'Espace vendeur' }] : []),
-                  ...(user.role === 'admin' ? [{ href: '/admin', label: 'Administration' }] : []),
+                  { href: '/profil', label: t.myProfile },
+                  { href: '/commandes', label: t.myOrders },
+                  ...(user.role === 'vendor' || user.role === 'admin' ? [{ href: '/vendeur', label: t.vendorSpace }] : []),
+                  ...(user.role === 'admin' ? [{ href: '/admin', label: t.administration }] : []),
                 ].map(item => (
                   <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
                     className="px-2 py-2.5 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)] rounded-md transition-colors">
@@ -409,7 +457,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                 ))}
                 <form action="/api/auth/signout" method="post">
                   <button className="w-full text-left px-2 py-2.5 text-sm text-[var(--color-danger)] hover:bg-[var(--color-slate-50)] rounded-md">
-                    Déconnexion
+                    {t.logout}
                   </button>
                 </form>
               </div>

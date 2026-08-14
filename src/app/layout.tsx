@@ -3,6 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
 import { ScrollToTop } from '@/components/ui/scroll-to-top'
+import { AppProviders } from '@/components/providers/app-providers'
 
 const geistSans = GeistSans
 const geistMono = GeistMono
@@ -20,10 +21,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-        {children}
-        <ScrollToTop />
+        <AppProviders>
+          {children}
+          <ScrollToTop />
+        </AppProviders>
       </body>
     </html>
   )

@@ -7,139 +7,56 @@ import {
   Smartphone, Zap, ShoppingBag, Laptop, ShoppingCart, Store, Plug, Gamepad2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/providers/language-provider'
+import type { Translations } from '@/lib/i18n/translations'
 
-/* ── SLIDES ─────────────────────────────────────────────────────────────── */
-
-const slides = [
-  {
-    id: 1,
-    photo: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1400&q=85&auto=format&fit=crop',
-    bgColor: '#0a0e17',
-    photoPos: '70% center',
-    overlay: 'linear-gradient(105deg, rgba(8,10,18,0.97) 38%, rgba(8,10,18,0.12) 78%)',
-    accent: '#FFC107',
-    BadgeIcon: Smartphone,
-    badgeText: 'TECH & MOBILE',
-    headline: 'Smartphones & Tablettes',
-    sub: 'Les meilleures marques au meilleur prix.',
-    extra: 'Samsung, Tecno, iPhone & bien plus.',
-    cta: { label: 'VOIR LES TÉLÉPHONES', href: '/catalogue?categorie=telephones-tablettes' },
-  },
-  {
-    id: 2,
-    photo: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=85&auto=format&fit=crop',
-    bgColor: '#1a0505',
-    photoPos: '65% center',
-    overlay: 'linear-gradient(105deg, rgba(90,5,5,0.97) 38%, rgba(90,5,5,0.12) 78%)',
-    accent: '#FFD700',
-    BadgeIcon: Zap,
-    badgeText: 'FLASH SALE',
-    headline: "Jusqu'à –70%",
-    sub: 'Sur une sélection de produits.',
-    extra: "Offres valables jusqu'à épuisement des stocks.",
-    cta: { label: 'EN PROFITER MAINTENANT', href: '/catalogue' },
-  },
-  {
-    id: 3,
-    photo: 'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1400&q=85&auto=format&fit=crop',
-    bgColor: '#0a1a12',
-    photoPos: '60% center',
-    overlay: 'linear-gradient(105deg, rgba(0,40,20,0.97) 38%, rgba(0,40,20,0.10) 78%)',
-    accent: '#A5D6A7',
-    BadgeIcon: ShoppingBag,
-    badgeText: 'NOUVELLE COLLECTION',
-    headline: 'Mode Africaine',
-    sub: 'Bogolan, Ankara & prêt-à-porter élégant.',
-    extra: 'Livraison express à Douala & Yaoundé.',
-    cta: { label: 'VOIR LA MODE', href: '/catalogue?categorie=mode-vetements' },
-  },
-  {
-    id: 4,
-    photo: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1400&q=85&auto=format&fit=crop',
-    bgColor: '#050e1a',
-    photoPos: '65% center',
-    overlay: 'linear-gradient(105deg, rgba(5,14,40,0.97) 38%, rgba(5,14,40,0.12) 78%)',
-    accent: '#90CAF9',
-    BadgeIcon: Laptop,
-    badgeText: 'HIGH-TECH',
-    headline: 'Électronique & Informatique',
-    sub: 'PC portables, TV, Audio, Accessoires.',
-    extra: 'Garantie constructeur sur tous les produits.',
-    cta: { label: "DÉCOUVRIR L'ÉLECTRONIQUE", href: '/catalogue?categorie=electronique' },
-  },
-  {
-    id: 5,
-    photo: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1400&q=85&auto=format&fit=crop',
-    bgColor: '#0f1a06',
-    photoPos: '60% center',
-    overlay: 'linear-gradient(105deg, rgba(15,30,5,0.97) 38%, rgba(15,30,5,0.10) 78%)',
-    accent: '#C8E6C9',
-    BadgeIcon: ShoppingCart,
-    badgeText: 'ALIMENTATION',
-    headline: 'Produits du Terroir',
-    sub: 'Épices, huile de palme, miel naturel & plus.',
-    extra: 'Directement des producteurs locaux.',
-    cta: { label: "VOIR L'ALIMENTATION", href: '/catalogue?categorie=alimentation' },
-  },
-  {
-    id: 6,
-    photo: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1400&q=85&auto=format&fit=crop',
-    bgColor: '#0d0a1f',
-    photoPos: '65% center',
-    overlay: 'linear-gradient(105deg, rgba(20,10,60,0.97) 38%, rgba(20,10,60,0.12) 78%)',
-    accent: '#CE93D8',
-    BadgeIcon: Store,
-    badgeText: 'VENDEURS BRICELO',
-    headline: 'Ouvrez Votre Boutique',
-    sub: 'Vendez en ligne simplement et gratuitement.',
-    extra: 'Zéro commission cachée. Support 7j/7.',
-    cta: { label: 'DEVENIR VENDEUR', href: '/devenir-vendeur' },
-  },
+/* ── CONFIG STATIQUE (photos, couleurs, icônes) ────────────────────────── */
+const slideConfigs = [
+  { id:1, photo:'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=1400&q=85&auto=format&fit=crop', bgColor:'#0a0e17', photoPos:'70% center', overlay:'linear-gradient(105deg, rgba(8,10,18,0.97) 38%, rgba(8,10,18,0.12) 78%)', accent:'#FFC107', BadgeIcon:Smartphone, badgeText:'TECH & MOBILE', href:'/catalogue?categorie=telephones-tablettes', textKey:'1' as const },
+  { id:2, photo:'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1400&q=85&auto=format&fit=crop', bgColor:'#1a0505', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(90,5,5,0.97) 38%, rgba(90,5,5,0.12) 78%)', accent:'#FFD700', BadgeIcon:Zap, badgeText:'FLASH SALE', href:'/catalogue', textKey:'2' as const },
+  { id:3, photo:'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=1400&q=85&auto=format&fit=crop', bgColor:'#0a1a12', photoPos:'60% center', overlay:'linear-gradient(105deg, rgba(0,40,20,0.97) 38%, rgba(0,40,20,0.10) 78%)', accent:'#A5D6A7', BadgeIcon:ShoppingBag, badgeText:'NEW COLLECTION', href:'/catalogue?categorie=mode-vetements', textKey:'3' as const },
+  { id:4, photo:'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1400&q=85&auto=format&fit=crop', bgColor:'#050e1a', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(5,14,40,0.97) 38%, rgba(5,14,40,0.12) 78%)', accent:'#90CAF9', BadgeIcon:Laptop, badgeText:'HIGH-TECH', href:'/catalogue?categorie=electronique', textKey:'4' as const },
+  { id:5, photo:'https://images.unsplash.com/photo-1542838132-92c53300491e?w=1400&q=85&auto=format&fit=crop', bgColor:'#0f1a06', photoPos:'60% center', overlay:'linear-gradient(105deg, rgba(15,30,5,0.97) 38%, rgba(15,30,5,0.10) 78%)', accent:'#C8E6C9', BadgeIcon:ShoppingCart, badgeText:'FOOD', href:'/catalogue?categorie=alimentation', textKey:'5' as const },
+  { id:6, photo:'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1400&q=85&auto=format&fit=crop', bgColor:'#0d0a1f', photoPos:'65% center', overlay:'linear-gradient(105deg, rgba(20,10,60,0.97) 38%, rgba(20,10,60,0.12) 78%)', accent:'#CE93D8', BadgeIcon:Store, badgeText:'SELLERS', href:'/devenir-vendeur', textKey:'6' as const },
 ]
 
-/* ── BANNIÈRES LATÉRALES ─────────────────────────────────────────────────── */
+type SlideText = { headline: string; sub: string; extra: string; ctaLabel: string }
+type SlideTextFn = (t: Translations, lang: string) => SlideText
 
-const sideBanners = [
-  {
-    id: 1,
-    photo: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=85&auto=format&fit=crop',
-    overlay: 'linear-gradient(160deg, rgba(120,5,5,0.88) 0%, rgba(60,2,2,0.70) 100%)',
-    Icon: Plug,
-    title: 'ÉLECTROCHOC',
-    sub: 'DÉCOUVREZ NOTRE SÉLECTION',
-    badge: 'DU 08 AU 22 AOÛT',
-    href: '/catalogue?categorie=electromenager',
-  },
-  {
-    id: 2,
-    photo: 'https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?w=700&q=85&auto=format&fit=crop',
-    overlay: 'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)',
-    Icon: Gamepad2,
-    title: 'GAMING ZONE',
-    sub: 'CONSOLES & ACCESSOIRES',
-    badge: null,
-    href: '/catalogue?categorie=electronique',
-  },
+const slideTexts: Record<string, SlideTextFn> = {
+  '1': (t) => ({ headline: t.heroSlide1Headline, sub: t.heroSlide1Sub, extra: t.heroSlide1Extra, ctaLabel: t.heroSlide1Cta }),
+  '2': (_t, lang) => ({ headline: "Jusqu'à –70%", sub: lang === 'fr' ? 'Sur une sélection de produits.' : 'On selected products.', extra: lang === 'fr' ? "Offres valables jusqu'à épuisement des stocks." : 'While stocks last.', ctaLabel: lang === 'fr' ? 'EN PROFITER MAINTENANT' : 'SHOP NOW' }),
+  '3': (t, lang) => ({ headline: t.heroSlide3Headline, sub: lang === 'fr' ? 'Bogolan, Ankara & prêt-à-porter élégant.' : 'Bogolan, Ankara & elegant ready-to-wear.', extra: lang === 'fr' ? 'Livraison express à Douala & Yaoundé.' : 'Express delivery to Douala & Yaoundé.', ctaLabel: t.heroSlide3Cta }),
+  '4': (_t, lang) => ({ headline: lang === 'fr' ? 'Électronique & Informatique' : 'Electronics & Computing', sub: lang === 'fr' ? 'PC portables, TV, Audio, Accessoires.' : 'Laptops, TVs, Audio, Accessories.', extra: lang === 'fr' ? 'Garantie constructeur sur tous les produits.' : 'Manufacturer warranty on all products.', ctaLabel: lang === 'fr' ? "DÉCOUVRIR L'ÉLECTRONIQUE" : 'SHOP ELECTRONICS' }),
+  '5': (t, lang) => ({ headline: lang === 'fr' ? 'Produits du Terroir' : 'Local Farm Products', sub: lang === 'fr' ? 'Épices, huile de palme, miel naturel & plus.' : 'Spices, palm oil, natural honey & more.', extra: lang === 'fr' ? 'Directement des producteurs locaux.' : 'Directly from local producers.', ctaLabel: t.heroSlide4Cta }),
+  '6': (t, lang) => ({ headline: lang === 'fr' ? 'Ouvrez Votre Boutique' : 'Open Your Store', sub: lang === 'fr' ? 'Vendez en ligne simplement et gratuitement.' : 'Sell online easily and for free.', extra: lang === 'fr' ? 'Zéro commission cachée. Support 7j/7.' : 'Zero hidden fees. 7/7 support.', ctaLabel: t.heroSlide6Cta }),
+}
+
+const sideBannerConfigs = [
+  { id:1, photo:'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(120,5,5,0.88) 0%, rgba(60,2,2,0.70) 100%)', Icon:Plug, href:'/catalogue?categorie=electromenager', badge:'DU 08 AU 22 AOÛT' },
+  { id:2, photo:'https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)', Icon:Gamepad2, href:'/catalogue?categorie=electronique', badge: null },
 ]
 
 /* ── COMPOSANT ───────────────────────────────────────────────────────────── */
 
 export function HeroBanner() {
+  const { t, lang } = useLanguage()
   const [current,  setCurrent]  = useState(0)
   const [slideKey, setSlideKey] = useState(0)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const slideCount = slideConfigs.length
   const goNext = useCallback(() => {
-    setCurrent((c) => (c + 1) % slides.length)
+    setCurrent((c) => (c + 1) % slideCount)
     setSlideKey((k) => k + 1)
-  }, [])
+  }, [slideCount])
 
   const goPrev = useCallback(() => {
-    setCurrent((c) => (c - 1 + slides.length) % slides.length)
+    setCurrent((c) => (c - 1 + slideCount) % slideCount)
     setSlideKey((k) => k + 1)
-  }, [])
+  }, [slideCount])
 
   const goTo = useCallback((i: number) => {
     setCurrent(i)
@@ -168,6 +85,16 @@ export function HeroBanner() {
       resetTimer()
     }
   }
+
+  const slides = slideConfigs.map((cfg) => {
+    const texts = slideTexts[cfg.textKey](t, lang)
+    return { ...cfg, headline: texts.headline, sub: texts.sub, extra: texts.extra, cta: { label: texts.ctaLabel, href: cfg.href } }
+  })
+
+  const sideBanners = [
+    { ...sideBannerConfigs[0], title: lang === 'fr' ? 'ÉLECTROCHOC' : 'POWER DEALS', sub: lang === 'fr' ? 'DÉCOUVREZ NOTRE SÉLECTION' : 'DISCOVER OUR SELECTION' },
+    { ...sideBannerConfigs[1], title: 'GAMING ZONE', sub: lang === 'fr' ? 'CONSOLES & ACCESSOIRES' : 'CONSOLES & ACCESSORIES' },
+  ]
 
   const slide = slides[current]
 
@@ -289,7 +216,7 @@ export function HeroBanner() {
                     <p className="text-yellow-300 text-[10px] sm:text-xs font-bold mt-1">{b.badge}</p>
                   )}
                   <p className="text-white/70 text-xs font-bold tracking-wide mt-2">
-                    DÉCOUVRIR &rsaquo;
+                    {lang === 'fr' ? 'DÉCOUVRIR' : 'EXPLORE'} &rsaquo;
                   </p>
                 </div>
               </Link>

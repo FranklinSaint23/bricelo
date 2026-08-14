@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/components/providers/language-provider'
 
 const reviews = [
   { name: 'Kamga Bertrand', email: 'k.bertrand@gmail.com', rating: 5, product: 'Smartphone Samsung Galaxy A55', comment: 'Livraison ultra rapide, le produit est exactement comme décrit. Service client très réactif. Je recommande BRICELO à tous mes amis !' },
@@ -27,6 +28,7 @@ function Stars({ rating }: { rating: number }) {
 }
 
 export function ReviewsBanner() {
+  const { t } = useLanguage()
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
 
@@ -46,8 +48,8 @@ export function ReviewsBanner() {
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-8">
-          <p className="text-[var(--color-accent)] text-xs font-bold uppercase tracking-widest mb-1">Témoignages clients</p>
-          <h2 className="text-xl font-bold text-white">Ce que disent nos acheteurs</h2>
+          <p className="text-[var(--color-accent)] text-xs font-bold uppercase tracking-widest mb-1">{t.testimonials}</p>
+          <h2 className="text-xl font-bold text-white">{t.testimonialsSub}</h2>
         </div>
 
         <div className="relative">
@@ -63,7 +65,7 @@ export function ReviewsBanner() {
 
             {/* Product */}
             <p className="text-[var(--color-accent)]/70 text-xs font-medium mt-4">
-              Avis sur : <span className="text-[var(--color-accent)]">{r.product}</span>
+              {t.reviewOn} <span className="text-[var(--color-accent)]">{r.product}</span>
             </p>
 
             {/* Reviewer */}

@@ -1,6 +1,9 @@
+'use client'
+
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { ProductCard } from '@/components/product/product-card'
+import { useLanguage } from '@/components/providers/language-provider'
 import type { Product } from '@/types'
 
 interface FeaturedProductsProps {
@@ -8,17 +11,18 @@ interface FeaturedProductsProps {
 }
 
 export function FeaturedProducts({ products }: FeaturedProductsProps) {
+  const { t } = useLanguage()
   if (!products.length) return null
 
   return (
     <section>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-[var(--color-navy-900)]">Produits en vedette</h2>
-          <p className="text-sm text-[var(--color-slate-500)] mt-0.5">Sélectionnés pour vous</p>
+          <h2 className="text-2xl font-bold text-[var(--color-navy-900)]">{t.featuredProductsTitle}</h2>
+          <p className="text-sm text-[var(--color-slate-500)] mt-0.5">{t.featuredProductsSub}</p>
         </div>
         <Link href="/catalogue" className="flex items-center gap-1 text-sm text-[var(--color-accent)] font-medium hover:underline">
-          Voir plus <ArrowRight className="h-4 w-4" />
+          {t.seeMore} <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
 

@@ -12,7 +12,7 @@ export function Card({ children, className, hover, onClick }: CardProps) {
     <div
       onClick={onClick}
       className={cn(
-        'bg-white rounded-[var(--radius-lg)] border border-[var(--color-slate-200)]',
+        'bg-[var(--color-surface)] rounded-[var(--radius-lg)] border border-[var(--color-slate-200)]',
         'shadow-[var(--shadow-card)]',
         hover && 'transition-shadow duration-200 hover:shadow-[var(--shadow-card-hover)] cursor-pointer',
         onClick && 'cursor-pointer',
