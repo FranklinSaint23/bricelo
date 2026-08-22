@@ -237,7 +237,7 @@ export const fr = {
   footerSupport: 'Service client de qualité',
   footerSupportDesc: 'Disponible 7j/7',
   paymentMethods: 'Moyens de paiement acceptés',
-  copyright: (year: number) => `Copyright © ${year} BRICELO.com — Tous droits réservés.`,
+  copyright: (year: number) => `Copyright © ${year} BRICELO.com - Tous droits réservés.`,
 
   // ── Pages info ──
   faqTitle: 'Questions fréquentes',

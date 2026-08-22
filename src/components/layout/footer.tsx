@@ -263,7 +263,7 @@ export function Footer() {
             </div>
             <div className="flex flex-col items-center gap-1.5">
               <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
-                <Image src="/payments/orange-money.png" alt="Orange Money" width={112} height={56} className="h-10 w-auto object-contain" />
+                <Image src="/payments/orange-money.jpg" alt="Orange Money" width={112} height={56} className="h-10 w-auto object-contain" />
               </div>
               <span className="text-xs text-slate-500 font-medium">Orange Money</span>
             </div>

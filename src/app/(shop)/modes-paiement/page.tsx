@@ -23,7 +23,7 @@ export default function ModesPaiementPage() {
     },
     {
       name: 'Orange Money',
-      img: '/payments/orange-money.png',
+      img: '/payments/orange-money.jpg',
       desc: 'Payez directement depuis votre compte Orange Money. Le paiement est instantané et sécurisé.',
       steps: [
         'Sélectionnez « Orange Money » lors du paiement',
@@ -60,7 +60,7 @@ export default function ModesPaiementPage() {
     },
     {
       name: 'Orange Money',
-      img: '/payments/orange-money.png',
+      img: '/payments/orange-money.jpg',
       desc: 'Pay directly from your Orange Money account. Payment is instant and secure.',
       steps: [
         'Select "Orange Money" at checkout',
