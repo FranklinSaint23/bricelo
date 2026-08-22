@@ -10,25 +10,25 @@ export default function FaqPage() {
     {
       section: 'Acheter sur BRICELO',
       items: [
-        { q: 'Comment passer une commande ?', a: "Choisissez votre produit, cliquez sur « Ajouter au panier » ou « Acheter maintenant », puis sélectionnez votre mode de paiement (Orange Money, MTN MoMo ou espèces) et validez. Vous recevrez une confirmation par e-mail." },
+        { q: 'Comment passer une commande ?', a: "Choisissez votre produit, cliquez sur « Ajouter au panier » ou « Acheter maintenant », puis sélectionnez votre mode de paiement (espèces, Orange Money ou MTN MoMo) et validez. Vous recevrez une confirmation." },
         { q: 'Dois-je créer un compte pour commander ?', a: "Non. BRICELO accepte les commandes invité — vous pouvez acheter sans créer de compte. Cependant, un compte vous permet de suivre vos commandes, sauvegarder vos adresses et accéder à vos favoris." },
         { q: 'Comment puis-je suivre ma commande ?', a: 'Connectez-vous et rendez-vous dans « Mes commandes ». Vous y trouverez le statut en temps réel de chaque commande.' },
-        { q: 'Quels moyens de paiement sont acceptés ?', a: 'Nous acceptons Orange Money, MTN Mobile Money et le paiement en espèces à la livraison (Cash on Delivery). Les paiements mobiles sont validés automatiquement ; le cash est validé par notre équipe après livraison.' },
+        { q: 'Quels moyens de paiement sont acceptés ?', a: 'Nous acceptons en priorité le paiement en espèces à la livraison (Cash on Delivery), ainsi qu’Orange Money et MTN Mobile Money. Les paiements en espèces sont validés à la livraison par notre équipe.' },
       ],
     },
     {
       section: 'Livraison',
       items: [
-        { q: 'Quels sont les délais de livraison ?', a: 'À Douala et Yaoundé, la livraison est possible en 3 heures pour les commandes urgentes. Dans les autres villes, comptez 1 à 4 jours ouvrables selon la localisation.' },
+        { q: 'Quels sont les délais de livraison ?', a: 'La livraison s’effectue en moins de 3 heures de temps à Douala et Yaoundé.' },
         { q: 'Combien coûte la livraison ?', a: "Les frais de livraison varient selon la distance et le poids. Ils vous sont affichés clairement lors du passage en caisse, avant de confirmer votre commande." },
-        { q: 'Livrez-vous partout au Cameroun ?', a: 'Oui. Nous livrons dans toutes les grandes villes du Cameroun. La livraison express (3h) est disponible uniquement à Douala et Yaoundé.' },
+        { q: 'Livrez-vous à Douala et Yaoundé ?', a: 'Oui. Nous livrons à Douala et Yaoundé en moins de 3 heures de temps.' },
       ],
     },
     {
       section: 'Retours & Remboursements',
       items: [
-        { q: 'Puis-je retourner un article ?', a: "Oui. Vous disposez de 7 jours après réception pour retourner un article défectueux ou non conforme à la description. Consultez notre politique de retour pour les conditions détaillées." },
-        { q: 'Comment obtenir un remboursement ?', a: "Signalez le problème via votre espace client ou contactez notre service client. Après vérification, le remboursement est effectué sur votre moyen de paiement initial sous 5 à 10 jours ouvrables." },
+        { q: 'Puis-je retourner un article ?', a: "Oui. Vous disposez de 5 jours après réception pour retourner un article défectueux ou non conforme à la description. Consultez notre politique de retour pour les conditions détaillées." },
+        { q: 'Comment obtenir un remboursement ?', a: "Signalez le problème via votre espace client ou contactez notre service client. Après vérification, le remboursement est effectué rapidement sur votre moyen de paiement." },
       ],
     },
     {
@@ -43,25 +43,25 @@ export default function FaqPage() {
     {
       section: 'Buying on BRICELO',
       items: [
-        { q: 'How do I place an order?', a: 'Choose your product, click "Add to cart" or "Buy now", then select your payment method (Orange Money, MTN MoMo or cash) and confirm. You will receive a confirmation by email.' },
+        { q: 'How do I place an order?', a: 'Choose your product, click "Add to cart" or "Buy now", then select your payment method (Cash on delivery, Orange Money or MTN MoMo) and confirm. You will receive a confirmation.' },
         { q: 'Do I need an account to order?', a: 'No. BRICELO accepts guest orders — you can buy without creating an account. However, an account lets you track orders, save addresses and access your wishlist.' },
         { q: 'How can I track my order?', a: 'Sign in and go to "My orders". You will find the real-time status of each order there.' },
-        { q: 'What payment methods are accepted?', a: 'We accept Orange Money, MTN Mobile Money and cash on delivery. Mobile payments are validated automatically; cash is validated by our team upon delivery.' },
+        { q: 'What payment methods are accepted?', a: 'We accept Cash on Delivery first, as well as Orange Money and MTN Mobile Money. Cash payments are validated upon delivery by our team.' },
       ],
     },
     {
       section: 'Delivery',
       items: [
-        { q: 'What are the delivery times?', a: 'In Douala and Yaoundé, delivery is possible within 3 hours for urgent orders. In other cities, allow 1 to 4 business days depending on the location.' },
+        { q: 'What are the delivery times?', a: 'Delivery takes place in under 3 hours in Douala and Yaoundé.' },
         { q: 'How much does delivery cost?', a: 'Delivery fees vary depending on distance and weight. They are clearly displayed at checkout before you confirm your order.' },
-        { q: 'Do you deliver across Cameroon?', a: 'Yes. We deliver to all major cities in Cameroon. Express delivery (3h) is only available in Douala and Yaoundé.' },
+        { q: 'Do you deliver to Douala & Yaoundé?', a: 'Yes. We deliver in Douala and Yaoundé in under 3 hours.' },
       ],
     },
     {
       section: 'Returns & Refunds',
       items: [
-        { q: 'Can I return an item?', a: 'Yes. You have 7 days after receiving your order to return a defective or incorrectly described item. See our return policy for full conditions.' },
-        { q: 'How do I get a refund?', a: 'Report the issue through your account or contact our support team. After verification, the refund is issued to your original payment method within 5–10 business days.' },
+        { q: 'Can I return an item?', a: 'Yes. You have 5 days after receiving your order to return a defective or incorrectly described item. See our return policy for full conditions.' },
+        { q: 'How do I get a refund?', a: 'Report the issue through your account or contact our support team. After verification, the refund is issued quickly to your payment method.' },
       ],
     },
     {

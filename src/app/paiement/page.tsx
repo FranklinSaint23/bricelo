@@ -36,13 +36,13 @@ export default async function PaiementPage({ searchParams }: PageProps) {
               <ShieldCheck className="h-7 w-7 text-[var(--color-accent)]" />
             </div>
             <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Paiement sécurisé</h1>
-            <p className="text-sm text-[var(--color-slate-500)] mt-1">Via CinetPay — vos données sont protégées</p>
+            <p className="text-sm text-[var(--color-slate-500)] mt-1">Via CinetPay - vos données sont protégées</p>
           </div>
 
           <div className="bg-[var(--color-slate-50)] rounded-[var(--radius-lg)] p-4 mb-6 flex flex-col gap-2">
             {orders.map((order) => (
               <div key={order.id} className="flex justify-between text-sm">
-                <span className="text-[var(--color-slate-600)]">Commande — {(order.store as any)?.name}</span>
+                <span className="text-[var(--color-slate-600)]">Commande - {(order.store as any)?.name}</span>
                 <span className="font-semibold text-[var(--color-navy-900)]">{formatPrice(order.total)}</span>
               </div>
             ))}

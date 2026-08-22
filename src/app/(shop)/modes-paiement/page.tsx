@@ -10,6 +10,19 @@ export default function ModesPaiementPage() {
 
   const methods = fr ? [
     {
+      name: 'Espèces (Cash on Delivery)',
+      img: '/payments/cash.jpg',
+      color: 'bg-emerald-50 border-emerald-200',
+      desc: 'Payez en main propre au livreur lors de la réception de votre commande. Aucune information bancaire requise.',
+      steps: [
+        'Sélectionnez « Espèces à la livraison »',
+        'Votre commande est traitée et préparée',
+        'Le livreur passe à votre adresse',
+        'Remettez le montant exact au livreur',
+      ],
+      badge: 'Validation à la livraison',
+    },
+    {
       name: 'Orange Money',
       img: '/payments/orange-money.png',
       color: 'bg-orange-50 border-orange-200',
@@ -35,20 +48,20 @@ export default function ModesPaiementPage() {
       ],
       badge: 'Validation instantanée',
     },
+  ] : [
     {
-      name: 'Espèces (Cash on Delivery)',
+      name: 'Cash on Delivery',
       img: '/payments/cash.jpg',
       color: 'bg-emerald-50 border-emerald-200',
-      desc: 'Payez en main propre au livreur lors de la réception de votre commande. Aucune information bancaire requise.',
+      desc: 'Pay the delivery person directly when you receive your order. No banking information required.',
       steps: [
-        'Sélectionnez « Espèces à la livraison »',
-        'Votre commande est traitée et préparée',
-        'Le livreur passe à votre adresse',
-        'Remettez le montant exact au livreur',
+        'Select "Cash on delivery"',
+        'Your order is processed and prepared',
+        'The delivery person comes to your address',
+        'Hand the exact amount to the delivery person',
       ],
-      badge: 'Validation à la livraison',
+      badge: 'Validated at delivery',
     },
-  ] : [
     {
       name: 'Orange Money',
       img: '/payments/orange-money.png',
@@ -74,19 +87,6 @@ export default function ModesPaiementPage() {
         'Order confirmed automatically',
       ],
       badge: 'Instant validation',
-    },
-    {
-      name: 'Cash on Delivery',
-      img: '/payments/cash.jpg',
-      color: 'bg-emerald-50 border-emerald-200',
-      desc: 'Pay the delivery person directly when you receive your order. No banking information required.',
-      steps: [
-        'Select "Cash on delivery"',
-        'Your order is processed and prepared',
-        'The delivery person comes to your address',
-        'Hand the exact amount to the delivery person',
-      ],
-      badge: 'Validated at delivery',
     },
   ]
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronLeft, MapPin, Package, CheckCircle2, Clock, Truck, Star, XCircle } from 'lucide-react'
+import { ChevronLeft, MapPin, Package, CheckCircle2, Clock, Truck, Star, XCircle, Download, LogOut } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
@@ -68,13 +68,34 @@ export function OrderDetailView({ order }: { order: Order }) {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-2xl">
-      <Link
-        href="/commandes"
-        className="inline-flex items-center gap-1.5 text-sm text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] transition-colors mb-6"
-      >
-        <ChevronLeft className="h-4 w-4" />
-        {fr ? 'Mes commandes' : 'My orders'}
-      </Link>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <Link
+          href="/commandes"
+          className="inline-flex items-center gap-1.5 text-sm text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          {fr ? 'Mes commandes' : 'My orders'}
+        </Link>
+
+        {/* Action Buttons Top */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-navy-900)] text-white text-xs font-bold rounded-lg hover:bg-[var(--color-navy-950)] transition-colors shadow-sm"
+            title={fr ? 'Télécharger / Imprimer le reçu en PDF' : 'Download / Print PDF receipt'}
+          >
+            <Download className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+            <span>{fr ? 'Télécharger le reçu (PDF)' : 'Download PDF'}</span>
+          </button>
+          <Link
+            href="/commandes"
+            className="inline-flex items-center gap-1 px-3 py-1.5 border border-[var(--color-slate-300)] text-[var(--color-slate-700)] text-xs font-bold rounded-lg hover:bg-[var(--color-slate-100)] transition-colors"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span>{fr ? 'Sortir' : 'Exit'}</span>
+          </Link>
+        </div>
+      </div>
 
       {/* Header */}
       <div className="flex items-start justify-between mb-6 gap-3">
@@ -235,6 +256,24 @@ export function OrderDetailView({ order }: { order: Order }) {
             className="shrink-0 text-sm font-semibold text-[var(--color-accent)] hover:underline"
           >
             {fr ? 'Contacter le support' : 'Contact support'}
+          </Link>
+        </div>
+
+        {/* Bottom Actions: Télécharger Reçu PDF & Sortir */}
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          <button
+            onClick={() => window.print()}
+            className="flex-1 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-[var(--color-navy-900)] text-white text-sm font-bold hover:bg-[var(--color-navy-950)] transition-colors shadow-sm"
+          >
+            <Download className="h-4 w-4 text-[var(--color-accent)]" />
+            {fr ? 'Télécharger le reçu (PDF)' : 'Download PDF receipt'}
+          </button>
+          <Link
+            href="/commandes"
+            className="flex-1 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-[var(--color-slate-300)] text-sm font-bold text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            {fr ? 'Sortir' : 'Exit'}
           </Link>
         </div>
       </div>

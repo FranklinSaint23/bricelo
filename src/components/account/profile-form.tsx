@@ -39,7 +39,7 @@ export function ProfileForm({ userId, initialData }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <Input
-        label="Nom complet"
+        label="Nom et Prénom"
         value={fullName}
         onChange={(e) => setFullName(e.target.value)}
         placeholder="Jean Dupont"

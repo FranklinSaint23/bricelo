@@ -24,26 +24,26 @@ export default function RetoursPage() {
     'Produits ouverts ou utilisés (hors défaut)',
     'Produits périssables (alimentation)',
     'Articles personnalisés ou sur mesure',
-    'Retour après 7 jours de réception',
+    'Retour après 5 jours de réception',
     "Produit endommagé par l'acheteur",
   ] : [
     'Opened or used products (unless defective)',
     'Perishable goods (food)',
     'Personalised or custom-made items',
-    'Return request after 7 days of receipt',
+    'Return request after 5 days of receipt',
     'Product damaged by the buyer',
   ]
 
   const processSteps = fr ? [
-    { Icon: MessageSquare, title: 'Signalez le problème', desc: "Contactez notre support dans les 7 jours suivant la réception via votre espace commandes ou notre page contact." },
-    { Icon: Clock,         title: 'Traitement sous 48h', desc: "Notre équipe examine votre demande et vous contacte pour valider le retour et organiser la récupération du colis." },
+    { Icon: MessageSquare, title: 'Signalez le problème', desc: "Contactez notre support dans les 5 jours suivant la réception via votre espace commandes ou notre page contact." },
+    { Icon: Clock,         title: 'Traitement rapide',    desc: "Notre équipe examine votre demande et vous contacte pour valider le retour et organiser la récupération du colis." },
     { Icon: RotateCcw,     title: 'Renvoi du produit',   desc: "Emballez soigneusement le produit dans son emballage d'origine avec tous les accessoires et factures." },
-    { Icon: CheckCircle2,  title: 'Remboursement',        desc: "Après réception et vérification, le remboursement est effectué sous 5 à 10 jours ouvrables sur votre moyen de paiement initial." },
+    { Icon: CheckCircle2,  title: 'Remboursement',        desc: "Après réception et vérification, le remboursement est effectué rapidement sur votre moyen de paiement." },
   ] : [
-    { Icon: MessageSquare, title: 'Report the issue',     desc: "Contact our support within 7 days of receipt via your orders section or our contact page." },
-    { Icon: Clock,         title: 'Processed within 48h', desc: "Our team reviews your request and contacts you to validate the return and arrange collection of the parcel." },
+    { Icon: MessageSquare, title: 'Report the issue',     desc: "Contact our support within 5 days of receipt via your orders section or our contact page." },
+    { Icon: Clock,         title: 'Fast processing',      desc: "Our team reviews your request and contacts you to validate the return and arrange collection of the parcel." },
     { Icon: RotateCcw,     title: 'Return the product',   desc: "Pack the product carefully in its original packaging with all accessories and receipts." },
-    { Icon: CheckCircle2,  title: 'Refund',               desc: "After receipt and verification, the refund is issued within 5–10 business days to your original payment method." },
+    { Icon: CheckCircle2,  title: 'Refund',               desc: "After receipt and verification, the refund is issued quickly to your payment method." },
   ]
 
   return (
@@ -55,8 +55,8 @@ export default function RetoursPage() {
         </h1>
         <p className="text-[var(--color-slate-500)]">
           {fr
-            ? <>Votre satisfaction est notre priorité. Vous avez <strong>7 jours</strong> après réception pour retourner un produit non conforme.</>
-            : <>Your satisfaction is our priority. You have <strong>7 days</strong> after receipt to return a non-conforming product.</>}
+            ? <>Votre satisfaction est notre priorité. Vous avez <strong>5 jours</strong> après réception pour retourner un produit non conforme.</>
+            : <>Your satisfaction is our priority. You have <strong>5 days</strong> after receipt to return a non-conforming product.</>}
         </p>
       </div>
 

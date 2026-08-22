@@ -36,9 +36,9 @@ export default function GuideAchatPage() {
       num: '03',
       title: 'Choisissez votre mode de paiement',
       content: [
+        'Espèces (Cash on Delivery) : payez à la livraison',
         'Orange Money : paiement instantané via votre compte Orange',
         'MTN Mobile Money : paiement instantané via votre compte MTN',
-        'Espèces (Cash on Delivery) : payez à la livraison',
         'Aucune carte bancaire requise',
       ],
     },
@@ -48,8 +48,7 @@ export default function GuideAchatPage() {
       title: 'Recevez votre commande',
       content: [
         'Renseignez votre adresse de livraison exacte',
-        'Livraison express en 3h à Douala & Yaoundé',
-        'Livraison sous 1 à 4 jours dans les autres villes',
+        'Livraison express en moins de 3h de temps à Douala & Yaoundé',
         'Suivez votre commande en temps réel dans votre espace',
       ],
     },

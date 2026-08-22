@@ -43,20 +43,26 @@ export function VendorApplicationForm() {
   const [email,      setEmail]      = useState('')
   const [phone,      setPhone]      = useState('')
   const [gender,     setGender]     = useState('homme')
-  const [birthDate,  setBirthDate]  = useState('')
+  const [birthDay,   setBirthDay]   = useState('')
+  const [birthMonth, setBirthMonth] = useState('')
+  const [birthYear,  setBirthYear]  = useState('')
+
+  const birthDate = birthDay && birthMonth && birthYear
+    ? `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
+    : ''
 
   // Step 2 — business
   const [businessName, setBusinessName] = useState('')
   const [businessType, setBusinessType] = useState('')
-  const [city,         setCity]         = useState('')
+  const [city,         setCity]         = useState('Douala')
   const [address,      setAddress]      = useState('')
 
-  // Step 3 — documents
+  // Step 3 — documents (CNI & plan de localisation cochés par défaut)
   const [docs, setDocs] = useState<Record<string, boolean>>({
-    has_cni: false,
+    has_cni: true,
     has_registre_commerce: false,
     has_carte_contribuable: false,
-    has_plan_localisation: false,
+    has_plan_localisation: true,
     has_patente: false,
     has_licence_exploitation: false,
   })
@@ -202,12 +208,41 @@ export function VendorApplicationForm() {
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[var(--color-navy-900)]">Date de naissance</label>
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  className="h-10 px-3 text-sm border border-[var(--color-slate-200)] rounded-[var(--radius-md)] bg-white focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent text-[var(--color-navy-900)]"
-                />
+                <div className="grid grid-cols-3 gap-2">
+                  <select
+                    value={birthDay}
+                    onChange={(e) => setBirthDay(e.target.value)}
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-200)] rounded-[var(--radius-md)] bg-white text-[var(--color-navy-900)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  >
+                    <option value="">Jour</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                      <option key={d} value={String(d)}>{d}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={birthMonth}
+                    onChange={(e) => setBirthMonth(e.target.value)}
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-200)] rounded-[var(--radius-md)] bg-white text-[var(--color-navy-900)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  >
+                    <option value="">Mois</option>
+                    {[
+                      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+                    ].map((m, idx) => (
+                      <option key={m} value={String(idx + 1)}>{m}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={birthYear}
+                    onChange={(e) => setBirthYear(e.target.value)}
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-200)] rounded-[var(--radius-md)] bg-white text-[var(--color-navy-900)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  >
+                    <option value="">Année</option>
+                    {Array.from({ length: 76 }, (_, i) => 2015 - i).map((y) => (
+                      <option key={y} value={String(y)}>{y}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </>
           )}
@@ -236,13 +271,17 @@ export function VendorApplicationForm() {
                   ))}
                 </select>
               </div>
-              <Input
-                label="Ville *"
-                placeholder="Ex : Douala, Yaoundé…"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                required
-              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-[var(--color-navy-900)]">Ville *</label>
+                <select
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="h-10 px-3 text-sm border border-[var(--color-slate-200)] rounded-[var(--radius-md)] bg-white text-[var(--color-navy-900)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                >
+                  <option value="Douala">Douala</option>
+                  <option value="Yaoundé">Yaoundé</option>
+                </select>
+              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[var(--color-navy-900)]">Adresse de la boutique</label>
                 <textarea

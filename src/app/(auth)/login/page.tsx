@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react'
+import { Eye, EyeOff, Lock, UserCheck, Smartphone, Mail } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,41 +13,94 @@ import { useLanguage } from '@/components/providers/language-provider'
 function LoginForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/'
-  const { t } = useLanguage()
+  const registered = searchParams.get('registered')
+  const { t, lang } = useLanguage()
 
-  const [email, setEmail]       = useState('')
-  const [password, setPassword] = useState('')
-  const [showPwd, setShowPwd]   = useState(false)
-  const [loading, setLoading]   = useState(false)
-  const [error, setError]       = useState<string | null>(null)
+  const [identifier, setIdentifier] = useState('')
+  const [password, setPassword]     = useState('')
+  const [showPwd, setShowPwd]       = useState(false)
+  const [loading, setLoading]       = useState(false)
+  const [error, setError]           = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
     setLoading(true)
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    const rawValue = identifier.trim()
+
+    if (!rawValue) {
+      setError(t.contactRequired)
+      setLoading(false)
+      return
+    }
+
+    let targetEmail = rawValue
+
+    // Si la valeur saisie n'est pas un e-mail (ne contient pas @), il s'agit d'un numéro de téléphone
+    if (!rawValue.includes('@')) {
+      const cleanPhone = rawValue.replace(/\D/g, '')
+
+      // 1. Essayer la connexion avec le compte téléphone synthétique
+      const syntheticEmail = `${cleanPhone}@bricelo.phone`
+      const { error: phoneErr } = await supabase.auth.signInWithPassword({
+        email: syntheticEmail,
+        password,
+      })
+
+      if (!phoneErr) {
+        window.location.href = redirect
+        return
+      }
+
+      // 2. Chercher dans la table public.users si ce téléphone est associé à un e-mail réel
+      const { data: userData } = await supabase
+        .from('users')
+        .select('email')
+        .eq('phone', rawValue)
+        .maybeSingle()
+
+      if (userData?.email) {
+        targetEmail = userData.email
+      } else {
+        targetEmail = syntheticEmail
+      }
+    }
+
+    const { error: err } = await supabase.auth.signInWithPassword({
+      email: targetEmail,
+      password,
+    })
+
     if (err) {
       setError(t.loginError)
       setLoading(false)
       return
     }
+
     window.location.href = redirect
   }
 
   return (
     <Card>
       <CardBody className="p-6">
+        {registered === '1' && (
+          <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-xs text-green-800 flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-green-600 shrink-0" />
+            <span>{lang === 'fr' ? 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.' : 'Account created successfully! You can now log in.'}</span>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Input
-            label={t.email}
-            type="email"
-            placeholder="vous@exemple.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            icon={<Mail className="h-4 w-4" />}
+            label={t.loginIdentifier}
+            type="text"
+            placeholder={lang === 'fr' ? 'vous@exemple.com ou 6XX XXX XXX' : 'user@example.com or phone'}
+            value={identifier}
+            onChange={(e) => setIdentifier(e.target.value)}
+            icon={identifier.includes('@') ? <Mail className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
             required
-            autoComplete="email"
+            autoComplete="username"
           />
 
           <div className="flex flex-col gap-1.5">

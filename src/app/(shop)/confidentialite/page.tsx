@@ -29,7 +29,7 @@ export default function ConfidentialitePage() {
     },
     {
       title: '6. Vos droits',
-      content: `Vous disposez des droits suivants concernant vos données : droit d'accès et de rectification, droit à l'effacement (« droit à l'oubli »), droit à la portabilité, droit d'opposition au traitement. Pour exercer ces droits, contactez-nous à privacy@bricelo.com.`,
+      content: `Vous disposez des droits suivants concernant vos données : droit d'accès et de rectification, droit à l'effacement (« droit à l'oubli »), droit à la portabilité, droit d'opposition au traitement. Pour exercer ces droits, contactez-nous à bricelo237@gmail.com.`,
     },
     {
       title: '7. Conservation des données',
@@ -37,7 +37,7 @@ export default function ConfidentialitePage() {
     },
     {
       title: '8. Contact',
-      content: `Pour toute question relative à notre politique de confidentialité ou à vos données personnelles, contactez notre Délégué à la Protection des Données : privacy@bricelo.com ou BRICELO SAS, Douala, Cameroun.`,
+      content: `Pour toute question relative à notre politique de confidentialité ou à vos données personnelles, contactez notre Délégué à la Protection des Données : bricelo237@gmail.com ou BRICELO SAS, Douala, Cameroun.`,
     },
   ] : [
     {
@@ -62,7 +62,7 @@ export default function ConfidentialitePage() {
     },
     {
       title: '6. Your rights',
-      content: `You have the following rights regarding your data: right of access and rectification, right to erasure ("right to be forgotten"), right to portability, right to object to processing. To exercise these rights, contact us at privacy@bricelo.com.`,
+      content: `You have the following rights regarding your data: right of access and rectification, right to erasure ("right to be forgotten"), right to portability, right to object to processing. To exercise these rights, contact us at bricelo237@gmail.com.`,
     },
     {
       title: '7. Data retention',
@@ -70,7 +70,7 @@ export default function ConfidentialitePage() {
     },
     {
       title: '8. Contact',
-      content: `For any question about our privacy policy or your personal data, contact our Data Protection Officer: privacy@bricelo.com or BRICELO SAS, Douala, Cameroon.`,
+      content: `For any question about our privacy policy or your personal data, contact our Data Protection Officer: bricelo237@gmail.com or BRICELO SAS, Douala, Cameroon.`,
     },
   ]
 

@@ -85,7 +85,7 @@ export default async function VendorDashboard() {
   ]
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* En-tête */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
         <div>
@@ -117,7 +117,7 @@ export default async function VendorDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map(({ icon: Icon, label, value, accent, border, link }) => {
           const card = (
             <div className={`bg-white rounded-xl border border-[var(--color-slate-200)] border-l-4 ${border} p-4 flex items-center gap-4 h-full`}>

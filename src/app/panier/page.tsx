@@ -15,7 +15,7 @@ export default function CartPage() {
   const { t } = useLanguage()
   const count = itemCount()
   const subtotal = total()
-  const shipping = subtotal > 0 ? 2000 : 0
+  const shipping = subtotal > 0 ? 1000 : 0
   const grandTotal = subtotal + shipping
 
   return (
@@ -90,6 +90,9 @@ export default function CartPage() {
                       <span>{t.shipping}</span>
                       <span>{formatPrice(shipping)}</span>
                     </div>
+                    <p className="text-[11px] text-[var(--color-slate-400)] bg-[var(--color-slate-50)] p-2 rounded-md border border-[var(--color-slate-200)]">
+                      🚚 1 000 FCFA (Même ville) / 2 000 FCFA (Autre ville)
+                    </p>
                     <hr className="border-[var(--color-slate-200)]" />
                     <div className="flex justify-between font-bold text-base text-[var(--color-navy-900)]">
                       <span>{t.total}</span>

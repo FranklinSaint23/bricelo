@@ -9,7 +9,7 @@ const geistSans = GeistSans
 const geistMono = GeistMono
 
 export const metadata: Metadata = {
-  title: { default: 'BRICELO — Marketplace multi-vendeurs', template: '%s | BRICELO' },
+  title: { default: 'BRICELO - Marketplace multi-vendeurs', template: '%s | BRICELO' },
   description: 'Découvrez des milliers de produits sur BRICELO, la marketplace de confiance. Qualité, confiance, livraison rapide.',
   keywords: ['marketplace', 'ecommerce', 'Cameroun', 'boutique en ligne', 'bricelo'],
   openGraph: {

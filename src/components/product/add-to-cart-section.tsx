@@ -85,27 +85,26 @@ export function AddToCartSection({ product }: Props) {
       </div>
 
       {/* Boutons CTA */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Button
-          onClick={handleAdd}
-          disabled={!!outOfStock}
-          size="lg"
-          className="flex-1"
-          variant={added ? 'secondary' : 'primary'}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
-        </Button>
-
+      <div className="flex flex-col gap-2.5">
         <Button
           onClick={handleBuyNow}
           disabled={!!outOfStock}
           size="lg"
-          className="flex-1"
-          variant="outline"
+          className="w-full py-4 text-base font-extrabold shadow-md bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] border-none btn-animate-attention flex items-center justify-center gap-2"
         >
-          <Zap className="h-4 w-4" />
+          <Zap className="h-5 w-5 fill-current" />
           {t.buyNow}
+        </Button>
+
+        <Button
+          onClick={handleAdd}
+          disabled={!!outOfStock}
+          size="lg"
+          className="w-full"
+          variant={added ? 'secondary' : 'outline'}
+        >
+          <ShoppingCart className="h-4 w-4" />
+          {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
         </Button>
       </div>
     </div>

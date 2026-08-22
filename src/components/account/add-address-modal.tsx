@@ -20,7 +20,7 @@ export function AddAddressModal({ userId }: Props) {
   const [phone, setPhone]         = useState('')
   const [line1, setLine1]         = useState('')
   const [line2, setLine2]         = useState('')
-  const [city, setCity]           = useState('')
+  const [city, setCity]           = useState('Douala')
   const [region, setRegion]       = useState('')
   const [country, setCountry]     = useState('Cameroun')
   const [postal, setPostal]       = useState('')
@@ -71,14 +71,24 @@ export function AddAddressModal({ userId }: Props) {
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               <Input label="Libellé (optionnel)" value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Maison, Bureau…" />
               <div className="grid grid-cols-2 gap-3">
-                <Input label="Nom complet *" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jean Dupont" required />
+                <Input label="Nom et Prénom *" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jean Dupont" required />
                 <Input label="Téléphone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+237 6XX XXX XXX" />
               </div>
               <Input label="Adresse *" value={line1} onChange={(e) => setLine1(e.target.value)} placeholder="Rue, quartier, N°" required />
               <Input label="Complément" value={line2} onChange={(e) => setLine2(e.target.value)} placeholder="Appartement, bâtiment…" />
               <div className="grid grid-cols-2 gap-3">
-                <Input label="Ville *" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Yaoundé" required />
-                <Input label="Région" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="Centre" />
+                <div className="flex flex-col gap-1">
+                  <label className="text-sm font-medium text-[var(--color-navy-900)]">Ville *</label>
+                  <select
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-md bg-white text-[var(--color-navy-900)] focus:outline-none focus:border-[var(--color-navy-900)]"
+                  >
+                    <option value="Douala">Douala</option>
+                    <option value="Yaoundé">Yaoundé</option>
+                  </select>
+                </div>
+                <Input label="Région" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="Littoral / Centre" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <Input label="Pays" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Cameroun" />

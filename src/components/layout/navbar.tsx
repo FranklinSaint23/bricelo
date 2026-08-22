@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Search, ShoppingCart, Bell, User, Menu, X, ChevronDown,
-  Phone, MessageCircle, Grid3X3, HelpCircle, UserPlus,
+  Phone, MessageCircle, Grid3X3, UserPlus,
   Truck, CreditCard, Store, RefreshCw, CheckCircle2,
   Sun, Moon,
 } from 'lucide-react'
@@ -164,8 +164,8 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
         </div>
         {/* Contact — desktop seulement */}
         <div className="hidden sm:flex items-center gap-3 text-[11px] text-white/55 px-4 shrink-0 border-l border-white/10 h-full">
-          <a href="tel:+237000000000" className="flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors whitespace-nowrap">
-            <Phone className="h-3 w-3" /> +237 000 000 000
+          <a href="tel:+237652704218" className="flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors whitespace-nowrap">
+            <Phone className="h-3 w-3" /> +237 6 52 70 42 18
           </a>
           <span className="text-white/20">|</span>
           <a href="/contact" className="flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors whitespace-nowrap">
@@ -283,7 +283,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
             <button
               onClick={toggleLang}
               aria-label="Changer de langue"
-              className="flex md:hidden p-2 rounded-md hover:bg-[var(--color-slate-100)] transition-colors text-base leading-none"
+              className="flex md:hidden p-2 rounded-md hover:bg-[var(--color-slate-100)] transition-colors text-xl leading-none"
             >
               {lang === 'fr' ? '🇬🇧' : '🇫🇷'}
             </button>
@@ -292,9 +292,9 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
             <Link href="/panier" aria-label="Panier"
               className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-[var(--color-slate-100)] transition-colors">
               <div className="relative">
-                <ShoppingCart className="h-5 w-5 text-[var(--color-navy-900)]" />
+                <ShoppingCart className="h-6 w-6 text-[var(--color-navy-900)]" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-[var(--color-navy-900)] flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 h-4.5 w-4.5 rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-[var(--color-navy-900)] flex items-center justify-center shadow-sm">
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
                 )}
@@ -302,25 +302,10 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               <span className="hidden lg:block text-xs font-semibold text-[var(--color-navy-900)]">{t.cart}</span>
             </Link>
 
-            {/* Mobile: Aide */}
-            <a href="/contact" aria-label="Aide"
-              className="flex md:hidden p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors">
-              <HelpCircle className="h-5 w-5" />
-            </a>
-
-            {/* Thème — mobile */}
-            <button
-              onClick={toggleTheme}
-              aria-label={theme === 'dark' ? t.lightMode : t.darkMode}
-              className="flex md:hidden p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors"
-            >
-              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-
             {!user && (
               <Link href="/register" aria-label="Créer un compte"
                 className="flex md:hidden p-2 text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors">
-                <UserPlus className="h-5 w-5" />
+                <UserPlus className="h-6 w-6" />
               </Link>
             )}
 
@@ -330,7 +315,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               className="flex md:hidden p-2 text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] rounded-md transition-colors"
               aria-label={mobileOpen ? 'Fermer le menu' : 'Ouvrir le menu'}
             >
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileOpen ? <X className="h-6.5 w-6.5" /> : <Menu className="h-6.5 w-6.5" />}
             </button>
           </div>
           </div>{/* fin flex row */}
@@ -401,7 +386,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                   <div className="bg-[var(--color-slate-50)] border-t border-[var(--color-slate-100)]">
                     <Link href={href} onClick={() => { setMobileOpen(false); setOpenCat(null) }}
                       className="flex items-center gap-2 pl-14 pr-4 py-2.5 text-sm font-bold text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors">
-                      Tout — {label}
+                      Tout - {label}
                     </Link>
                     {sub.map(s => (
                       <Link key={s.href} href={s.href} onClick={() => { setMobileOpen(false); setOpenCat(null) }}

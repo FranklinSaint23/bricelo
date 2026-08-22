@@ -46,7 +46,7 @@ export default async function AdminDashboard() {
   ]
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 sm:p-6 lg:p-8">
       {/* En-tête */}
       <div className="mb-8">
         <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Vue globale</h1>
@@ -66,7 +66,7 @@ export default async function AdminDashboard() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {stats.map(({ icon: Icon, label, value, color, bg, border, href }) => {
           const card = (
             <div className={`bg-white rounded-xl border border-[var(--color-slate-200)] border-l-4 ${border} p-5 flex items-center gap-4 h-full`}>

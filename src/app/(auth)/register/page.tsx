@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Lock, Mail, User } from 'lucide-react'
+import { Lock, Mail, Phone, User } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const { t, lang } = useLanguage()
   const [fullName, setFullName] = useState('')
   const [email, setEmail]       = useState('')
+  const [phone, setPhone]       = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState<string | null>(null)
@@ -23,23 +24,58 @@ export default function RegisterPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+
+    if (!email.trim() && !phone.trim()) {
+      setError(t.contactRequired)
+      return
+    }
+
     if (password.length < 8) {
       setError(lang === 'fr' ? 'Le mot de passe doit contenir au moins 8 caractères.' : 'Password must be at least 8 characters.')
       return
     }
+
     setLoading(true)
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signUp({
-      email,
+
+    // Si pas d'email fourni, générer un identifiant e-mail lié au numéro de téléphone
+    const cleanPhone = phone.replace(/\D/g, '')
+    const targetEmail = email.trim()
+      ? email.trim()
+      : `${cleanPhone}@bricelo.phone`
+
+    const { data: signUpData, error: err } = await supabase.auth.signUp({
+      email: targetEmail,
       password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: {
+          full_name: fullName.trim(),
+          phone: phone.trim(),
+        },
+      },
     })
+
     if (err) {
       setError(err.message)
       setLoading(false)
       return
     }
-    setSuccess(true)
+
+    // Mettre à jour la table users de secours
+    if (signUpData?.user) {
+      await supabase.from('users').upsert({
+        id: signUpData.user.id,
+        full_name: fullName.trim(),
+        email: email.trim() || null,
+        phone: phone.trim() || null,
+      })
+    }
+
+    if (email.trim()) {
+      setSuccess(true)
+    } else {
+      router.push('/login?registered=1')
+    }
     setLoading(false)
   }
 
@@ -72,6 +108,7 @@ export default function RegisterPage() {
       <Card>
         <CardBody className="p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            {/* Nom et Prénom */}
             <Input
               label={t.fullName.replace(' *', '')}
               type="text"
@@ -81,16 +118,30 @@ export default function RegisterPage() {
               icon={<User className="h-4 w-4" />}
               required
             />
+
+            {/* Adresse e-mail (FACULTATIF) */}
             <Input
-              label={t.email}
+              label={t.emailOptional}
               type="email"
-              placeholder="vous@exemple.com"
+              placeholder="vous@exemple.com (optionnel)"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               icon={<Mail className="h-4 w-4" />}
-              required
               autoComplete="email"
             />
+
+            {/* Numéro de téléphone (APRÈS L'ADRESSE MAIL) */}
+            <Input
+              label={t.phoneField}
+              type="tel"
+              placeholder="+237 6XX XXX XXX"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              icon={<Phone className="h-4 w-4" />}
+              autoComplete="tel"
+            />
+
+            {/* Mot de passe */}
             <Input
               label={t.password}
               type="password"
@@ -131,3 +182,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+
