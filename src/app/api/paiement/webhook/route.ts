@@ -1,14 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-// Utilise le service_role pour bypasser RLS — uniquement côté serveur
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  )
-}
+import { getAdminClient } from '@/lib/supabase/admin'
+import { decrementStockForOrder } from '@/lib/stock'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     const supabase = getAdminClient()
 
-    // Vérification idempotente — on ne traite pas deux fois la même transaction
+    // 1. Vérification idempotente
     const { data: existingPayment } = await supabase
       .from('payments')
       .select('id, status, order_id, metadata')
@@ -39,19 +31,23 @@ export async function POST(request: NextRequest) {
     const isSuccess = cpm_result === '00' || cpm_trans_status === 'ACCEPTED'
     const newStatus = isSuccess ? 'success' : 'failed'
 
-    // Mise à jour du paiement
+    // 2. Mise à jour de tous les enregistrements de paiement associés (principal + sous-commandes)
     await supabase
       .from('payments')
       .update({ status: newStatus, metadata: { ...((existingPayment.metadata as any) ?? {}), webhook_body: body } })
-      .eq('transaction_ref', cpm_trans_id)
+      .or(`transaction_ref.eq.${cpm_trans_id},metadata->>parent_transaction_ref.eq.${cpm_trans_id}`)
 
-    // Mise à jour des commandes associées
+    // 3. Mise à jour des commandes associées et décrémentation des stocks
     const orderIds: string[] = (existingPayment.metadata as any)?.order_ids ?? [existingPayment.order_id]
     if (isSuccess) {
       await supabase
         .from('orders')
         .update({ status: 'confirmed' })
         .in('id', orderIds)
+
+      for (const oid of orderIds) {
+        await decrementStockForOrder(oid)
+      }
     }
 
     return NextResponse.json({ message: 'OK' })

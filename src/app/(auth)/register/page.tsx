@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardBody } from '@/components/ui/card'
 import { useLanguage } from '@/components/providers/language-provider'
+import { linkGuestOrders } from './actions'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -61,7 +62,7 @@ export default function RegisterPage() {
       return
     }
 
-    // Mettre à jour la table users de secours
+    // Mettre à jour la table users de secours et rattacher les anciennes commandes invités
     if (signUpData?.user) {
       await supabase.from('users').upsert({
         id: signUpData.user.id,
@@ -69,6 +70,7 @@ export default function RegisterPage() {
         email: email.trim() || null,
         phone: phone.trim() || null,
       })
+      await linkGuestOrders(signUpData.user.id, email, phone)
     }
 
     if (email.trim()) {

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
+import { decrementStockForOrder } from '@/lib/stock'
 import { revalidatePath } from 'next/cache'
 import { headers } from 'next/headers'
 
@@ -35,7 +36,10 @@ export async function validateCashOrder(orderId: string) {
 
   if (updateErr) return { error: updateErr.message }
 
-  // 3. Enregistrer automatiquement la transaction dans la table payments
+  // 3. Décrémenter automatiquement le stock des produits commandés
+  await decrementStockForOrder(orderId)
+
+  // 4. Enregistrer automatiquement la transaction dans la table payments
   const transactionRef = `CASH-${orderId.slice(0, 8).toUpperCase()}`
 
   const { data: existingPayment } = await adminClient
@@ -71,6 +75,7 @@ export async function validateCashOrder(orderId: string) {
   revalidatePath('/admin')
   revalidatePath('/vendeur/commandes')
   revalidatePath('/vendeur')
+  revalidatePath('/catalogue')
 
   return { success: true }
 }
