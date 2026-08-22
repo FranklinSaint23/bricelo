@@ -10,12 +10,12 @@ export default function ModesPaiementPage() {
 
   const methods = fr ? [
     {
-      name: 'Espèces (Cash on Delivery)',
+      name: 'Paiement à la livraison',
       img: '/payments/cash.jpg',
-      color: 'bg-emerald-50 border-emerald-200',
+      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Payez en main propre au livreur lors de la réception de votre commande. Aucune information bancaire requise.',
       steps: [
-        'Sélectionnez « Espèces à la livraison »',
+        'Sélectionnez « Paiement à la livraison »',
         'Votre commande est traitée et préparée',
         'Le livreur passe à votre adresse',
         'Remettez le montant exact au livreur',
@@ -25,7 +25,7 @@ export default function ModesPaiementPage() {
     {
       name: 'Orange Money',
       img: '/payments/orange-money.png',
-      color: 'bg-orange-50 border-orange-200',
+      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Payez directement depuis votre compte Orange Money. Le paiement est instantané et sécurisé.',
       steps: [
         'Sélectionnez « Orange Money » lors du paiement',
@@ -38,7 +38,7 @@ export default function ModesPaiementPage() {
     {
       name: 'MTN Mobile Money',
       img: '/payments/mtn-momo.png',
-      color: 'bg-yellow-50 border-yellow-200',
+      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Payez depuis votre compte MTN MoMo. Rapide, sans frais cachés, confirmé en quelques secondes.',
       steps: [
         'Sélectionnez « MTN Mobile Money » lors du paiement',
@@ -50,9 +50,9 @@ export default function ModesPaiementPage() {
     },
   ] : [
     {
-      name: 'Cash on Delivery',
+      name: 'Cash on delivery',
       img: '/payments/cash.jpg',
-      color: 'bg-emerald-50 border-emerald-200',
+      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Pay the delivery person directly when you receive your order. No banking information required.',
       steps: [
         'Select "Cash on delivery"',
@@ -65,7 +65,7 @@ export default function ModesPaiementPage() {
     {
       name: 'Orange Money',
       img: '/payments/orange-money.png',
-      color: 'bg-orange-50 border-orange-200',
+      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Pay directly from your Orange Money account. Payment is instant and secure.',
       steps: [
         'Select "Orange Money" at checkout',
@@ -78,7 +78,7 @@ export default function ModesPaiementPage() {
     {
       name: 'MTN Mobile Money',
       img: '/payments/mtn-momo.png',
-      color: 'bg-yellow-50 border-yellow-200',
+      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Pay from your MTN MoMo account. Fast, no hidden fees, confirmed in seconds.',
       steps: [
         'Select "MTN Mobile Money" at checkout',
@@ -92,7 +92,7 @@ export default function ModesPaiementPage() {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-      <title>{fr ? 'Modes de paiement — BRICELO' : 'Payment methods — BRICELO'}</title>
+      <title>{fr ? 'Modes de paiement - BRICELO' : 'Payment methods - BRICELO'}</title>
       <div className="mb-10">
         <h1 className="text-3xl sm:text-4xl font-extrabold text-[var(--color-navy-900)] mb-3">
           {fr ? 'Modes de paiement' : 'Payment methods'}
@@ -108,8 +108,8 @@ export default function ModesPaiementPage() {
         {methods.map(({ name, img, color, desc, steps, badge }) => (
           <div key={name} className={`border rounded-2xl p-6 ${color} shadow-sm`}>
             <div className="flex items-start gap-4 mb-4">
-              <div className="h-14 w-14 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 overflow-hidden p-1">
-                <Image src={img} alt={name} width={56} height={56} className="h-full w-full object-contain" />
+              <div className="h-14 w-28 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 overflow-hidden p-2 border border-[var(--color-slate-200)]">
+                <Image src={img} alt={name} width={112} height={56} className="h-full w-auto object-contain" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">

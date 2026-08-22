@@ -248,20 +248,25 @@ export function Footer() {
       <div className="bg-[var(--color-surface)] border-t border-[var(--color-slate-200)] py-5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs text-slate-400 font-medium uppercase tracking-widest mb-4">{t.paymentMethods}</p>
-          <div className="flex items-center justify-center gap-8 flex-wrap">
+          <div className="flex items-center justify-center gap-6 sm:gap-8 flex-wrap">
             <div className="flex flex-col items-center gap-1.5">
-              <Image src="/payments/cash.jpg" alt={t.cash} width={96} height={56} className="h-14 w-auto object-contain" />
+              <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
+                <Image src="/payments/cash.jpg" alt={t.cash} width={96} height={56} className="h-10 w-auto object-contain" />
+              </div>
               <span className="text-xs text-slate-500 font-medium">{t.cash}</span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
-              <Image src="/payments/mtn-momo.png" alt="MTN Mobile Money" width={112} height={56} className="h-14 w-auto object-contain" />
+              <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
+                <Image src="/payments/mtn-momo.png" alt="MTN Mobile Money" width={112} height={56} className="h-10 w-auto object-contain" />
+              </div>
               <span className="text-xs text-slate-500 font-medium">MTN MoMo</span>
             </div>
             <div className="flex flex-col items-center gap-1.5">
-              <Image src="/payments/orange-money.png" alt="Orange Money" width={112} height={56} className="h-14 w-auto object-contain" />
+              <div className="bg-white p-2 rounded-lg border border-slate-200 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
+                <Image src="/payments/orange-money.png" alt="Orange Money" width={112} height={56} className="h-10 w-auto object-contain" />
+              </div>
               <span className="text-xs text-slate-500 font-medium">Orange Money</span>
             </div>
-            
           </div>
         </div>
       </div>

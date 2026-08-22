@@ -34,19 +34,21 @@ export function PromoTimer({ className, endsAt }: Props) {
   const pad = (n: number) => String(n).padStart(2, '0')
 
   return (
-    <div className={cn('flex items-center gap-2 flex-wrap bg-red-50/80 border border-red-200/60 p-2 rounded-xl', className)}>
-      <Timer className="h-4 w-4 text-red-600 shrink-0 animate-pulse" />
-      <span className="text-xs font-bold text-red-700 uppercase tracking-wide">
-        Offre limitée :
-      </span>
-      <div className="flex items-center gap-1 font-mono text-xs font-bold">
-        <span className="bg-red-600 text-white px-1.5 py-0.5 rounded shadow-xs">{d}J</span>
+    <div className={cn('bg-red-50/90 border border-red-200/80 rounded-lg p-1.5 flex flex-col gap-1 w-full max-w-full overflow-hidden', className)}>
+      <div className="flex items-center gap-1 shrink-0">
+        <Timer className="h-3.5 w-3.5 text-red-600 shrink-0 animate-pulse" />
+        <span className="text-[10px] sm:text-xs font-extrabold text-red-700 uppercase tracking-tight whitespace-nowrap">
+          Fin de promo dans :
+        </span>
+      </div>
+      <div className="flex items-center gap-0.5 font-mono text-[10px] sm:text-xs font-bold shrink-0">
+        <span className="bg-red-600 text-white px-1 py-0.5 rounded text-[10px] sm:text-xs">{d}J</span>
         <span className="text-red-500 font-extrabold">:</span>
-        <span className="bg-[var(--color-navy-900)] text-white px-1.5 py-0.5 rounded shadow-xs">{pad(h)}H</span>
+        <span className="bg-[var(--color-navy-900)] text-white px-1 py-0.5 rounded text-[10px] sm:text-xs">{pad(h)}H</span>
         <span className="text-[var(--color-slate-400)] font-extrabold">:</span>
-        <span className="bg-[var(--color-navy-900)] text-white px-1.5 py-0.5 rounded shadow-xs">{pad(m)}M</span>
+        <span className="bg-[var(--color-navy-900)] text-white px-1 py-0.5 rounded text-[10px] sm:text-xs">{pad(m)}M</span>
         <span className="text-[var(--color-slate-400)] font-extrabold">:</span>
-        <span className="bg-[var(--color-navy-900)] text-white px-1.5 py-0.5 rounded shadow-xs">{pad(s)}S</span>
+        <span className="bg-[var(--color-navy-900)] text-white px-1 py-0.5 rounded text-[10px] sm:text-xs">{pad(s)}S</span>
       </div>
     </div>
   )

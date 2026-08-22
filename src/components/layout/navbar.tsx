@@ -135,15 +135,13 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   /* Ticker cycle */
   useEffect(() => {
     const t = setInterval(() => {
-      setTickerIdx(i => (i + 1) % TICKER_COUNT)
-      setTickerKey(k => k + 1)
-    }, 3000)
+      setTickerIdx((i) => (i + 1) % 4)
+      setTickerKey((k) => k + 1)
+    }, 3500)
     return () => clearInterval(t)
   }, [])
 
   const user = authUser
-  const ticker = tickerItems[tickerIdx]
-  const TickerIcon = ticker.icon
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
@@ -153,24 +151,76 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   return (
     <header className="sticky top-0 z-50 w-full">
 
-      {/* ── 1. BARRE PROMO ── */}
-      <div className="bg-[var(--color-navy-950)] h-8 overflow-hidden flex items-center">
-        {/* Message animé */}
-        <div className="flex-1 overflow-hidden px-4 flex items-center">
-          <span key={tickerKey} className="ticker-up text-[11px] text-white/80 font-medium whitespace-nowrap overflow-hidden text-ellipsis block">
-            <TickerIcon className="inline h-3.5 w-3.5 text-[var(--color-accent)] mr-2" />
-            {ticker.text}
-          </span>
+      {/* ── 1. BARRE PROMO (Style Iziway) ── */}
+      <div className="bg-[var(--color-navy-950)] h-9 overflow-hidden flex items-center border-b border-white/10">
+        {/* Message animé en séquence */}
+        <div className="flex-1 overflow-hidden px-3 sm:px-4 flex items-center">
+          <div key={tickerKey} className="ticker-up flex items-center flex-wrap gap-2 text-xs whitespace-nowrap overflow-hidden text-ellipsis">
+            {tickerIdx === 0 && (
+              <>
+                <span className="text-[var(--color-accent)] font-black tracking-wider uppercase text-xs sm:text-sm">BRICELO ...</span>
+                <span className="text-white font-bold hidden sm:inline text-xs sm:text-sm">VOS ESSENTIELS À PETIT PRIX ...</span>
+                <span className="text-[var(--color-navy-950)] font-black bg-[var(--color-accent)] px-2 py-0.5 rounded text-[11px] sm:text-xs shadow-xs animate-pulse">
+                  Jusqu'à -70%
+                </span>
+              </>
+            )}
+            {tickerIdx === 1 && (
+              <>
+                <span className="text-[var(--color-accent)] font-black tracking-wider uppercase text-xs sm:text-sm">LIVRAISON EXPRESS ...</span>
+                <span className="text-white font-bold hidden sm:inline text-xs sm:text-sm">1 000 FCFA même ville / 2 000 FCFA inter-villes ...</span>
+                <span className="text-amber-300 font-extrabold bg-amber-400/20 border border-amber-400/30 px-2 py-0.5 rounded text-[11px] sm:text-xs">
+                  Paiement à la livraison
+                </span>
+              </>
+            )}
+            {tickerIdx === 2 && (
+              <>
+                <span className="text-[var(--color-accent)] font-black tracking-wider uppercase text-xs sm:text-sm">SERVICE CLIENT 7J/7 ...</span>
+                <span className="text-white font-bold hidden sm:inline text-xs sm:text-sm">Assistance & Commandes WhatsApp ...</span>
+                <span className="text-amber-300 font-extrabold bg-amber-400/20 border border-amber-400/30 px-2 py-0.5 rounded text-[11px] sm:text-xs">
+                  +237 6 52 70 42 18
+                </span>
+              </>
+            )}
+            {tickerIdx === 3 && (
+              <>
+                <span className="text-[var(--color-accent)] font-black tracking-wider uppercase text-xs sm:text-sm">BOUTIQUES CERTIFIÉES ...</span>
+                <span className="text-white font-bold hidden sm:inline text-xs sm:text-sm">Des milliers de produits au Cameroun ...</span>
+                <span className="text-emerald-300 font-extrabold bg-emerald-400/20 border border-emerald-400/30 px-2 py-0.5 rounded text-[11px] sm:text-xs">
+                  100% Vérifiés
+                </span>
+              </>
+            )}
+          </div>
         </div>
-        {/* Contact — desktop seulement */}
-        <div className="hidden sm:flex items-center gap-3 text-[11px] text-white/55 px-4 shrink-0 border-l border-white/10 h-full">
-          <a href="tel:+237652704218" className="flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors whitespace-nowrap">
-            <Phone className="h-3 w-3" /> +237 6 52 70 42 18
-          </a>
-          <span className="text-white/20">|</span>
-          <a href="/contact" className="flex items-center gap-1 hover:text-[var(--color-accent)] transition-colors whitespace-nowrap">
-            <MessageCircle className="h-3 w-3" /> {t.help}
-          </a>
+
+        {/* Contact & Support client (Style Iziway) */}
+        <div className="flex items-center gap-2.5 px-3 sm:px-4 shrink-0 border-l border-white/15 h-full bg-white/[0.04]">
+          <div className="flex items-center gap-1.5">
+            <a
+              href="https://wa.me/237652704218"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="WhatsApp Service Client (+237 6 52 70 42 18)"
+              className="h-6 w-6 rounded-full bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] flex items-center justify-center transition-transform hover:scale-110 shadow-xs"
+            >
+              <MessageCircle className="h-3.5 w-3.5 fill-current" />
+            </a>
+            <a
+              href="tel:+237652704218"
+              title="Appeler le Service Client (+237 6 52 70 42 18)"
+              className="h-6 w-6 rounded-full bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] flex items-center justify-center transition-transform hover:scale-110 shadow-xs"
+            >
+              <Phone className="h-3.5 w-3.5 fill-current" />
+            </a>
+          </div>
+          <div className="hidden sm:flex flex-col justify-center text-[10px] leading-tight">
+            <span className="text-white/60 font-medium">Service client</span>
+            <a href="tel:+237652704218" className="text-[var(--color-accent)] font-extrabold text-xs hover:underline tracking-tight">
+              6 52 70 42 18
+            </a>
+          </div>
         </div>
       </div>
 
