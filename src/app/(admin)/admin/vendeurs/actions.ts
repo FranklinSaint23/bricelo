@@ -114,3 +114,11 @@ export async function rejectVendorApplication(applicationId: string) {
   revalidatePath('/admin/vendeurs')
   return { success: true }
 }
+
+export async function reviewVendorApplication(applicationId: string, status: 'approved' | 'rejected', notes?: string) {
+  if (status === 'approved') {
+    return approveVendorApplication(applicationId)
+  } else {
+    return rejectVendorApplication(applicationId)
+  }
+}
