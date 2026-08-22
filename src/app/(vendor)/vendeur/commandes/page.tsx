@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ShoppingBag } from 'lucide-react'
 import { OrderStatusBadge } from '@/components/ui/badge'
+import { ValidateCashButton } from '@/components/admin/validate-cash-button'
 import { formatPrice, formatDate } from '@/lib/utils'
 
 export default async function VendorOrdersPage() {
@@ -21,7 +22,7 @@ export default async function VendorOrdersPage() {
 
   const { data: orders } = await supabase
     .from('orders')
-    .select('id, total, status, created_at, shipping_address, order_items(id, quantity, unit_price, total_price, product:products(name, images))')
+    .select('id, total, status, payment_method, created_at, shipping_address, order_items(id, quantity, unit_price, total_price, product:products(name, images))')
     .eq('store_id', store.id)
     .order('created_at', { ascending: false })
 
@@ -78,6 +79,9 @@ export default async function VendorOrdersPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  {order.payment_method === 'cash' && order.status === 'pending' && (
+                    <ValidateCashButton orderId={order.id} />
+                  )}
                   <p className="text-lg font-bold text-[var(--color-navy-900)]">{formatPrice(order.total)}</p>
                   <OrderStatusBadge status={order.status} />
                 </div>

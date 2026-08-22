@@ -12,7 +12,6 @@ export default function ModesPaiementPage() {
     {
       name: 'Paiement à la livraison',
       img: '/payments/cash.jpg',
-      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Payez en main propre au livreur lors de la réception de votre commande. Aucune information bancaire requise.',
       steps: [
         'Sélectionnez « Paiement à la livraison »',
@@ -25,7 +24,6 @@ export default function ModesPaiementPage() {
     {
       name: 'Orange Money',
       img: '/payments/orange-money.png',
-      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Payez directement depuis votre compte Orange Money. Le paiement est instantané et sécurisé.',
       steps: [
         'Sélectionnez « Orange Money » lors du paiement',
@@ -38,7 +36,6 @@ export default function ModesPaiementPage() {
     {
       name: 'MTN Mobile Money',
       img: '/payments/mtn-momo.png',
-      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Payez depuis votre compte MTN MoMo. Rapide, sans frais cachés, confirmé en quelques secondes.',
       steps: [
         'Sélectionnez « MTN Mobile Money » lors du paiement',
@@ -52,7 +49,6 @@ export default function ModesPaiementPage() {
     {
       name: 'Cash on delivery',
       img: '/payments/cash.jpg',
-      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Pay the delivery person directly when you receive your order. No banking information required.',
       steps: [
         'Select "Cash on delivery"',
@@ -65,7 +61,6 @@ export default function ModesPaiementPage() {
     {
       name: 'Orange Money',
       img: '/payments/orange-money.png',
-      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Pay directly from your Orange Money account. Payment is instant and secure.',
       steps: [
         'Select "Orange Money" at checkout',
@@ -78,7 +73,6 @@ export default function ModesPaiementPage() {
     {
       name: 'MTN Mobile Money',
       img: '/payments/mtn-momo.png',
-      color: 'bg-[var(--color-surface)] border-[var(--color-slate-200)]',
       desc: 'Pay from your MTN MoMo account. Fast, no hidden fees, confirmed in seconds.',
       steps: [
         'Select "MTN Mobile Money" at checkout',
@@ -105,33 +99,34 @@ export default function ModesPaiementPage() {
       </div>
 
       <div className="flex flex-col gap-6 mb-10">
-        {methods.map(({ name, img, color, desc, steps, badge }) => (
-          <div key={name} className={`border rounded-2xl p-6 ${color} shadow-sm`}>
-            <div className="flex items-start gap-4 mb-4">
-              <div className="h-14 w-28 rounded-xl bg-white shadow-sm flex items-center justify-center shrink-0 overflow-hidden p-2 border border-[var(--color-slate-200)]">
-                <Image src={img} alt={name} width={112} height={56} className="h-full w-auto object-contain" />
+        {methods.map(({ name, img, desc, steps, badge }) => (
+          <div key={name} className="bg-[var(--color-surface)] border border-[var(--color-slate-200)] rounded-2xl p-6 shadow-sm">
+            <div className="flex items-start gap-4 mb-5">
+              <div className="h-16 w-32 rounded-xl bg-white shadow-xs flex items-center justify-center shrink-0 overflow-hidden p-2.5 border border-slate-200">
+                <Image src={img} alt={name} width={128} height={64} className="h-full w-auto object-contain" />
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="font-extrabold text-[var(--color-navy-900)]">{name}</h2>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white text-[var(--color-slate-600)] border border-[var(--color-slate-200)]">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 className="font-extrabold text-lg text-[var(--color-navy-900)]">{name}</h2>
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[var(--color-accent)]/15 text-[var(--color-accent)] border border-[var(--color-accent)]/30">
                     {badge}
                   </span>
                 </div>
-                <p className="text-sm text-[var(--color-slate-600)] mt-1">{desc}</p>
+                <p className="text-sm text-[var(--color-slate-500)] leading-relaxed">{desc}</p>
               </div>
             </div>
-            <div className="bg-white/60 rounded-xl p-4">
-              <p className="text-xs font-bold text-[var(--color-slate-500)] uppercase tracking-wider mb-2">
+
+            <div className="bg-[var(--color-slate-100)] rounded-xl p-4 border border-[var(--color-slate-200)]">
+              <p className="text-xs font-extrabold text-[var(--color-navy-900)] uppercase tracking-wider mb-3">
                 {fr ? 'Comment payer' : 'How to pay'}
               </p>
-              <ol className="flex flex-col gap-1.5">
+              <ol className="flex flex-col gap-2.5">
                 {steps.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-[var(--color-slate-700)]">
-                    <span className="shrink-0 h-5 w-5 rounded-full bg-[var(--color-navy-900)] text-white text-[10px] font-bold flex items-center justify-center mt-0.5">
+                  <li key={i} className="flex items-center gap-3 text-sm text-[var(--color-navy-900)] font-medium">
+                    <span className="shrink-0 h-6 w-6 rounded-full bg-[var(--color-navy-900)] text-white text-xs font-extrabold flex items-center justify-center">
                       {i + 1}
                     </span>
-                    {s}
+                    <span>{s}</span>
                   </li>
                 ))}
               </ol>
