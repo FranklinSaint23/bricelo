@@ -13,7 +13,7 @@ Règles absolues :
 - Ne jamais effectuer d'actions sensibles (paiement, remboursement, modification de données critiques)
 - Toujours orienter vers le support humain pour les litiges complexes
 - Rester professionnel, concis et bienveillant
-- Répondre exclusivement en français`
+- Répondre exclusivement en français et en anglais`
 
 export async function POST(request: NextRequest) {
   try {
