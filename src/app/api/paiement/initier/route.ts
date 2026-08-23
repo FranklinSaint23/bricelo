@@ -7,18 +7,28 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+    if (!user) return NextResponse.json({ error: 'Non authentifié. Veuillez vous connecter.' }, { status: 401 })
 
     const { orderIds, amount } = await request.json()
     if (!orderIds?.length || !amount) {
-      return NextResponse.json({ error: 'Données invalides' }, { status: 400 })
+      return NextResponse.json({ error: 'Données de commande invalides.' }, { status: 400 })
+    }
+
+    const apiKey = process.env.CINETPAY_API_KEY
+    const siteId = process.env.CINETPAY_SITE_ID
+
+    if (!apiKey || !siteId || apiKey === 'placeholder' || siteId === 'placeholder') {
+      return NextResponse.json(
+        { error: 'Clés API CinetPay non configurées. Veuillez renseigner CINETPAY_API_KEY et CINETPAY_SITE_ID dans votre fichier .env.local.' },
+        { status: 400 }
+      )
     }
 
     const transactionRef = `BRICELO-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
     const adminClient = getAdminClient()
 
-    // 1. Créer une ligne de paiement dans 'payments' pour chaque sous-commande boutique
+    // 1. Enregistrer une ligne de paiement en attente dans la table 'payments' pour chaque commande
     for (let i = 0; i < orderIds.length; i++) {
       const oid = orderIds[i]
       const { data: ord } = await adminClient.from('orders').select('total').eq('id', oid).single()
@@ -40,32 +50,36 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 2. Initialisation CinetPay avec la référence principale
+    // 2. Initialiser le paiement avec l'API officielle CinetPay v2
     const cinetpayRes = await fetch('https://api-checkout.cinetpay.com/v2/payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apikey:           process.env.CINETPAY_API_KEY,
-        site_id:          process.env.CINETPAY_SITE_ID,
+        apikey:           apiKey,
+        site_id:          siteId,
         transaction_id:   transactionRef,
         amount,
         currency:         'XAF',
         description:      `Commande BRICELO - ${orderIds.length} boutique(s)`,
         notify_url:       `${siteUrl}/api/paiement/webhook`,
-        return_url:       `${siteUrl}/commandes?paiement=success`,
+        return_url:       `${siteUrl}/commande-confirmee?orders=${orderIds.join(',')}&paiement=success`,
         channels:         'ALL',
         lang:             'fr',
         customer_id:      user.id,
-        customer_email:   user.email,
+        customer_email:   user.email || `${user.phone || 'client'}@bricelo.cm`,
       }),
     })
 
     const cinetpayData = await cinetpayRes.json()
-    if (cinetpayData.code !== '201') {
-      throw new Error(cinetpayData.message ?? 'Erreur CinetPay')
+
+    if (cinetpayData.code === '201' && cinetpayData.data?.payment_url) {
+      return NextResponse.json({ payment_url: cinetpayData.data.payment_url })
     }
 
-    return NextResponse.json({ payment_url: cinetpayData.data.payment_url })
+    return NextResponse.json(
+      { error: cinetpayData.message || cinetpayData.description || 'Erreur lors de l’initialisation CinetPay.' },
+      { status: 400 }
+    )
   } catch (err: any) {
     console.error('[payment/initier]', err)
     return NextResponse.json({ error: err.message ?? 'Erreur serveur' }, { status: 500 })

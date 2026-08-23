@@ -6,13 +6,9 @@ import { CinetPayButton } from '@/components/checkout/cinetpay-button'
 import { formatPrice } from '@/lib/utils'
 import { ShieldCheck, Store, MapPin, ShoppingBag } from 'lucide-react'
 
-interface PageProps { searchParams: Promise<{ orders?: string }> }
-
-export default async function PaiementPage({ searchParams }: PageProps) {
+export default async function PaiementPage({ searchParams }: { searchParams: Promise<{ orders?: string }> }) {
   const params = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
   const orderIds = params.orders?.split(',').filter(Boolean) ?? []
   if (!orderIds.length) redirect('/panier')
@@ -28,7 +24,6 @@ export default async function PaiementPage({ searchParams }: PageProps) {
       )
     `)
     .in('id', orderIds)
-    .eq('user_id', user.id)
 
   if (!orders?.length) redirect('/commandes')
 
