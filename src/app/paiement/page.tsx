@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/server'
+import { getAdminClient } from '@/lib/supabase/admin'
 import { Navbar } from '@/components/layout/navbar'
 import { CinetPayButton } from '@/components/checkout/cinetpay-button'
 import { formatPrice } from '@/lib/utils'
@@ -8,26 +8,40 @@ import { ShieldCheck, Store, MapPin, ShoppingBag } from 'lucide-react'
 
 export default async function PaiementPage({ searchParams }: { searchParams: Promise<{ orders?: string }> }) {
   const params = await searchParams
-  const supabase = await createClient()
-
   const orderIds = params.orders?.split(',').filter(Boolean) ?? []
   if (!orderIds.length) redirect('/panier')
 
-  const { data: orders } = await supabase
+  const adminClient = getAdminClient()
+
+  // 1. Récupérer les commandes de base avec le client admin (sans restriction RLS)
+  const { data: basicOrders, error: baseErr } = await adminClient
     .from('orders')
-    .select(`
-      id, total, subtotal, shipping_cost, status, shipping_address,
-      store:stores ( name, city ),
-      order_items (
-        id, quantity, unit_price, total_price,
-        product:products ( name, images )
-      )
-    `)
+    .select('id, total, subtotal, shipping_cost, status, shipping_address, store_id')
     .in('id', orderIds)
 
-  if (!orders?.length) redirect('/commandes')
+  if (baseErr) {
+    console.error('[PaiementPage] Erreur récupération commandes:', baseErr)
+  }
 
-  const grandTotal = orders.reduce((s, o) => s + o.total, 0)
+  const ordersList = basicOrders ?? []
+
+  // 2. Charger les boutiques et les articles pour chaque commande
+  const enrichedOrders = await Promise.all(
+    ordersList.map(async (order) => {
+      const [{ data: store }, { data: items }] = await Promise.all([
+        adminClient.from('stores').select('name, city').eq('id', order.store_id).maybeSingle(),
+        adminClient.from('order_items').select('id, quantity, unit_price, total_price, snapshot, product:products(name, images)').eq('order_id', order.id),
+      ])
+
+      return {
+        ...order,
+        store: store ?? { name: 'Boutique BRICELO', city: 'Douala' },
+        order_items: items ?? [],
+      }
+    })
+  )
+
+  const grandTotal = enrichedOrders.reduce((s, o) => s + (o.total || 0), 0)
 
   return (
     <>
@@ -50,74 +64,81 @@ export default async function PaiementPage({ searchParams }: { searchParams: Pro
               <span>Récapitulatif de votre commande</span>
             </div>
 
-            {orders.map((order) => {
-              const storeName = (order.store as any)?.name ?? 'Boutique BRICELO'
-              const storeCity = (order.store as any)?.city
-              const items = order.order_items ?? []
-              const addr = (order.shipping_address as any) ?? null
+            {enrichedOrders.length === 0 ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-800 text-center font-medium">
+                Commande #{orderIds[0]?.slice(0, 8).toUpperCase()} prêtre pour le règlement.
+              </div>
+            ) : (
+              enrichedOrders.map((order) => {
+                const storeName = (order.store as any)?.name ?? 'Boutique BRICELO'
+                const storeCity = (order.store as any)?.city
+                const items = order.order_items ?? []
+                const addr = (order.shipping_address as any) ?? null
 
-              return (
-                <div key={order.id} className="bg-[var(--color-slate-50)] rounded-xl border border-[var(--color-slate-200)] p-4 flex flex-col gap-3">
-                  {/* Nom de la boutique / vendeur */}
-                  <div className="flex items-center justify-between pb-2 border-b border-[var(--color-slate-200)]">
-                    <div className="flex items-center gap-2">
-                      <Store className="h-4 w-4 text-[var(--color-navy-900)] shrink-0" />
-                      <span className="font-bold text-sm text-[var(--color-navy-900)]">{storeName}</span>
-                      {storeCity && (
-                        <span className="text-[10px] bg-white border border-[var(--color-slate-200)] px-2 py-0.5 rounded-full text-[var(--color-slate-500)] font-medium">
-                          {storeCity}
-                        </span>
-                      )}
+                return (
+                  <div key={order.id} className="bg-[var(--color-slate-50)] rounded-xl border border-[var(--color-slate-200)] p-4 flex flex-col gap-3">
+                    {/* Nom de la boutique / vendeur */}
+                    <div className="flex items-center justify-between pb-2 border-b border-[var(--color-slate-200)]">
+                      <div className="flex items-center gap-2">
+                        <Store className="h-4 w-4 text-[var(--color-navy-900)] shrink-0" />
+                        <span className="font-bold text-sm text-[var(--color-navy-900)]">{storeName}</span>
+                        {storeCity && (
+                          <span className="text-[10px] bg-white border border-[var(--color-slate-200)] px-2 py-0.5 rounded-full text-[var(--color-slate-500)] font-medium">
+                            {storeCity}
+                          </span>
+                        )}
+                      </div>
+                      <span className="font-mono text-xs text-[var(--color-slate-400)]">#{order.id.slice(0, 8).toUpperCase()}</span>
                     </div>
-                    <span className="font-mono text-xs text-[var(--color-slate-400)]">#{order.id.slice(0, 8).toUpperCase()}</span>
-                  </div>
 
-                  {/* Articles commandés */}
-                  <div className="flex flex-col gap-2.5">
-                    {items.map((item: any) => {
-                      const prodName = item.product?.name ?? 'Produit'
-                      const img = item.product?.images?.[0]
-                      return (
-                        <div key={item.id} className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-white border border-[var(--color-slate-200)] shrink-0 overflow-hidden relative">
-                            {img ? (
-                              <Image src={img} alt={prodName} fill className="object-cover" sizes="40px" />
-                            ) : (
-                              <div className="h-full w-full flex items-center justify-center text-[10px] text-slate-400">BRICELO</div>
-                            )}
+                    {/* Articles commandés */}
+                    <div className="flex flex-col gap-2.5">
+                      {items.map((item: any) => {
+                        const snap = (item.snapshot as any) ?? {}
+                        const prodName = item.product?.name ?? snap.name ?? 'Article BRICELO'
+                        const img = item.product?.images?.[0] ?? snap.image
+                        return (
+                          <div key={item.id} className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-lg bg-white border border-[var(--color-slate-200)] shrink-0 overflow-hidden relative">
+                              {img ? (
+                                <Image src={img} alt={prodName} fill className="object-cover" sizes="40px" />
+                              ) : (
+                                <div className="h-full w-full flex items-center justify-center text-[10px] text-slate-400">BRICELO</div>
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold text-[var(--color-navy-900)] truncate">{prodName}</p>
+                              <p className="text-[11px] text-[var(--color-slate-500)]">Qté : {item.quantity} × {formatPrice(item.unit_price)}</p>
+                            </div>
+                            <span className="text-xs font-bold text-[var(--color-navy-900)] shrink-0">{formatPrice(item.total_price)}</span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-[var(--color-navy-900)] truncate">{prodName}</p>
-                            <p className="text-[11px] text-[var(--color-slate-500)]">Qté : {item.quantity} × {formatPrice(item.unit_price)}</p>
-                          </div>
-                          <span className="text-xs font-bold text-[var(--color-navy-900)] shrink-0">{formatPrice(item.total_price)}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {/* Adresse de livraison */}
-                  {addr && (
-                    <div className="pt-2 border-t border-dashed border-[var(--color-slate-200)] flex items-start gap-1.5 text-[11px] text-[var(--color-slate-600)]">
-                      <MapPin className="h-3.5 w-3.5 text-[var(--color-slate-400)] shrink-0 mt-0.5" />
-                      <span className="truncate">Livraison à {addr.full_name || 'Client'} • {addr.address_line || addr.address_line1 || addr.city} ({addr.phone})</span>
+                        )
+                      })}
                     </div>
-                  )}
 
-                  {/* Sous-total commande boutique */}
-                  <div className="flex justify-between items-center pt-2 text-xs font-medium text-[var(--color-slate-600)]">
-                    <span>Sous-total + Livraison ({formatPrice(order.shipping_cost)})</span>
-                    <span className="font-bold text-[var(--color-navy-900)]">{formatPrice(order.total)}</span>
+                    {/* Adresse de livraison */}
+                    {addr && (
+                      <div className="pt-2 border-t border-dashed border-[var(--color-slate-200)] flex items-start gap-1.5 text-[11px] text-[var(--color-slate-600)]">
+                        <MapPin className="h-3.5 w-3.5 text-[var(--color-slate-400)] shrink-0 mt-0.5" />
+                        <span className="truncate">Livraison à {addr.full_name || 'Client'} • {addr.address_line || addr.address_line1 || addr.city} ({addr.phone})</span>
+                      </div>
+                    )}
+
+                    {/* Sous-total commande boutique */}
+                    <div className="flex justify-between items-center pt-2 text-xs font-medium text-[var(--color-slate-600)]">
+                      <span>Sous-total + Livraison ({formatPrice(order.shipping_cost)})</span>
+                      <span className="font-bold text-[var(--color-navy-900)]">{formatPrice(order.total)}</span>
+                    </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })
+            )}
 
             {/* Total Global */}
             <div className="bg-[var(--color-navy-900)] text-white rounded-xl p-4 flex items-center justify-between shadow-xs">
               <div>
                 <p className="text-xs text-white/70">Montant total de la commande</p>
-                <p className="text-xs font-medium text-[var(--color-accent)]">{orders.length} boutique{orders.length > 1 ? 's' : ''} au total</p>
+                <p className="text-xs font-medium text-[var(--color-accent)]">{enrichedOrders.length} boutique{enrichedOrders.length > 1 ? 's' : ''} au total</p>
               </div>
               <span className="text-xl font-extrabold text-white">{formatPrice(grandTotal)}</span>
             </div>

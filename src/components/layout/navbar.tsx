@@ -102,6 +102,11 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   const [tickerIdx, setTickerIdx]     = useState(0)
   const [tickerKey, setTickerKey]     = useState(0)
   const [openCat, setOpenCat]         = useState<string | null>(null)
+  const [mounted, setMounted]         = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const tickerItems = [
     { icon: TICKER_ICONS[0], text: t.ticker1 },
@@ -343,7 +348,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               className="relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-md hover:bg-[var(--color-slate-100)] transition-colors">
               <div className="relative">
                 <ShoppingCart className="h-6 w-6 text-[var(--color-navy-900)]" />
-                {cartCount > 0 && (
+                {mounted && cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 h-4.5 w-4.5 rounded-full bg-[var(--color-accent)] text-[10px] font-bold text-[var(--color-navy-900)] flex items-center justify-center shadow-sm">
                     {cartCount > 9 ? '9+' : cartCount}
                   </span>
