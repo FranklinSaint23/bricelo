@@ -6,6 +6,7 @@ import { ChevronLeft, MapPin, Package, CheckCircle2, Clock, Truck, Star, XCircle
 import { Badge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
+import { generateOrderReceiptPDF } from '@/lib/pdf-generator'
 
 type OrderItem = {
   id: string
@@ -80,9 +81,9 @@ export function OrderDetailView({ order }: { order: Order }) {
         {/* Action Buttons Top */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => window.print()}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-navy-900)] text-white text-xs font-bold rounded-lg hover:bg-[var(--color-navy-950)] transition-colors shadow-sm"
-            title={fr ? 'Télécharger / Imprimer le reçu en PDF' : 'Download / Print PDF receipt'}
+            onClick={() => generateOrderReceiptPDF(order as any)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-navy-900)] text-white text-xs font-bold rounded-lg hover:bg-[var(--color-navy-950)] transition-colors shadow-sm cursor-pointer"
+            title={fr ? 'Télécharger le reçu en PDF' : 'Download PDF receipt'}
           >
             <Download className="h-3.5 w-3.5 text-[var(--color-accent)]" />
             <span>{fr ? 'Télécharger le reçu (PDF)' : 'Download PDF'}</span>
@@ -259,18 +260,11 @@ export function OrderDetailView({ order }: { order: Order }) {
           </Link>
         </div>
 
-        {/* Bottom Actions: Télécharger Reçu PDF & Sortir */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
-          <button
-            onClick={() => window.print()}
-            className="flex-1 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl bg-[var(--color-navy-900)] text-white text-sm font-bold hover:bg-[var(--color-navy-950)] transition-colors shadow-sm"
-          >
-            <Download className="h-4 w-4 text-[var(--color-accent)]" />
-            {fr ? 'Télécharger le reçu (PDF)' : 'Download PDF receipt'}
-          </button>
+        {/* Bottom Actions: Sortir */}
+        <div className="flex pt-2">
           <Link
             href="/commandes"
-            className="flex-1 inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-[var(--color-slate-300)] text-sm font-bold text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors"
+            className="w-full inline-flex items-center justify-center gap-2 h-11 px-5 rounded-xl border border-[var(--color-slate-300)] text-sm font-bold text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors"
           >
             <LogOut className="h-4 w-4" />
             {fr ? 'Sortir' : 'Exit'}

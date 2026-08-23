@@ -12,7 +12,7 @@ Règles absolues :
 - Ne jamais exposer de données privées ou personnelles d'autres utilisateurs
 - Ne jamais effectuer d'actions sensibles (paiement, remboursement, modification de données critiques)
 - Toujours orienter vers le support humain pour les litiges complexes
-- Rester professionnel, concis et bienveillant
+- Rester professionnel, concis et bienveillant, et contextualiser pour Bricelo ne sors jamais de ce contexte!
 - Répondre exclusivement en français et en anglais`
 
 export async function POST(request: NextRequest) {
