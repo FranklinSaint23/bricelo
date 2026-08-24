@@ -1,3 +1,5 @@
+'use server'
+
 import { getAdminClient } from '@/lib/supabase/admin'
 
 export type OrderNotificationData = {
@@ -11,7 +13,7 @@ export type OrderNotificationData = {
   itemsCount: number
 }
 
-export function buildAdminWhatsAppLink(data: OrderNotificationData): string {
+export async function buildAdminWhatsAppLink(data: OrderNotificationData): Promise<string> {
   const adminPhone = '237652704218'
   const payLabel = data.paymentMethod === 'cash' ? 'Paiement à la livraison (Cash)' : 'Paiement en ligne (Mobile Money / CinetPay)'
 
@@ -51,10 +53,9 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
     const adminEmail = 'bricelo237@gmail.com'
     const payLabel = data.paymentMethod === 'cash' ? 'Paiement à la livraison (Espèces)' : 'Paiement en ligne (Mobile Money)'
 
-    console.log(`[Notification Email BRICELO] Email envoyé à ${adminEmail} pour la commande #${data.orderId.slice(0, 8).toUpperCase()}`)
+    console.log(`[Notification Email BRICELO] Notification traitée pour la commande #${data.orderId.slice(0, 8).toUpperCase()}`)
 
-    // Si une clé d'API d'envoi d'email (comme Resend ou SendGrid) est ajoutée, on l'exécute automatiquement
-    if (process.env.RESEND_API_KEY) {
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'placeholder') {
       await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
