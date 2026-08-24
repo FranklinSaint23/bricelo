@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle2, Phone, Package, ArrowRight } from 'lucide-react'
+import { CheckCircle2, Phone, Package, ArrowRight, MessageSquare } from 'lucide-react'
 import { Suspense } from 'react'
 import { useLanguage } from '@/components/providers/language-provider'
 
@@ -15,6 +15,10 @@ function ConfirmationContent() {
     { icon: Phone,   title: t.phoneConfirm,  desc: t.phoneConfirmDesc },
     { icon: Package, title: t.prepDelivery,  desc: t.prepDeliveryDesc },
   ]
+
+  const firstOrderId = orderIds[0]?.slice(0, 8).toUpperCase() ?? ''
+  const whatsappText = `Bonjour l'équipe BRICELO, je viens de passer la commande #${firstOrderId}. Pouvez-vous confirmer ma livraison ?`
+  const whatsappUrl = `https://wa.me/237652704218?text=${encodeURIComponent(whatsappText)}`
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-16">
@@ -29,12 +33,12 @@ function ConfirmationContent() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--color-navy-900)] mb-3">
           {t.orderReceived}
         </h1>
-        <p className="text-[var(--color-slate-600)] mb-8 leading-relaxed">
+        <p className="text-[var(--color-slate-600)] mb-6 leading-relaxed">
           {t.orderReceivedSub}
         </p>
 
         {orderIds.length > 0 && (
-          <div className="bg-[var(--color-slate-100)] rounded-xl px-5 py-4 mb-8 text-sm">
+          <div className="bg-[var(--color-slate-100)] rounded-xl px-5 py-4 mb-6 text-sm">
             <p className="text-[var(--color-slate-500)] text-xs font-semibold uppercase tracking-wider mb-2">
               {orderIds.length > 1 ? t.orderRefs : t.orderRef}
             </p>
@@ -45,6 +49,19 @@ function ConfirmationContent() {
             ))}
           </div>
         )}
+
+        {/* Bouton WhatsApp direct pour le client */}
+        <div className="mb-8">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md hover:shadow-lg transition-all"
+          >
+            <MessageSquare className="h-5 w-5" />
+            <span>Notifier le support BRICELO sur WhatsApp (+237 6 52 70 42 18)</span>
+          </a>
+        </div>
 
         <div className="grid gap-3 mb-10">
           {steps.map(({ icon: Icon, title, desc }) => (

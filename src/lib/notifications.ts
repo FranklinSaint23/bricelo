@@ -53,17 +53,17 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
     const adminEmail = 'bricelo237@gmail.com'
     const payLabel = data.paymentMethod === 'cash' ? 'Paiement à la livraison (Espèces)' : 'Paiement en ligne (Mobile Money)'
 
-    console.log(`[Notification Email BRICELO] Notification traitée pour la commande #${data.orderId.slice(0, 8).toUpperCase()}`)
+    console.log(`[Notification Email BRICELO] Traitement pour la commande #${data.orderId.slice(0, 8).toUpperCase()}`)
 
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'placeholder') {
-      await fetch('https://api.resend.com/emails', {
+      const res = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'BRICELO Marketplace <commandes@bricelo.cm>',
+          from: 'BRICELO Marketplace <onboarding@resend.dev>',
           to: [adminEmail],
           subject: `📦 [BRICELO] Nouvelle commande #${data.orderId.slice(0, 8).toUpperCase()} - ${data.totalAmount.toLocaleString('fr-FR')} FCFA`,
           html: `
@@ -82,6 +82,11 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
           `,
         }),
       })
+
+      const resData = await res.json()
+      console.log('[Resend API Result]:', resData)
+    } else {
+      console.log('[Resend API] Clé RESEND_API_KEY absente ou égale à placeholder dans .env.local')
     }
   } catch (err) {
     console.error('[sendOrderNotificationEmail] Erreur:', err)
