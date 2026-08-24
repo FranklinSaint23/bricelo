@@ -12,10 +12,10 @@ interface BadgeProps {
 const variants: Record<BadgeVariant, string> = {
   default: 'bg-[var(--color-slate-100)] text-[var(--color-slate-700)]',
   navy:    'bg-[var(--color-navy-900)] text-white',
-  success: 'bg-green-100 text-green-700',
-  warning: 'bg-amber-100 text-amber-700',
-  danger:  'bg-red-100 text-red-700',
-  info:    'bg-sky-100 text-sky-700',
+  success: 'bg-green-100 text-green-700 font-semibold',
+  warning: 'bg-amber-100 text-amber-800 font-semibold',
+  danger:  'bg-red-100 text-red-700 font-semibold',
+  info:    'bg-sky-100 text-sky-800 font-semibold',
 }
 
 export function Badge({ children, variant = 'default', size = 'md', className }: BadgeProps) {
@@ -33,7 +33,7 @@ export function Badge({ children, variant = 'default', size = 'md', className }:
   )
 }
 
-export function OrderStatusBadge({ status }: { status: string }) {
+export function OrderStatusBadge({ status, role = 'admin' }: { status: string; role?: 'admin' | 'vendor' | 'customer' }) {
   const map: Record<string, BadgeVariant> = {
     pending:   'warning',
     confirmed: 'info',
@@ -43,14 +43,38 @@ export function OrderStatusBadge({ status }: { status: string }) {
     cancelled: 'danger',
     returned:  'danger',
   }
-  const labels: Record<string, string> = {
+
+  const adminLabels: Record<string, string> = {
+    pending:   'En attente de paiement',
+    confirmed: 'Confirmée (À ramasser)',
+    preparing: 'Ramassée chez le vendeur',
+    shipped:   'En cours de livraison',
+    delivered: 'Livrée & Encaissée',
+    cancelled: 'Annulée',
+    returned:  'Retournée',
+  }
+
+  const vendorLabels: Record<string, string> = {
+    pending:   'À emballer',
+    confirmed: 'Prêt pour ramassage BRICELO',
+    preparing: 'Récupéré par BRICELO',
+    shipped:   'En livraison BRICELO',
+    delivered: 'Livré au client',
+    cancelled: 'Annulée',
+    returned:  'Retourné',
+  }
+
+  const customerLabels: Record<string, string> = {
     pending:   'En attente',
     confirmed: 'Confirmée',
-    preparing: 'En préparation',
-    shipped:   'Expédiée',
+    preparing: 'Préparation & Ramassage',
+    shipped:   'En cours de livraison',
     delivered: 'Livrée',
     cancelled: 'Annulée',
     returned:  'Retournée',
   }
+
+  const labels = role === 'vendor' ? vendorLabels : role === 'customer' ? customerLabels : adminLabels
+
   return <Badge variant={map[status] ?? 'default'}>{labels[status] ?? status}</Badge>
 }

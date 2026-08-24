@@ -27,10 +27,10 @@ export default async function VendorOrdersPage() {
     .order('created_at', { ascending: false })
 
   const statusLabels: Record<string, string> = {
-    pending: 'En attente',
-    confirmed: 'Confirmée',
-    shipped: 'Expédiée',
-    delivered: 'Livrée',
+    pending: 'À emballer',
+    confirmed: 'Prêt pour ramassage BRICELO',
+    shipped: 'En livraison BRICELO',
+    delivered: 'Livré au client',
     cancelled: 'Annulée',
   }
 
@@ -42,13 +42,13 @@ export default async function VendorOrdersPage() {
     <div className="p-6 lg:p-8">
       <div className="mb-6">
         <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Commandes reçues</h1>
-        <p className="text-sm text-[var(--color-slate-500)] mt-0.5">{orders?.length ?? 0} commande{(orders?.length ?? 0) > 1 ? 's' : ''} au total</p>
+        <p className="text-sm text-[var(--color-slate-500)] mt-0.5">{orders?.length ?? 0} commande{(orders?.length ?? 0) > 1 ? 's' : ''} au total • Préparation & Ramassage par BRICELO</p>
       </div>
 
       {/* Compteurs par statut */}
       <div className="flex flex-wrap gap-2 mb-6">
         {Object.entries(statusLabels).map(([key, label]) => (
-          <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[var(--color-slate-200)] text-xs font-medium text-[var(--color-slate-600)]">
+          <div key={key} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-[var(--color-slate-200)] text-xs font-medium text-[var(--color-slate-600)] shadow-2xs">
             <span>{label}</span>
             <span className="h-4 w-4 rounded-full bg-[var(--color-slate-100)] flex items-center justify-center text-[10px] font-bold text-[var(--color-navy-900)]">{counts[key]}</span>
           </div>
@@ -64,7 +64,7 @@ export default async function VendorOrdersPage() {
       ) : (
         <div className="flex flex-col gap-4">
           {orders.map((order) => (
-            <div key={order.id} className="bg-white rounded-xl border border-[var(--color-slate-200)] overflow-hidden">
+            <div key={order.id} className="bg-white rounded-xl border border-[var(--color-slate-200)] overflow-hidden shadow-2xs">
               {/* En-tête commande */}
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[var(--color-slate-100)]">
                 <div className="flex items-center gap-4">
@@ -83,7 +83,7 @@ export default async function VendorOrdersPage() {
                     <ValidateCashButton orderId={order.id} />
                   )}
                   <p className="text-lg font-bold text-[var(--color-navy-900)]">{formatPrice(order.total)}</p>
-                  <OrderStatusBadge status={order.status} />
+                  <OrderStatusBadge status={order.status} role="vendor" />
                 </div>
               </div>
 

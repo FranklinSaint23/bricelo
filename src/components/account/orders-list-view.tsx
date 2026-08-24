@@ -4,7 +4,7 @@ import { useState, useTransition, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { ChevronRight, ShoppingBag, PackageSearch, Trash2, Loader2 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Badge, OrderStatusBadge } from '@/components/ui/badge'
 import { formatPrice } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
 import { deleteUserOrder } from '@/app/(account)/commandes/actions'
@@ -191,9 +191,7 @@ function OrderItemCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap mb-1">
               <span className="font-bold text-[var(--color-navy-900)] text-sm">#{order.id.slice(0, 8).toUpperCase()}</span>
-              <Badge variant={STATUS_VARIANTS[order.status] ?? 'default'}>
-                {STATUS_LABELS[order.status] ?? order.status}
-              </Badge>
+              <OrderStatusBadge status={order.status} role="customer" />
             </div>
             <p className="text-xs text-[var(--color-slate-500)]">
               {new Date(order.created_at).toLocaleDateString(fr ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}

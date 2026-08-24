@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
+import { sendOrderNotificationEmail } from '@/lib/notifications'
 import type { Address } from '@/types'
 
 interface Props { addresses: Address[]; userId: string | null }
@@ -174,6 +175,17 @@ export function CheckoutForm({ addresses, userId }: Props) {
         }))
         await supabase.from('order_items').insert(orderItems)
         orderIds.push(order.id)
+
+        sendOrderNotificationEmail({
+          orderId: order.id,
+          customerName: shippingAddress.full_name || 'Client',
+          customerPhone: shippingAddress.phone || '',
+          city: shippingAddress.city || 'Douala',
+          storeName: (storeItems[0]?.product?.store as any)?.name ?? 'Boutique BRICELO',
+          totalAmount: storeSub + storeShipping,
+          paymentMethod: paymentMethod,
+          itemsCount: storeItems.length,
+        })
       }
 
       clearCart()

@@ -2,6 +2,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardLayoutClient } from '@/components/dashboard/dashboard-layout-client'
+import { AdminOrderAlert } from '@/components/admin/admin-order-alert'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const headersList = await headers()
@@ -20,6 +21,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <DashboardLayoutClient profile={profile} variant="admin">
       {children}
+      <AdminOrderAlert />
     </DashboardLayoutClient>
   )
 }
