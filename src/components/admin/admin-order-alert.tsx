@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Bell, ShoppingBag, X, MessageSquare } from 'lucide-react'
+import { Bell, X, Mail } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 
 function playChimeSound() {
@@ -70,15 +70,6 @@ export function AdminOrderAlert() {
   const amount = latestOrder.total ?? 0
   const addr = latestOrder.shipping_address ?? {}
   const clientName = addr.full_name || 'Client'
-  const clientPhone = addr.phone || ''
-
-  const whatsappText = `📦 *NOUVELLE COMMANDE BRICELO !*
-• *N° Commande :* #${orderId}
-• *Client :* ${clientName} (${clientPhone})
-• *Montant :* ${amount.toLocaleString('fr-FR')} FCFA
-• *Mode :* ${latestOrder.payment_method === 'cash' ? 'Espèces à la livraison' : 'Paiement mobile / en ligne'}`
-
-  const whatsappUrl = `https://wa.me/237652704218?text=${encodeURIComponent(whatsappText)}`
 
   return (
     <div className="fixed bottom-5 right-5 z-50 max-w-md w-full bg-slate-900 text-white border-2 border-amber-400 rounded-2xl p-4 shadow-2xl animate-bounce">
@@ -104,15 +95,10 @@ export function AdminOrderAlert() {
 
       <div className="mt-3 pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
         <span className="text-slate-300">Client: <strong>{clientName}</strong></span>
-        <a
-          href={whatsappUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black transition-colors"
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          <span>Alerter WhatsApp</span>
-        </a>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-medium">
+          <Mail className="h-3.5 w-3.5 text-amber-400" />
+          <span>E-mail envoyé</span>
+        </span>
       </div>
     </div>
   )

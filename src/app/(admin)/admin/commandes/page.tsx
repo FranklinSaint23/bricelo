@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ShoppingBag, Smartphone, Banknote, MessageSquare } from 'lucide-react'
+import { ShoppingBag, Smartphone, Banknote } from 'lucide-react'
 import { OrderStatusBadge } from '@/components/ui/badge'
 import { ValidateCashButton } from '@/components/admin/validate-cash-button'
 import { formatPrice, formatDate } from '@/lib/utils'
@@ -69,9 +69,6 @@ export default async function AdminCommandesPage() {
                   const storePhone = (o.store as any)?.phone || ''
                   const storeName = (o.store as any)?.name ?? 'Boutique BRICELO'
 
-                  const clientWaText = `Bonjour ${clientName}, c'est l'équipe BRICELO concernant votre commande #${o.id.slice(0, 8).toUpperCase()} de ${formatPrice(o.total)}.`
-                  const storeWaText = `Bonjour ${storeName}, c'est BRICELO concernant le ramassage de la commande #${o.id.slice(0, 8).toUpperCase()}.`
-
                   return (
                     <tr key={o.id} className="hover:bg-[var(--color-slate-50)] transition-colors">
                       <td className="px-4 py-3.5 font-mono text-xs text-[var(--color-slate-400)]">#{o.id.slice(0, 8).toUpperCase()}</td>
@@ -92,30 +89,6 @@ export default async function AdminCommandesPage() {
                       <td className="px-4 py-3.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           {isCashPending && <ValidateCashButton orderId={o.id} />}
-                          
-                          {clientPhone && (
-                            <a
-                              href={`https://wa.me/${clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(clientWaText)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Contacter le client sur WhatsApp"
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg hover:bg-emerald-100 transition-colors"
-                            >
-                              <MessageSquare className="h-3 w-3" /> Client
-                            </a>
-                          )}
-
-                          {storePhone && (
-                            <a
-                              href={`https://wa.me/${storePhone.replace(/\D/g, '')}?text=${encodeURIComponent(storeWaText)}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="Contacter le vendeur pour le ramassage"
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-100 transition-colors"
-                            >
-                              <MessageSquare className="h-3 w-3" /> Vendeur
-                            </a>
-                          )}
                         </div>
                       </td>
                     </tr>
