@@ -28,18 +28,28 @@ export async function submitReview(
     if (withName) base.reviewer_name = reviewerName.trim()
 
     if (user) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (supabase.from('reviews') as any)
-        .upsert(base, { onConflict: 'product_id,user_id' })
+      // Vérifier si un avis existe déjà pour ce produit et cet utilisateur
+      const { data: existing } = await (supabase.from('reviews') as any)
+        .select('id')
+        .eq('product_id', productId)
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+      if (existing) {
+        return (supabase.from('reviews') as any)
+          .update(base)
+          .eq('id', existing.id)
+      } else {
+        return (supabase.from('reviews') as any).insert(base)
+      }
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (supabase.from('reviews') as any).insert(base)
     }
   }
 
   let { error } = await doInsert(true)
 
-  // Si la colonne reviewer_name n'existe pas encore (migration non exécutée)
+  // Si la colonne reviewer_name n'existe pas encore
   if (error && (error.message.includes('reviewer_name') || error.code === '42703')) {
     const res = await doInsert(false)
     error = res.error
