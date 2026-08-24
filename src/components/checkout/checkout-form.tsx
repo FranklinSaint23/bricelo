@@ -142,9 +142,11 @@ export function CheckoutForm({ addresses, userId }: Props) {
 
     try {
       const orderIds: string[] = []
-      for (const [storeId, storeItems] of Object.entries(byStore)) {
+      const storeEntries = Object.entries(byStore)
+      for (let index = 0; index < storeEntries.length; index++) {
+        const [storeId, storeItems] = storeEntries[index]
         const storeCity = (storeItems[0]?.product.store as any)?.city || 'Douala'
-        const storeShipping = getShippingForStore(storeCity)
+        const storeShipping = index === 0 ? getShippingForStore(storeCity) : 0
         const storeSub = storeItems.reduce(
           (s, i) => s + (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity, 0,
         )
