@@ -80,11 +80,12 @@ export async function submitVendorApplication(data: VendorApplicationPayload) {
     }
   }
 
-  // 2. Insérer la candidature dans 'vendor_applications'
+  // 2. Insérer la candidature dans 'vendor_applications' avec le mot de passe souhaité
   const { password, ...applicationData } = data
 
   const { error } = await supabase.from('vendor_applications').insert({
     ...applicationData,
+    desired_password: password || null,
     user_id: userId,
     status: 'pending',
   })
