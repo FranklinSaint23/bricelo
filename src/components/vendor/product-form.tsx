@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, X, Plus, Sparkles, Trash2, Layers, Tag } from 'lucide-react'
+import { Upload, X, Plus, Sparkles, Trash2, Layers, Tag, BedDouble, Shirt, Footprints, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -71,6 +71,7 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
   const [customName, setCustomName]     = useState('Nombre de places')
   const [customValue, setCustomValue]   = useState('')
   const [customAdj, setCustomAdj]       = useState('0')
+  const [variantError, setVariantError] = useState<string | null>(null)
 
   function handleNameChange(val: string) {
     setName(val)
@@ -122,14 +123,24 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
     setVariantsList(items)
   }
 
-  function addCustomVariant() {
-    if (!customValue.trim()) return
+  function addCustomVariant(e?: React.SyntheticEvent) {
+    if (e) e.preventDefault()
+    setVariantError(null)
+    const nameVal = customName.trim() || 'Option'
+    const optVal  = customValue.trim()
+
+    if (!optVal) {
+      setVariantError('Veuillez remplir la "Valeur / Option" (ex: 3 places, 15 CM, XL, Bleu...).')
+      return
+    }
+
     const newItem: VariantFormItem = {
-      name: customName.trim() || 'Option',
-      value: customValue.trim(),
+      name: nameVal,
+      value: optVal,
       price_adjustment: Number(customAdj) || 0,
       stock: Number(stock) || 10,
     }
+
     setVariantsList((prev) => [...prev, newItem])
     setCustomValue('')
     setCustomAdj('0')
@@ -348,49 +359,56 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
                   <button
                     type="button"
                     onClick={applyMattressPreset}
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 transition-colors flex items-center gap-1"
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 transition-colors flex items-center gap-1.5"
                   >
-                    🛏️ Matelas (Places & Épaisseurs)
+                    <BedDouble className="h-4 w-4 text-amber-700" />
+                    <span>Matelas (Places & Épaisseurs)</span>
                   </button>
                   <button
                     type="button"
                     onClick={applyClothingPreset}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--color-slate-100)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-200)] transition-colors"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--color-slate-100)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-200)] transition-colors flex items-center gap-1.5"
                   >
-                    👕 Vêtements (S, M, L, XL, XXL)
+                    <Shirt className="h-4 w-4 text-slate-600" />
+                    <span>Vêtements (S, M, L, XL, XXL)</span>
                   </button>
                   <button
                     type="button"
                     onClick={applyShoesPreset}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--color-slate-100)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-200)] transition-colors"
+                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--color-slate-100)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-200)] transition-colors flex items-center gap-1.5"
                   >
-                    👞 Chaussures (Pointures 39-45)
+                    <Footprints className="h-4 w-4 text-slate-600" />
+                    <span>Chaussures (Pointures 39-45)</span>
                   </button>
                 </div>
               </div>
 
               {/* Formulaire d'ajout personnalisé */}
               <div className="bg-white p-4 rounded-xl border border-[var(--color-slate-200)] flex flex-col gap-3">
-                <p className="text-xs font-bold text-[var(--color-navy-900)]">➕ Ajouter une option personnalisée :</p>
+                <p className="text-xs font-bold text-[var(--color-navy-900)] flex items-center gap-1.5">
+                  <Plus className="h-4 w-4 text-[var(--color-accent)]" /> Ajouter une option personnalisée :
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Nom du Type</label>
+                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Nom du Type (ex: Places, Épaisseur)</label>
                     <input
                       type="text"
                       placeholder="Ex: Nombre de places, Épaisseur"
                       value={customName}
                       onChange={(e) => setCustomName(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomVariant(e) } }}
                       className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Valeur / Option</label>
+                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Valeur / Option *</label>
                     <input
                       type="text"
                       placeholder="Ex: 3 places (160/190) ou 15 CM"
                       value={customValue}
                       onChange={(e) => setCustomValue(e.target.value)}
-                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomVariant(e) } }}
+                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg font-semibold text-[var(--color-navy-900)]"
                     />
                   </div>
                   <div>
@@ -400,11 +418,20 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
                       placeholder="0 (+15000 FCFA...)"
                       value={customAdj}
                       onChange={(e) => setCustomAdj(e.target.value)}
-                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg font-bold"
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomVariant(e) } }}
+                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg font-bold text-[var(--color-navy-900)]"
                     />
                   </div>
                 </div>
-                <Button type="button" onClick={addCustomVariant} size="sm" className="self-end gap-1 text-xs">
+
+                {variantError && (
+                  <p className="text-xs text-red-600 font-semibold bg-red-50 p-2.5 rounded-lg border border-red-200 flex items-center gap-1.5">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
+                    <span>{variantError}</span>
+                  </p>
+                )}
+
+                <Button type="button" onClick={(e) => addCustomVariant(e)} size="sm" className="self-end gap-1 text-xs font-bold">
                   <Plus className="h-3.5 w-3.5" /> Ajouter l'option
                 </Button>
               </div>

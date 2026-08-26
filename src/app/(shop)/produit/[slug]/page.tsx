@@ -118,7 +118,9 @@ export default async function ProductPage({ params }: PageProps) {
                 </>
               )}
             </div>
-            {product.compare_at_price && <PromoTimer endsAt={product.promo_ends_at} />}
+            {(product.compare_at_price && product.compare_at_price > product.price || product.promo_ends_at || product.promotion_label) && (
+              <PromoTimer endsAt={product.promo_ends_at} />
+            )}
           </div>
 
           {/* Stock */}

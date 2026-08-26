@@ -136,7 +136,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           )}
         </div>
 
-        {product.compare_at_price && product.compare_at_price > product.price && (
+        {((product.compare_at_price && product.compare_at_price > product.price) || (product as any).promo_ends_at || (product as any).promotion_label) && (
           <PromoTimer className="mt-1.5" endsAt={(product as any).promo_ends_at} />
         )}
 
