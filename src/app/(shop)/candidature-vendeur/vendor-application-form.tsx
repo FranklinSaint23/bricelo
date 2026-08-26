@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { CheckCircle2, User, Building2, FileText, ChevronRight, ChevronLeft } from 'lucide-react'
+import { CheckCircle2, User, Building2, FileText, ChevronRight, ChevronLeft, Lock, Eye, EyeOff, Info } from 'lucide-react'
 import { submitVendorApplication } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,13 +39,15 @@ export function VendorApplicationForm() {
   const [error, setError]   = useState<string | null>(null)
 
   // Step 1 — personal
-  const [fullName,   setFullName]   = useState('')
-  const [email,      setEmail]      = useState('')
-  const [phone,      setPhone]      = useState('')
-  const [gender,     setGender]     = useState('homme')
-  const [birthDay,   setBirthDay]   = useState('')
-  const [birthMonth, setBirthMonth] = useState('')
-  const [birthYear,  setBirthYear]  = useState('')
+  const [fullName,     setFullName]     = useState('')
+  const [email,        setEmail]        = useState('')
+  const [phone,        setPhone]        = useState('')
+  const [password,     setPassword]     = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [gender,       setGender]       = useState('homme')
+  const [birthDay,     setBirthDay]     = useState('')
+  const [birthMonth,   setBirthMonth]   = useState('')
+  const [birthYear,    setBirthYear]    = useState('')
 
   const birthDate = birthDay && birthMonth && birthYear
     ? `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`
@@ -76,6 +78,7 @@ export function VendorApplicationForm() {
       if (!fullName.trim()) { setError('Le nom complet est requis.'); return false }
       if (!email.trim() || !email.includes('@')) { setError('E-mail invalide.'); return false }
       if (!phone.trim()) { setError('Le numéro de téléphone est requis.'); return false }
+      if (!password || password.length < 8) { setError('Le mot de passe doit contenir au moins 8 caractères.'); return false }
     }
     if (step === 1) {
       if (!businessName.trim()) { setError("Le nom de l'entreprise est requis."); return false }
@@ -97,6 +100,7 @@ export function VendorApplicationForm() {
       full_name:    fullName.trim(),
       email:        email.trim(),
       phone:        phone.trim(),
+      password:     password.trim(),
       gender,
       birth_date:   birthDate,
       business_name: businessName.trim(),
@@ -119,9 +123,9 @@ export function VendorApplicationForm() {
         <div className="h-16 w-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
           <CheckCircle2 className="h-8 w-8 text-emerald-600" />
         </div>
-        <h2 className="text-xl font-bold text-[var(--color-navy-900)] mb-2">Candidature envoyée !</h2>
-        <p className="text-[var(--color-slate-500)] text-sm max-w-sm mx-auto">
-          Merci <strong>{fullName}</strong> ! Notre équipe examinera votre dossier et vous contactera à <strong>{email}</strong> sous 48h.
+        <h2 className="text-xl font-bold text-[var(--color-navy-900)] mb-2">Candidature envoyée avec succès !</h2>
+        <p className="text-[var(--color-slate-600)] text-sm max-w-sm mx-auto mb-4 leading-relaxed">
+          Merci <strong>{fullName}</strong> ! Votre compte vendeur a été préparé. Dès validation par l'administration, vous pourrez vous connecter directement sur <strong>/login</strong> avec votre adresse e-mail ou téléphone et le mot de passe créé.
         </p>
       </div>
     )
@@ -188,6 +192,35 @@ export function VendorApplicationForm() {
                 onChange={(e) => setPhone(e.target.value)}
                 required
               />
+
+              {/* Champ Mot de passe */}
+              <div className="flex flex-col gap-1">
+                <Input
+                  label="Mot de passe de votre compte *"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  icon={<Lock className="h-4 w-4" />}
+                  required
+                  helper="Au moins 8 caractères"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="self-end text-xs text-[var(--color-slate-500)] hover:text-[var(--color-accent)] transition-colors flex items-center gap-1 mt-0.5"
+                >
+                  {showPassword ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                  {showPassword ? 'Masquer' : 'Afficher'}
+                </button>
+              </div>
+
+              {/* Petit message discret d'information */}
+              <div className="p-3 bg-amber-50/80 border border-amber-200/80 rounded-lg flex items-start gap-2 text-xs text-amber-900 leading-relaxed">
+                <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>Retenez bien votre mot de passe ainsi que votre e-mail ou numéro de téléphone pour vous connecter directement à votre boutique dès sa validation.</span>
+              </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-[var(--color-navy-900)]">Sexe</label>
                 <div className="flex gap-4">
