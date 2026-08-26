@@ -31,6 +31,12 @@ export default async function EditProductPage({ params }: Props) {
 
   if (!product) notFound()
 
+  const { data: variants } = await supabase
+    .from('product_variants')
+    .select('id, name, value, price_adjustment, stock')
+    .eq('product_id', id)
+    .order('created_at', { ascending: true })
+
   const { data: categories } = await supabase
     .from('categories')
     .select('id, name')
@@ -53,6 +59,7 @@ export default async function EditProductPage({ params }: Props) {
         storeId={store.id}
         categories={categories ?? []}
         initialData={product}
+        initialVariants={variants ?? []}
         mode="edit"
       />
     </div>

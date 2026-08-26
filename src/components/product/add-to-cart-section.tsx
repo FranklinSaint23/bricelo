@@ -11,9 +11,9 @@ import type { Product, ProductVariant } from '@/types'
 interface Props { product: Product }
 
 export function AddToCartSection({ product }: Props) {
-  const [qty, setQty]         = useState(1)
-  const [variant, setVariant] = useState<ProductVariant | undefined>()
-  const [added, setAdded]     = useState(false)
+  const [qty, setQty]                 = useState(1)
+  const [selectedMap, setSelectedMap] = useState<Record<string, ProductVariant>>({})
+  const [added, setAdded]             = useState(false)
   const router = useRouter()
   const addItem  = useCartStore((s) => s.addItem)
   const clearCart = useCartStore((s) => s.clearCart)
@@ -26,52 +26,102 @@ export function AddToCartSection({ product }: Props) {
     return acc
   }, {})
 
+  function toggleVariant(groupName: string, item: ProductVariant) {
+    setSelectedMap((prev) => {
+      const next = { ...prev }
+      if (next[groupName]?.id === item.id) {
+        delete next[groupName]
+      } else {
+        next[groupName] = item
+      }
+      return next
+    })
+  }
+
+  // Cumul des ajustements de prix de toutes les variantes sélectionnées
+  const selectedValues = Object.values(selectedMap)
+  const combinedAdjustment = selectedValues.reduce((acc, v) => acc + (v.price_adjustment ?? 0), 0)
+  const unitPrice = product.price + combinedAdjustment
+
+  // Générer une variante synthétique combinée pour le panier
+  const primaryVariant: ProductVariant | undefined = selectedValues.length > 0 ? {
+    id: selectedValues.map(v => v.id).join('_'),
+    product_id: product.id,
+    name: selectedValues.map(v => v.name).join(' / '),
+    value: selectedValues.map(v => v.value).join(' — '),
+    price_adjustment: combinedAdjustment,
+    stock: Math.min(...selectedValues.map(v => v.stock ?? 10)),
+    sku: null,
+  } : undefined
+
   function handleAdd() {
-    addItem(product, variant, qty)
+    addItem(product, primaryVariant, qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
 
   function handleBuyNow() {
     clearCart()
-    addItem(product, variant, qty)
+    addItem(product, primaryVariant, qty)
     router.push('/checkout')
   }
 
-  const outOfStock = product.stock === 0 || (variant && variant.stock === 0)
-  const unitPrice = product.price + (variant?.price_adjustment ?? 0)
+  const outOfStock = product.stock === 0 || selectedValues.some(v => v.stock === 0)
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Variantes */}
-      {Object.entries(groupedVariants).map(([name, opts]) => (
-        <div key={name}>
-          <p className="text-sm font-medium text-[var(--color-navy-900)] mb-2">{name}</p>
+      {/* Variantes multiples (ex: Nombre de places, Épaisseur, Couleur, Taille...) */}
+      {Object.entries(groupedVariants).map(([groupName, opts]) => (
+        <div key={groupName}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-[var(--color-navy-900)]">
+              {groupName}
+            </p>
+            {selectedMap[groupName] && (
+              <span className="text-xs font-bold text-[var(--color-accent)]">
+                {selectedMap[groupName].value}
+              </span>
+            )}
+          </div>
           <div className="flex flex-wrap gap-2">
-            {opts.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => setVariant(variant?.id === v.id ? undefined : v)}
-                disabled={v.stock === 0}
-                className={`px-3 py-1.5 rounded-md text-sm border transition-all ${
-                  variant?.id === v.id
-                    ? 'bg-[var(--color-navy-900)] text-white border-[var(--color-navy-900)]'
-                    : v.stock === 0
-                    ? 'border-[var(--color-slate-200)] text-[var(--color-slate-400)] line-through cursor-not-allowed'
-                    : 'border-[var(--color-slate-300)] text-[var(--color-navy-900)] hover:border-[var(--color-navy-900)]'
-                }`}
-              >
-                {v.value}
-                {v.price_adjustment !== 0 && (
-                  <span className="ml-1 text-xs opacity-70">
-                    {v.price_adjustment > 0 ? '+' : ''}{v.price_adjustment.toLocaleString()} F
-                  </span>
-                )}
-              </button>
-            ))}
+            {opts.map((v) => {
+              const isSelected = selectedMap[groupName]?.id === v.id
+              return (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => toggleVariant(groupName, v)}
+                  disabled={v.stock === 0}
+                  className={`px-3 py-2 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${
+                    isSelected
+                      ? 'bg-[var(--color-navy-900)] text-white border-[var(--color-navy-900)] shadow-sm'
+                      : v.stock === 0
+                      ? 'border-[var(--color-slate-200)] text-[var(--color-slate-400)] line-through cursor-not-allowed'
+                      : 'border-[var(--color-slate-300)] text-[var(--color-navy-900)] hover:border-[var(--color-navy-900)] bg-white'
+                  }`}
+                >
+                  <span>{v.value}</span>
+                  {v.price_adjustment !== 0 && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-extrabold ${isSelected ? 'bg-amber-400 text-slate-900' : 'bg-slate-100 text-slate-700'}`}>
+                      {v.price_adjustment > 0 ? '+' : ''}{v.price_adjustment.toLocaleString('fr-FR')} F
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </div>
       ))}
+
+      {/* Calcul dynamique du prix unitaire selon le cumul des options */}
+      {selectedValues.length > 0 && (
+        <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs flex items-center justify-between">
+          <span className="font-medium text-amber-900">Prix selon vos options sélectionnées :</span>
+          <span className="font-extrabold text-sm text-[var(--color-navy-900)]">
+            {unitPrice.toLocaleString('fr-FR')} FCFA
+          </span>
+        </div>
+      )}
 
       {/* Quantité */}
       <p className="text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wide">{t.quantity}</p>

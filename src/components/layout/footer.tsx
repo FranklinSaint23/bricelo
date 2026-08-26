@@ -248,24 +248,24 @@ export function Footer() {
       <div className="bg-[var(--color-surface)] border-t border-[var(--color-slate-200)] py-5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-center text-xs text-slate-400 font-medium uppercase tracking-widest mb-4">{t.paymentMethods}</p>
-          <div className="flex items-center justify-center gap-6 sm:gap-8 flex-wrap">
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="bg-emerald-50 dark:bg-emerald-950 p-2 rounded-lg border border-emerald-200 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
-                <Image src="/payments/cash.jpeg" alt={t.cash} width={96} height={56} className="h-10 w-auto object-contain" />
+          <div className="grid grid-cols-3 gap-2 sm:gap-6 max-w-lg mx-auto">
+            <div className="flex flex-col items-center gap-1.5 min-w-0">
+              <div className="bg-emerald-50 dark:bg-emerald-950 p-1.5 sm:p-2 rounded-lg border border-emerald-200 shadow-2xs flex items-center justify-center h-12 sm:h-14 w-full overflow-hidden">
+                <Image src="/payments/cash.jpeg" alt={t.cash} width={96} height={56} className="h-8 sm:h-10 w-auto object-contain" />
               </div>
-              <span className="text-xs text-slate-500 font-medium">{t.cash}</span>
+              <span className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">{t.cash}</span>
             </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="bg-amber-400 p-2 rounded-lg border border-amber-500 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
-                <Image src="/payments/mtn-momo.jpeg" alt="MTN Mobile Money" width={112} height={56} className="h-10 w-auto object-contain" />
+            <div className="flex flex-col items-center gap-1.5 min-w-0">
+              <div className="bg-amber-400 p-1.5 sm:p-2 rounded-lg border border-amber-500 shadow-2xs flex items-center justify-center h-12 sm:h-14 w-full overflow-hidden">
+                <Image src="/payments/mtn-momo.jpeg" alt="MTN Mobile Money" width={112} height={56} className="h-8 sm:h-10 w-auto object-contain" />
               </div>
-              <span className="text-xs text-slate-500 font-medium">MTN MoMo</span>
+              <span className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">MTN MoMo</span>
             </div>
-            <div className="flex flex-col items-center gap-1.5">
-              <div className="bg-black p-2 rounded-lg border border-orange-500 shadow-xs flex items-center justify-center h-14 w-28 shrink-0 overflow-hidden">
-                <Image src="/payments/orange-money.jpg" alt="Orange Money" width={112} height={56} className="h-10 w-auto object-contain" />
+            <div className="flex flex-col items-center gap-1.5 min-w-0">
+              <div className="bg-black p-1.5 sm:p-2 rounded-lg border border-orange-500 shadow-2xs flex items-center justify-center h-12 sm:h-14 w-full overflow-hidden">
+                <Image src="/payments/orange-money.jpg" alt="Orange Money" width={112} height={56} className="h-8 sm:h-10 w-auto object-contain" />
               </div>
-              <span className="text-xs text-slate-500 font-medium">Orange Money</span>
+              <span className="text-[11px] sm:text-xs text-slate-500 font-medium truncate">Orange Money</span>
             </div>
           </div>
         </div>
