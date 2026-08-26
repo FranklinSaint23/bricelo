@@ -86,17 +86,11 @@ export function CheckoutForm({ addresses, userId }: Props) {
     ? newDelivery.city
     : (addresses.find((a) => a.id === selectedAddress)?.city || 'Douala')
 
-  function getShippingForStore(storeCity?: string | null) {
-    const cCity = (selectedCity || 'Douala').trim().toLowerCase()
-    const sCity = (storeCity || 'Douala').trim().toLowerCase()
-    return cCity === sCity ? 1000 : 2000
+  function getShippingForStore(_storeCity?: string | null) {
+    return 1000 // Frais de livraison fixe à 1 000 FCFA peu importe la ville
   }
 
-  const shipping = items.reduce((acc, item) => {
-    const sCity = (item.product.store as any)?.city || 'Douala'
-    const fee = getShippingForStore(sCity)
-    return Math.max(acc, fee)
-  }, 1000)
+  const shipping = 1000
 
   const grandTotal = total() + shipping
 
@@ -178,15 +172,30 @@ export function CheckoutForm({ addresses, userId }: Props) {
         await supabase.from('order_items').insert(orderItems)
         orderIds.push(order.id)
 
+        const storeData = storeItems[0]?.product?.store as any
+
         sendOrderNotificationEmail({
           orderId: order.id,
-          customerName: shippingAddress.full_name || 'Client',
-          customerPhone: shippingAddress.phone || '',
-          city: shippingAddress.city || 'Douala',
-          storeName: (storeItems[0]?.product?.store as any)?.name ?? 'Boutique BRICELO',
+          createdAt: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }),
+          customerName: shippingAddress.full_name || newDelivery.full_name || 'Client',
+          customerEmail: null,
+          customerPhone: shippingAddress.phone || newDelivery.phone || '',
+          city: shippingAddress.city || newDelivery.city || 'Douala',
+          addressLine: (shippingAddress as any).address_line || `${newDelivery.quartier} (${newDelivery.delivery_day} ${newDelivery.delivery_time})`,
+          storeName: storeData?.name ?? 'Boutique BRICELO',
+          storePhone: storeData?.phone ?? null,
           totalAmount: storeSub + storeShipping,
+          subtotal: storeSub,
+          shippingCost: storeShipping,
           paymentMethod: paymentMethod,
           itemsCount: storeItems.length,
+          items: storeItems.map(i => ({
+            name: i.product.name,
+            variantName: i.variant?.value ?? null,
+            quantity: i.quantity,
+            unitPrice: i.product.price + (i.variant?.price_adjustment ?? 0),
+            totalPrice: (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity,
+          })),
         })
       }
 

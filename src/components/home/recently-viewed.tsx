@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Clock, ArrowRight } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { formatPrice } from '@/lib/utils'
 
 export const RECENTLY_VIEWED_KEY = 'bricelo_recently_viewed'
@@ -35,13 +36,53 @@ export function RecentlyViewed({ excludeId }: Props = {}) {
   const [products, setProducts] = useState<RecentlyViewedProduct[]>([])
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(RECENTLY_VIEWED_KEY)
-      if (raw) {
+    async function loadValidRecentProducts() {
+      try {
+        const raw = localStorage.getItem(RECENTLY_VIEWED_KEY)
+        if (!raw) return
+
         const all: RecentlyViewedProduct[] = JSON.parse(raw)
-        setProducts(excludeId ? all.filter(p => p.id !== excludeId) : all)
+        const candidates = excludeId ? all.filter(p => p.id !== excludeId) : all
+        if (!candidates.length) return
+
+        const supabase = createClient()
+        const ids = candidates.map(c => c.id)
+
+        // Vérifier dans Supabase que ces produits existent et sont actifs (purge des anciens produits de test)
+        const { data: dbProds } = await supabase
+          .from('products')
+          .select('id, name, slug, price, images, is_active')
+          .in('id', ids)
+          .eq('is_active', true)
+
+        if (dbProds && dbProds.length > 0) {
+          const dbMap = new Map(dbProds.map(p => [p.id, p]))
+          const cleanedList: RecentlyViewedProduct[] = candidates
+            .filter(c => dbMap.has(c.id))
+            .map(c => {
+              const fresh = dbMap.get(c.id)!
+              return {
+                id: fresh.id,
+                name: fresh.name,
+                slug: fresh.slug,
+                price: fresh.price,
+                image: fresh.images?.[0] ?? null,
+              }
+            })
+
+          setProducts(cleanedList)
+          localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(cleanedList))
+        } else {
+          // Si tous les anciens produits stockés sont des faux tests supprimés, purger le localStorage
+          setProducts([])
+          localStorage.removeItem(RECENTLY_VIEWED_KEY)
+        }
+      } catch (err) {
+        console.error('Erreur récemment consultés:', err)
       }
-    } catch {}
+    }
+
+    loadValidRecentProducts()
   }, [excludeId])
 
   if (products.length === 0) return null

@@ -14,6 +14,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') ?? '/'
   const registered = searchParams.get('registered')
+  const reset = searchParams.get('reset')
   const { t, lang } = useLanguage()
 
   const [identifier, setIdentifier] = useState('')
@@ -95,6 +96,13 @@ function LoginForm() {
           <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-xs text-green-800 flex items-center gap-2">
             <UserCheck className="h-4 w-4 text-green-600 shrink-0" />
             <span>{lang === 'fr' ? 'Compte créé avec succès ! Vous pouvez maintenant vous connecter.' : 'Account created successfully! You can now log in.'}</span>
+          </div>
+        )}
+
+        {reset === '1' && (
+          <div className="mb-4 p-3 rounded-lg bg-green-50 border border-green-200 text-xs text-green-800 flex items-center gap-2">
+            <UserCheck className="h-4 w-4 text-green-600 shrink-0" />
+            <span>{lang === 'fr' ? 'Mot de passe réinitialisé avec succès ! Connectez-vous avec votre nouveau mot de passe.' : 'Password reset successfully! Log in with your new password.'}</span>
           </div>
         )}
 

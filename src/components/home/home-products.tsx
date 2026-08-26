@@ -102,7 +102,7 @@ export function HomeProducts({ featuredProducts, allProducts, promoProducts }: P
           <p className="text-white font-bold">{t.sellerCta}</p>
           <p className="text-white/50 text-sm mt-0.5">{t.sellerCtaSub}</p>
         </div>
-        <Link href="/register"
+        <Link href="/devenir-vendeur"
           className="shrink-0 h-10 px-5 rounded-lg bg-[var(--color-accent)] text-[var(--color-navy-900)] font-bold text-sm hover:bg-[var(--color-gold-400)] transition-colors">
           {t.openStore}
         </Link>
