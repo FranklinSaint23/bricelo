@@ -1,13 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, UserPlus, Pencil, ShieldAlert, Key, UserCheck, Check, AlertCircle, X } from 'lucide-react'
+import { Search, UserPlus, Pencil, ShieldAlert, Key, UserCheck, Check, AlertCircle, X, Trash2, Store } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
 import { formatDate } from '@/lib/utils'
-import { updateUserAction, createUserAction } from '@/app/(admin)/admin/utilisateurs/actions'
+import { updateUserAction, createUserAction, deleteUserAction } from '@/app/(admin)/admin/utilisateurs/actions'
 
 interface UserItem {
   id: string
@@ -39,6 +39,7 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
   // Modals state
   const [editUser, setEditUser]     = useState<UserItem | null>(null)
   const [showCreate, setShowCreate] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null)
 
   // Edit form state
   const [editName, setEditName]     = useState('')
@@ -58,6 +59,10 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
   const [createRole, setCreateRole]     = useState<'customer' | 'vendor' | 'support'>('customer')
   const [createLoading, setCreateLoading] = useState(false)
   const [createError, setCreateError]   = useState<string | null>(null)
+
+  // Delete state
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError]     = useState<string | null>(null)
 
   function openEditModal(u: UserItem) {
     setEditUser(u)
@@ -129,8 +134,23 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
       setCreateEmail('')
       setCreatePhone('')
       setCreatePassword('')
-      // Recharger ou rafraîchir la page
       window.location.reload()
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return
+    setDeleteError(null)
+    setDeleteLoading(true)
+
+    const res = await deleteUserAction(deleteTarget.id)
+    setDeleteLoading(false)
+
+    if (res?.error) {
+      setDeleteError(res.error)
+    } else {
+      setUsers(prev => prev.filter(u => u.id !== deleteTarget.id))
+      setDeleteTarget(null)
     }
   }
 
@@ -196,7 +216,7 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
                   <th className="px-5 py-3.5 text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wider">Contact</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wider">Rôle</th>
                   <th className="px-5 py-3.5 text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wider">Date d'inscription</th>
-                  <th className="px-5 py-3.5 text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wider text-right">Action</th>
+                  <th className="px-5 py-3.5 text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--color-slate-100)]">
@@ -229,14 +249,25 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
                             <ShieldAlert className="h-3.5 w-3.5 shrink-0" /> Admin protégé
                           </span>
                         ) : (
-                          <Button
-                            onClick={() => openEditModal(u)}
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5"
-                          >
-                            <Pencil className="h-3.5 w-3.5 text-[var(--color-accent)]" /> Modifier & Pwd
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              onClick={() => openEditModal(u)}
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5"
+                            >
+                              <Pencil className="h-3.5 w-3.5 text-[var(--color-accent)]" /> Modifier & Pwd
+                            </Button>
+                            <Button
+                              onClick={() => { setDeleteTarget(u); setDeleteError(null) }}
+                              variant="danger"
+                              size="sm"
+                              className="gap-1 px-2.5"
+                              title="Supprimer définitivement cet utilisateur"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -247,6 +278,55 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
           </div>
         )}
       </div>
+
+      {/* MODAL SUPPRESSION UTILISATEUR */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[var(--color-slate-200)] relative animate-in fade-in zoom-in-95 duration-200">
+            <button
+              onClick={() => setDeleteTarget(null)}
+              className="absolute right-4 top-4 text-[var(--color-slate-400)] hover:text-[var(--color-navy-900)] p-1 rounded-lg"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center gap-3 mb-4 text-red-600">
+              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 className="h-5 w-5 text-red-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[var(--color-navy-900)]">Supprimer l'Utilisateur ?</h2>
+                <p className="text-xs text-[var(--color-slate-500)]">{deleteTarget.full_name || deleteTarget.email}</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-[var(--color-slate-600)] leading-relaxed mb-4">
+              Êtes-vous sûr de vouloir supprimer définitivement ce compte ?
+              {deleteTarget.role === 'vendor' && (
+                <span className="block mt-2 font-bold text-red-700 bg-red-50 p-2.5 rounded-lg border border-red-200 flex items-center gap-1.5">
+                  <Store className="h-4 w-4 shrink-0" /> ATTENTION : Cet utilisateur est Vendeur. Sa BOUTIQUE et TOUS SES PRODUITS seront automatiquement supprimés.
+                </span>
+              )}
+            </p>
+
+            {deleteError && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-red-600 shrink-0" />
+                <span>{deleteError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-[var(--color-slate-100)]">
+              <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)}>
+                Annuler
+              </Button>
+              <Button type="button" variant="danger" loading={deleteLoading} onClick={handleDeleteConfirm}>
+                Supprimer définitivement
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MODAL DE MODIFICATION ET RÉINITIALISATION MOT DE PASSE */}
       {editUser && (

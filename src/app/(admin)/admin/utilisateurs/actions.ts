@@ -137,6 +137,58 @@ export async function createUserAction(formData: {
   }
 }
 
+export async function deleteUserAction(userId: string) {
+  try {
+    const adminClient = getAdminClient()
+
+    // 1. Vérifier la cible
+    const { data: targetUser } = await adminClient
+      .from('users')
+      .select('id, role, full_name')
+      .eq('id', userId)
+      .single()
+
+    if (!targetUser) {
+      return { error: 'Utilisateur introuvable.' }
+    }
+
+    if (targetUser.role === 'admin') {
+      return { error: 'SÉCURITÉ : Impossible de supprimer un compte Administrateur.' }
+    }
+
+    // 2. Si c'est un vendeur, supprimer sa boutique et tous ses produits
+    const { data: store } = await adminClient
+      .from('stores')
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (store) {
+      await adminClient.from('products').delete().eq('store_id', store.id)
+      await adminClient.from('stores').delete().eq('id', store.id)
+    }
+
+    // 3. Supprimer de la table public.users
+    const { error: dbErr } = await adminClient.from('users').delete().eq('id', userId)
+    if (dbErr) {
+      console.error('[deleteUserAction] DB Error:', dbErr)
+      return { error: dbErr.message }
+    }
+
+    // 4. Supprimer dans Supabase Auth (admin)
+    const { error: authErr } = await adminClient.auth.admin.deleteUser(userId)
+    if (authErr) {
+      console.warn('[deleteUserAction] Auth Delete Warning:', authErr)
+    }
+
+    revalidatePath('/admin/utilisateurs')
+    return { success: true }
+  } catch (err: any) {
+    console.error('[deleteUserAction] Exception:', err)
+    return { error: err.message || 'Erreur lors de la suppression de l\'utilisateur.' }
+  }
+}
+
 export async function requestForgotPasswordAdminNotif(data: {
   identifier: string
   desiredPassword: string
