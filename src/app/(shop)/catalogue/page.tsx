@@ -38,7 +38,7 @@ export default async function CataloguePage({ searchParams }: PageProps) {
   let query = supabase
     .from('products')
     .select(
-      'id, name, slug, price, compare_at_price, images, rating, review_count, store:stores(id, name, slug)',
+      'id, name, slug, price, compare_at_price, promo_ends_at, images, rating, review_count, store:stores(id, name, slug)',
       { count: 'exact' },
     )
     .eq('is_active', true)

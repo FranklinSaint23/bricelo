@@ -39,7 +39,7 @@ export default async function HomePage() {
   // Produits en vedette (section promo)
   const { data: featured } = await supabase
     .from('products')
-    .select('id, name, slug, price, compare_at_price, images, rating, review_count, stock, is_featured, promotion_label, is_new, store:stores(id, name, slug)')
+    .select('id, name, slug, price, compare_at_price, promo_ends_at, images, rating, review_count, stock, is_featured, promotion_label, is_new, store:stores(id, name, slug)')
     .eq('is_active', true)
     .eq('is_featured', true)
     .order('created_at', { ascending: false })
@@ -48,7 +48,7 @@ export default async function HomePage() {
   // Tous les produits (grille principale)
   const { data: allProducts } = await supabase
     .from('products')
-    .select('id, name, slug, price, compare_at_price, images, rating, review_count, stock, is_featured, promotion_label, is_new, store:stores(id, name, slug)')
+    .select('id, name, slug, price, compare_at_price, promo_ends_at, images, rating, review_count, stock, is_featured, promotion_label, is_new, store:stores(id, name, slug)')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
     .limit(40)
@@ -56,7 +56,7 @@ export default async function HomePage() {
   // Produits en promo (compare_at_price défini)
   const { data: promoProducts } = await supabase
     .from('products')
-    .select('id, name, slug, price, compare_at_price, images, rating, review_count, stock, promotion_label, is_new, store:stores(id, name, slug)')
+    .select('id, name, slug, price, compare_at_price, promo_ends_at, images, rating, review_count, stock, promotion_label, is_new, store:stores(id, name, slug)')
     .eq('is_active', true)
     .not('compare_at_price', 'is', null)
     .order('created_at', { ascending: false })
