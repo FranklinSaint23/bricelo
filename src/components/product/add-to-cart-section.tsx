@@ -92,7 +92,7 @@ export function AddToCartSection({ product }: Props) {
           size="lg"
           className="w-full py-4 text-base font-extrabold shadow-md bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] border-none btn-animate-attention flex items-center justify-center gap-2"
         >
-          <Zap className="h-5 w-5 fill-current" />
+          <ShoppingCart className="h-5 w-5 fill-current" />
           {t.buyNow}
         </Button>
 

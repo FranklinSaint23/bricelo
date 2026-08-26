@@ -70,7 +70,7 @@ export const fr = {
   quantity: 'Quantité',
   addToCart: 'Ajouter au panier',
   added: '✓ Ajouté',
-  buyNow: 'Acheter maintenant',
+  buyNow: 'Commander maintenant',
   outOfStockBtn: 'Rupture de stock',
   variantRequired: 'Veuillez sélectionner une option',
   selectVariant: (name: string) => `Choisissez ${name}`,

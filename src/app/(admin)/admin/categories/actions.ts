@@ -16,12 +16,19 @@ export async function createCategory(formData: FormData) {
   if (!name) return { error: 'Le nom est obligatoire' }
 
   const slug = (formData.get('slug') as string).trim() || toSlug(name)
+  const imageUrl = (formData.get('image_url') as string)?.trim() || null
   const supabase = await createClient()
 
-  const { error } = await supabase.from('categories').insert({ name, slug })
+  const { error } = await supabase.from('categories').insert({
+    name,
+    slug,
+    image_url: imageUrl,
+  })
   if (error) return { error: error.message }
 
   revalidatePath('/admin/categories')
+  revalidatePath('/')
+  revalidatePath('/catalogue')
   return { success: true }
 }
 
@@ -30,11 +37,19 @@ export async function updateCategory(id: string, formData: FormData) {
   const slug = (formData.get('slug') as string).trim()
   if (!name || !slug) return { error: 'Nom et slug obligatoires' }
 
+  const imageUrl = (formData.get('image_url') as string)?.trim() || null
   const supabase = await createClient()
-  const { error } = await supabase.from('categories').update({ name, slug }).eq('id', id)
+
+  const { error } = await supabase
+    .from('categories')
+    .update({ name, slug, image_url: imageUrl })
+    .eq('id', id)
+
   if (error) return { error: error.message }
 
   revalidatePath('/admin/categories')
+  revalidatePath('/')
+  revalidatePath('/catalogue')
   return { success: true }
 }
 
@@ -54,5 +69,7 @@ export async function deleteCategory(id: string) {
   if (error) return { error: error.message }
 
   revalidatePath('/admin/categories')
+  revalidatePath('/')
+  revalidatePath('/catalogue')
   return { success: true }
 }

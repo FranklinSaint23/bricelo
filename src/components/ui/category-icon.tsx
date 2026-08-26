@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import {
   Smartphone, Zap, Tv, Shirt, Sofa, ShoppingBasket,
   Flower2, Car, Dumbbell, Gamepad2, Tag, UtensilsCrossed, Baby,
@@ -34,16 +35,27 @@ const SIZES = {
 
 interface Props {
   slug: string
+  imageUrl?: string | null
   size?: keyof typeof SIZES
   className?: string
 }
 
-export function CategoryIcon({ slug, size = 'md', className }: Props) {
+export function CategoryIcon({ slug, imageUrl, size = 'md', className }: Props) {
+  const s = SIZES[size]
+
+  if (imageUrl) {
+    return (
+      <div className={cn(s.wrap, 'relative overflow-hidden shrink-0 border border-slate-200 shadow-2xs bg-white flex items-center justify-center', className)}>
+        <Image src={imageUrl} alt="" fill className="object-cover" sizes="64px" />
+      </div>
+    )
+  }
+
   const cfg = SLUG_CONFIG[slug] ?? { Icon: Tag, bg: 'bg-slate-400' }
   const Icon = cfg.Icon
-  const s = SIZES[size]
+
   return (
-    <div className={cn(s.wrap, cfg.bg, 'flex items-center justify-center shrink-0 shadow-sm', className)}>
+    <div className={cn(s.wrap, cfg.bg, 'flex items-center justify-center shrink-0 shadow-2xs', className)}>
       <Icon className={cn(s.icon, 'text-white')} strokeWidth={1.8} />
     </div>
   )

@@ -13,7 +13,7 @@ export default async function AdminCategoriesPage() {
   const supabase = await createClient()
 
   const [{ data: categories }, { data: rawCounts }] = await Promise.all([
-    supabase.from('categories').select('id, name, slug, created_at').order('name'),
+    supabase.from('categories').select('id, name, slug, image_url, created_at').order('name'),
     supabase.from('products').select('category_id').eq('is_active', true),
   ])
 

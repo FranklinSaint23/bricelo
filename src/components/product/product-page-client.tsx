@@ -128,9 +128,15 @@ export function ProductStoreLink({ store }: { store: NonNullable<ProductClientPr
       className="flex items-center gap-3 p-3 bg-[var(--color-slate-50)] rounded-[var(--radius-lg)] hover:bg-[var(--color-slate-100)] transition-colors border border-[var(--color-slate-200)]">
       <Avatar src={store.logo_url} name={store.name} size="md" />
       <div className="flex-1">
-        <p className="text-sm font-semibold text-[var(--color-navy-900)]">{store.name}</p>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="text-sm font-bold text-[var(--color-navy-900)]">{store.name}</p>
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-sky-500/10 text-sky-600 border border-sky-500/20 shadow-2xs">
+            <BadgeCheck className="h-3.5 w-3.5 text-sky-500 fill-sky-100 shrink-0" />
+            <span>Vendeur certifié</span>
+          </span>
+        </div>
         {store.review_count > 0 && (
-          <div className="flex items-center gap-1 mt-0.5">
+          <div className="flex items-center gap-1 mt-1">
             <Star className="h-3 w-3 fill-[var(--color-accent)] text-[var(--color-accent)]" />
             <span className="text-xs text-[var(--color-slate-500)]">
               {store.rating.toFixed(1)} ({store.review_count} {lang === 'fr' ? 'avis' : 'reviews'})

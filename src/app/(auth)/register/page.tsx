@@ -45,40 +45,50 @@ export default function RegisterPage() {
       ? email.trim()
       : `${cleanPhone}@bricelo.phone`
 
-    const { data: signUpData, error: err } = await supabase.auth.signUp({
-      email: targetEmail,
-      password,
-      options: {
-        data: {
-          full_name: fullName.trim(),
-          phone: phone.trim(),
+    try {
+      const { data: signUpData, error: err } = await supabase.auth.signUp({
+        email: targetEmail,
+        password,
+        options: {
+          data: {
+            full_name: fullName.trim(),
+            phone: phone.trim(),
+          },
         },
-      },
-    })
-
-    if (err) {
-      setError(err.message)
-      setLoading(false)
-      return
-    }
-
-    // Mettre à jour la table users de secours et rattacher les anciennes commandes invités
-    if (signUpData?.user) {
-      await supabase.from('users').upsert({
-        id: signUpData.user.id,
-        full_name: fullName.trim(),
-        email: email.trim() || null,
-        phone: phone.trim() || null,
       })
-      await linkGuestOrders(signUpData.user.id, email, phone)
-    }
 
-    if (email.trim()) {
-      setSuccess(true)
-    } else {
-      router.push('/login?registered=1')
+      if (err) {
+        setError(err.message)
+        return
+      }
+
+      if (signUpData?.user) {
+        try {
+          await supabase.from('users').upsert({
+            id: signUpData.user.id,
+            full_name: fullName.trim(),
+            email: email.trim() || null,
+            phone: phone.trim() || null,
+          })
+          await linkGuestOrders(signUpData.user.id, email, phone)
+        } catch (dbErr) {
+          console.error('[register] Error upserting user:', dbErr)
+        }
+      }
+
+      if (signUpData?.session) {
+        router.push('/')
+        router.refresh()
+      } else if (email.trim()) {
+        setSuccess(true)
+      } else {
+        router.push('/login?registered=1')
+      }
+    } catch (e: any) {
+      setError(e.message || 'Erreur lors de la création du compte')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   if (success) {

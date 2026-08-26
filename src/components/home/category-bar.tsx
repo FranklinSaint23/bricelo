@@ -60,7 +60,7 @@ export function CategoryBar({ categories, activeSlug }: Props) {
                     ? 'bg-[var(--color-navy-900)] text-white'
                     : 'text-[var(--color-slate-600)] hover:bg-[var(--color-slate-100)] hover:text-[var(--color-navy-900)]',
                 )}>
-                <CategoryIcon slug={cat.slug} size="xs" className="shadow-none" />
+                <CategoryIcon slug={cat.slug} imageUrl={cat.image_url} size="xs" className="shadow-none" />
                 {lang === 'en' ? (CATEGORY_SLUG_EN[cat.slug] ?? cat.name) : cat.name}
               </Link>
             )

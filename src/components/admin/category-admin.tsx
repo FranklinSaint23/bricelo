@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, Fragment } from 'react'
-import { Plus, Pencil, Trash2, X, Check, AlertCircle, Tag, Package } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, AlertCircle, Tag, Package, Image as ImageIcon } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/category-icon'
 import { createCategory, updateCategory, deleteCategory } from '@/app/(admin)/admin/categories/actions'
 
@@ -9,6 +9,7 @@ interface Category {
   id: string
   name: string
   slug: string
+  image_url?: string | null
   created_at: string
 }
 
@@ -33,13 +34,14 @@ export function CategoryAdmin({ categories, countMap }: Props) {
   const [success, setSuccess]     = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  // Add form state
-  const [addName, setAddName] = useState('')
-  const [addSlug, setAddSlug] = useState('')
+  // Form states
+  const [addName, setAddName]     = useState('')
+  const [addSlug, setAddSlug]     = useState('')
+  const [addImageUrl, setAddImageUrl] = useState('')
 
-  // Edit form state
-  const [editName, setEditName] = useState('')
-  const [editSlug, setEditSlug] = useState('')
+  const [editName, setEditName]   = useState('')
+  const [editSlug, setEditSlug]   = useState('')
+  const [editImageUrl, setEditImageUrl] = useState('')
 
   function flash(msg: string, type: 'ok' | 'err') {
     if (type === 'ok') { setSuccess(msg); setError(null) }
@@ -51,6 +53,7 @@ export function CategoryAdmin({ categories, countMap }: Props) {
     setEditId(cat.id)
     setEditName(cat.name)
     setEditSlug(cat.slug)
+    setEditImageUrl(cat.image_url ?? '')
     setShowAdd(false)
   }
 
@@ -59,10 +62,18 @@ export function CategoryAdmin({ categories, countMap }: Props) {
     const fd = new FormData()
     fd.set('name', addName)
     fd.set('slug', addSlug)
+    fd.set('image_url', addImageUrl)
+
     startTransition(async () => {
       const res = await createCategory(fd)
       if ('error' in res) { flash(res.error ?? 'Erreur', 'err') }
-      else { flash('Catégorie créée.', 'ok'); setShowAdd(false); setAddName(''); setAddSlug('') }
+      else {
+        flash('Catégorie créée avec succès.', 'ok')
+        setShowAdd(false)
+        setAddName('')
+        setAddSlug('')
+        setAddImageUrl('')
+      }
     })
   }
 
@@ -72,6 +83,8 @@ export function CategoryAdmin({ categories, countMap }: Props) {
     const fd = new FormData()
     fd.set('name', editName)
     fd.set('slug', editSlug)
+    fd.set('image_url', editImageUrl)
+
     startTransition(async () => {
       const res = await updateCategory(editId, fd)
       if ('error' in res) { flash(res.error ?? 'Erreur', 'err') }
@@ -93,8 +106,10 @@ export function CategoryAdmin({ categories, countMap }: Props) {
       {/* En-tête */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Catégories</h1>
-          <p className="text-sm text-[var(--color-slate-500)] mt-0.5">{categories.length} catégorie{categories.length !== 1 ? 's' : ''} au total</p>
+          <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Gestion des Catégories</h1>
+          <p className="text-sm text-[var(--color-slate-500)] mt-0.5">
+            {categories.length} catégorie{categories.length !== 1 ? 's' : ''} au total • Gestion des images et icônes
+          </p>
         </div>
         <button
           onClick={() => { setShowAdd(v => !v); setEditId(null) }}
@@ -119,11 +134,11 @@ export function CategoryAdmin({ categories, countMap }: Props) {
 
       {/* Formulaire d'ajout */}
       {showAdd && (
-        <form onSubmit={handleAdd} className="mb-6 bg-white rounded-xl border border-[var(--color-slate-200)] p-5">
+        <form onSubmit={handleAdd} className="mb-6 bg-white rounded-xl border border-[var(--color-slate-200)] p-5 shadow-sm">
           <h2 className="font-semibold text-[var(--color-navy-900)] mb-4 flex items-center gap-2">
             <Tag className="h-4 w-4 text-[var(--color-accent)]" /> Nouvelle catégorie
           </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-[var(--color-slate-500)] mb-1">Nom *</label>
               <input
@@ -143,6 +158,18 @@ export function CategoryAdmin({ categories, countMap }: Props) {
                 className="w-full h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)] font-mono text-[var(--color-slate-600)]"
               />
             </div>
+            <div>
+              <label className="block text-xs font-semibold text-[var(--color-slate-500)] mb-1 flex items-center justify-between">
+                <span>URL de l'image (Optionnel)</span>
+                <ImageIcon className="h-3.5 w-3.5 text-slate-400" />
+              </label>
+              <input
+                value={addImageUrl}
+                onChange={e => setAddImageUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/..."
+                className="w-full h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)] text-[var(--color-navy-900)]"
+              />
+            </div>
           </div>
           <div className="flex justify-end gap-2 mt-4">
             <button type="button" onClick={() => setShowAdd(false)}
@@ -151,14 +178,14 @@ export function CategoryAdmin({ categories, countMap }: Props) {
             </button>
             <button type="submit" disabled={isPending}
               className="h-9 px-5 text-sm font-semibold rounded-lg bg-[var(--color-navy-900)] text-white hover:bg-[var(--color-navy-950)] disabled:opacity-50 transition-colors">
-              {isPending ? 'Enregistrement…' : 'Créer'}
+              {isPending ? 'Enregistrement…' : 'Créer la catégorie'}
             </button>
           </div>
         </form>
       )}
 
-      {/* Liste */}
-      <div className="bg-white rounded-xl border border-[var(--color-slate-200)] overflow-hidden">
+      {/* Liste des catégories */}
+      <div className="bg-white rounded-xl border border-[var(--color-slate-200)] overflow-hidden shadow-2xs">
         {categories.length === 0 ? (
           <div className="py-16 text-center">
             <Tag className="h-10 w-10 text-[var(--color-slate-200)] mx-auto mb-3" />
@@ -168,9 +195,9 @@ export function CategoryAdmin({ categories, countMap }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-[var(--color-slate-50)] border-b border-[var(--color-slate-200)]">
               <tr>
-                <th className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-slate-400)] uppercase tracking-wide">Catégorie</th>
+                <th className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-slate-400)] uppercase tracking-wide">Catégorie & Image</th>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-[var(--color-slate-400)] uppercase tracking-wide hidden sm:table-cell">Slug</th>
-                <th className="text-center px-5 py-3 text-xs font-semibold text-[var(--color-slate-400)] uppercase tracking-wide">Produits</th>
+                <th className="text-center px-5 py-3 text-xs font-semibold text-[var(--color-slate-400)] uppercase tracking-wide">Produits associés</th>
                 <th className="px-5 py-3 w-24" />
               </tr>
             </thead>
@@ -180,8 +207,17 @@ export function CategoryAdmin({ categories, countMap }: Props) {
                   <tr className="hover:bg-[var(--color-slate-50)] transition-colors">
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <CategoryIcon slug={cat.slug} size="sm" />
-                        <span className="font-semibold text-[var(--color-navy-900)]">{cat.name}</span>
+                        <CategoryIcon slug={cat.slug} imageUrl={cat.image_url} size="sm" />
+                        <div>
+                          <span className="font-semibold text-[var(--color-navy-900)] block">{cat.name}</span>
+                          {cat.image_url ? (
+                            <span className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
+                              <ImageIcon className="h-3 w-3" /> Image personnalisée active
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-[var(--color-slate-400)]">Icône par défaut</span>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="px-5 py-3.5 hidden sm:table-cell">
@@ -189,17 +225,19 @@ export function CategoryAdmin({ categories, countMap }: Props) {
                     </td>
                     <td className="px-5 py-3.5 text-center">
                       <span className="inline-flex items-center gap-1 text-[var(--color-slate-600)]">
-                        <Package className="h-3.5 w-3.5" />
+                        <Package className="h-3.5 w-3.5 text-slate-400" />
                         {countMap[cat.id] ?? 0}
                       </span>
                     </td>
                     <td className="px-5 py-3.5">
                       <div className="flex items-center justify-end gap-1">
                         <button onClick={() => startEdit(cat)}
+                          title="Modifier la catégorie & l'image"
                           className="p-1.5 rounded-md text-[var(--color-slate-400)] hover:text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors">
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button onClick={() => setDeleteId(cat.id)}
+                          title="Supprimer la catégorie"
                           className="p-1.5 rounded-md text-[var(--color-slate-400)] hover:text-red-600 hover:bg-red-50 transition-colors">
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -209,29 +247,38 @@ export function CategoryAdmin({ categories, countMap }: Props) {
 
                   {/* Ligne d'édition inline */}
                   {editId === cat.id && (
-                    <tr className="bg-amber-50 border-l-2 border-[var(--color-accent)]">
+                    <tr className="bg-amber-50/70 border-l-4 border-[var(--color-accent)]">
                       <td colSpan={4} className="px-5 py-4">
                         <form onSubmit={handleEdit}>
-                          <div className="grid sm:grid-cols-2 gap-3 mb-3">
+                          <p className="text-xs font-bold text-amber-900 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                            <Pencil className="h-3.5 w-3.5" /> Modifier la catégorie #{cat.name}
+                          </p>
+                          <div className="grid sm:grid-cols-3 gap-3 mb-3">
                             <div>
-                              <label className="block text-xs font-semibold text-[var(--color-slate-500)] mb-1">Nom</label>
+                              <label className="block text-xs font-semibold text-[var(--color-slate-600)] mb-1">Nom</label>
                               <input value={editName} onChange={e => setEditName(e.target.value)} required
-                                className="w-full h-9 px-3 text-sm border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)]" />
+                                className="w-full h-9 px-3 text-sm bg-white border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)]" />
                             </div>
                             <div>
-                              <label className="block text-xs font-semibold text-[var(--color-slate-500)] mb-1">Slug</label>
+                              <label className="block text-xs font-semibold text-[var(--color-slate-600)] mb-1">Slug</label>
                               <input value={editSlug} onChange={e => setEditSlug(e.target.value)} required
-                                className="w-full h-9 px-3 text-sm border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)] font-mono" />
+                                className="w-full h-9 px-3 text-sm bg-white border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)] font-mono text-xs" />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-semibold text-[var(--color-slate-600)] mb-1">URL Image personnalisée</label>
+                              <input value={editImageUrl} onChange={e => setEditImageUrl(e.target.value)}
+                                placeholder="https://images.unsplash.com/..."
+                                className="w-full h-9 px-3 text-sm bg-white border border-[var(--color-slate-300)] rounded-lg focus:outline-none focus:border-[var(--color-navy-900)]" />
                             </div>
                           </div>
-                          <div className="flex gap-2">
-                            <button type="submit" disabled={isPending}
-                              className="h-8 px-4 text-xs font-semibold rounded-lg bg-[var(--color-navy-900)] text-white hover:bg-[var(--color-navy-950)] disabled:opacity-50 transition-colors">
-                              {isPending ? 'Enregistrement…' : 'Enregistrer'}
-                            </button>
+                          <div className="flex gap-2 justify-end">
                             <button type="button" onClick={() => setEditId(null)}
-                              className="h-8 px-3 text-xs rounded-lg border border-[var(--color-slate-300)] text-[var(--color-slate-600)] hover:bg-white transition-colors">
+                              className="h-8 px-3 text-xs font-medium rounded-lg border border-[var(--color-slate-300)] text-[var(--color-slate-600)] hover:bg-white transition-colors">
                               Annuler
+                            </button>
+                            <button type="submit" disabled={isPending}
+                              className="h-8 px-4 text-xs font-bold rounded-lg bg-[var(--color-navy-900)] text-white hover:bg-[var(--color-navy-950)] disabled:opacity-50 transition-colors">
+                              {isPending ? 'Enregistrement…' : 'Enregistrer la catégorie'}
                             </button>
                           </div>
                         </form>
@@ -241,7 +288,7 @@ export function CategoryAdmin({ categories, countMap }: Props) {
 
                   {/* Confirmation suppression */}
                   {deleteId === cat.id && (
-                    <tr className="bg-red-50 border-l-2 border-red-400">
+                    <tr className="bg-red-50 border-l-4 border-red-500">
                       <td colSpan={4} className="px-5 py-3">
                         <div className="flex items-center gap-3">
                           <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />

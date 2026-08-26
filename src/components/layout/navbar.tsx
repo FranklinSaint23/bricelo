@@ -415,93 +415,120 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
         </div>
       </div>
 
-      {/* ── MENU MOBILE ── */}
+      {/* ── MENU MOBILE SLIDE-OVER DRAWER (3/4 de l'écran avec fond sombre & Connexion en haut) ── */}
       {mobileOpen && (
-        <div className="md:hidden bg-[var(--color-surface)] border-t border-[var(--color-slate-200)] shadow-xl max-h-[calc(100dvh-112px)] overflow-y-auto">
+        <div className="md:hidden fixed inset-0 z-50 flex justify-end">
+          {/* Backdrop sombre au clic pour fermer */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            onClick={() => setMobileOpen(false)}
+          />
 
-          {/* Catégories verticales avec accordéon */}
-          <div className="border-b border-[var(--color-slate-100)]">
-            <p className="px-4 pt-3 pb-1 text-[10px] font-bold text-[var(--color-slate-400)] uppercase tracking-widest">
-              {t.allCategories}
-            </p>
-            {categories.map(({ href, slug, label, sub }) => (
-              <div key={href}>
-                <button
-                  onClick={() => setOpenCat(openCat === href ? null : href)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--color-slate-50)] transition-colors border-t border-[var(--color-slate-100)]"
-                >
-                  <CategoryIcon slug={slug} size="sm" />
-                  <span className="flex-1 text-sm font-semibold text-[var(--color-navy-900)]">{label}</span>
-                  <ChevronDown className={cn(
-                    'h-4 w-4 text-[var(--color-slate-400)] transition-transform duration-200 shrink-0',
-                    openCat === href && 'rotate-180'
-                  )} />
-                </button>
-                {openCat === href && (
-                  <div className="bg-[var(--color-slate-50)] border-t border-[var(--color-slate-100)]">
-                    <Link href={href} onClick={() => { setMobileOpen(false); setOpenCat(null) }}
-                      className="flex items-center gap-2 pl-14 pr-4 py-2.5 text-sm font-bold text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors">
-                      Tout - {label}
+          {/* Tiroir latéral (78% de la largeur sur mobile: w-[78%] max-w-xs) */}
+          <div className="relative w-[78%] max-w-xs h-full bg-[var(--color-surface)] shadow-2xl flex flex-col z-50 overflow-y-auto">
+            {/* Header du Tiroir avec logo et bouton fermer */}
+            <div className="p-4 border-b border-[var(--color-slate-100)] flex items-center justify-between bg-[var(--color-slate-50)]">
+              <span className="font-extrabold text-base tracking-tight text-[var(--color-navy-900)]">
+                BRICE<span className="text-[var(--color-accent)]">LO</span>
+              </span>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="p-1.5 rounded-lg text-[var(--color-slate-500)] hover:bg-[var(--color-slate-200)] transition-colors"
+                aria-label="Fermer le menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* 1. CONNEXION / INSCRIPTION OU COMPTE EN HAUT DU MENU */}
+            <div className="p-4 border-b border-[var(--color-slate-100)] bg-amber-500/5">
+              {!user ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-[10px] font-bold text-[var(--color-slate-400)] uppercase tracking-widest">
+                    Mon Compte
+                  </p>
+                  <div className="flex gap-2">
+                    <Link href="/login" onClick={() => setMobileOpen(false)}
+                      className="flex-1 h-9 text-xs font-bold rounded-lg flex items-center justify-center border border-[var(--color-slate-300)] bg-white text-[var(--color-navy-900)] shadow-2xs">
+                      {t.login}
                     </Link>
-                    {sub.map(s => (
-                      <Link key={s.href} href={s.href} onClick={() => { setMobileOpen(false); setOpenCat(null) }}
-                        className="flex items-center pl-14 pr-4 py-2.5 text-sm text-[var(--color-slate-600)] hover:bg-[var(--color-slate-100)] hover:text-[var(--color-navy-900)] transition-colors border-t border-[var(--color-slate-100)]">
-                        {s.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            <Link href="/catalogue" onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 border-t border-[var(--color-slate-100)] hover:bg-[var(--color-slate-50)] transition-colors">
-              <div className="h-9 w-9 rounded-xl bg-[var(--color-navy-900)] flex items-center justify-center shrink-0">
-                <Grid3X3 className="h-4 w-4 text-white" />
-              </div>
-              <span className="flex-1 text-sm font-semibold text-[var(--color-navy-900)]">{t.allCatalog}</span>
-            </Link>
-          </div>
-
-          {/* Auth */}
-          <div className="px-4 py-3">
-            {!user ? (
-              <div className="flex gap-2">
-                <Link href="/login" onClick={() => setMobileOpen(false)}
-                  className="flex-1 h-10 text-sm font-semibold rounded-md flex items-center justify-center border border-[var(--color-slate-300)] text-[var(--color-navy-900)]">
-                  {t.login}
-                </Link>
-                <Link href="/register" onClick={() => setMobileOpen(false)}
-                  className="flex-1 h-10 text-sm font-bold rounded-md flex items-center justify-center bg-[var(--color-accent)] text-[var(--color-navy-900)]">
-                  {t.register}
-                </Link>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-0.5">
-                <div className="flex items-center gap-3 px-2 py-2 mb-1">
-                  <Avatar src={user.avatar_url} name={user.full_name} size="sm" />
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--color-navy-900)]">{user.full_name}</p>
-                    <p className="text-xs text-[var(--color-slate-400)] capitalize">{user.role}</p>
+                    <Link href="/register" onClick={() => setMobileOpen(false)}
+                      className="flex-1 h-9 text-xs font-bold rounded-lg flex items-center justify-center bg-[var(--color-accent)] text-[var(--color-navy-900)] shadow-2xs">
+                      {t.register}
+                    </Link>
                   </div>
                 </div>
-                {[
-                  { href: '/profil', label: t.myProfile },
-                  { href: '/commandes', label: t.myOrders },
-                  ...(user.role === 'vendor' || user.role === 'admin' ? [{ href: '/vendeur', label: t.vendorSpace }] : []),
-                  ...(user.role === 'admin' ? [{ href: '/admin', label: t.administration }] : []),
-                ].map(item => (
-                  <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
-                    className="px-2 py-2.5 text-sm text-[var(--color-slate-700)] hover:bg-[var(--color-slate-50)] rounded-md transition-colors">
-                    {item.label}
-                  </Link>
-                ))}
-                <form action="/api/auth/signout" method="post">
-                  <button className="w-full text-left px-2 py-2.5 text-sm text-[var(--color-danger)] hover:bg-[var(--color-slate-50)] rounded-md">
-                    {t.logout}
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-3 pb-2 mb-2 border-b border-slate-200/60">
+                    <Avatar src={user.avatar_url} name={user.full_name} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-[var(--color-navy-900)] truncate">{user.full_name}</p>
+                      <p className="text-[10px] text-[var(--color-slate-400)] capitalize">{user.role}</p>
+                    </div>
+                  </div>
+                  {[
+                    { href: '/profil', label: t.myProfile },
+                    { href: '/commandes', label: t.myOrders },
+                    ...(user.role === 'vendor' || user.role === 'admin' ? [{ href: '/vendeur', label: t.vendorSpace }] : []),
+                    ...(user.role === 'admin' ? [{ href: '/admin', label: t.administration }] : []),
+                  ].map(item => (
+                    <Link key={item.href} href={item.href} onClick={() => setMobileOpen(false)}
+                      className="px-2 py-2 text-xs font-medium text-[var(--color-slate-700)] hover:bg-white rounded-md transition-colors">
+                      {item.label}
+                    </Link>
+                  ))}
+                  <form action="/api/auth/signout" method="post" className="mt-1">
+                    <button className="w-full text-left px-2 py-1.5 text-xs font-bold text-[var(--color-danger)] hover:bg-white rounded-md">
+                      {t.logout}
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* 2. CATÉGORIES EN DESSOUS */}
+            <div className="flex-1 py-2">
+              <p className="px-4 pt-2 pb-1 text-[10px] font-bold text-[var(--color-slate-400)] uppercase tracking-widest">
+                {t.allCategories}
+              </p>
+              {categories.map(({ href, slug, label, sub }) => (
+                <div key={href}>
+                  <button
+                    onClick={() => setOpenCat(openCat === href ? null : href)}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left hover:bg-[var(--color-slate-50)] transition-colors border-t border-[var(--color-slate-100)]"
+                  >
+                    <CategoryIcon slug={slug} size="xs" />
+                    <span className="flex-1 text-xs font-semibold text-[var(--color-navy-900)]">{label}</span>
+                    <ChevronDown className={cn(
+                      'h-3.5 w-3.5 text-[var(--color-slate-400)] transition-transform duration-200 shrink-0',
+                      openCat === href && 'rotate-180'
+                    )} />
                   </button>
-                </form>
-              </div>
-            )}
+                  {openCat === href && (
+                    <div className="bg-[var(--color-slate-50)] border-t border-[var(--color-slate-100)]">
+                      <Link href={href} onClick={() => { setMobileOpen(false); setOpenCat(null) }}
+                        className="flex items-center gap-2 pl-11 pr-4 py-2 text-xs font-bold text-[var(--color-navy-900)] hover:bg-[var(--color-slate-100)] transition-colors">
+                        Tout - {label}
+                      </Link>
+                      {sub.map(s => (
+                        <Link key={s.href} href={s.href} onClick={() => { setMobileOpen(false); setOpenCat(null) }}
+                          className="flex items-center pl-11 pr-4 py-2 text-xs text-[var(--color-slate-600)] hover:bg-[var(--color-slate-100)] hover:text-[var(--color-navy-900)] transition-colors border-t border-[var(--color-slate-100)]">
+                          {s.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+              <Link href="/catalogue" onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 border-t border-[var(--color-slate-100)] hover:bg-[var(--color-slate-50)] transition-colors">
+                <div className="h-8 w-8 rounded-lg bg-[var(--color-navy-900)] flex items-center justify-center shrink-0">
+                  <Grid3X3 className="h-3.5 w-3.5 text-white" />
+                </div>
+                <span className="flex-1 text-xs font-bold text-[var(--color-navy-900)]">{t.allCatalog}</span>
+              </Link>
+            </div>
           </div>
         </div>
       )}
