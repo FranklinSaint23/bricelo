@@ -58,7 +58,13 @@ export default function RegisterPage() {
       })
 
       if (err) {
-        setError(err.message)
+        if (err.message.includes('Database error') || err.message.includes('saving new user') || err.message.includes('already registered')) {
+          setError(lang === 'fr' 
+            ? 'Cet e-mail ou numéro de téléphone est déjà associé à un compte. Veuillez vous connecter.' 
+            : 'This email or phone number is already associated with an account. Please log in.')
+        } else {
+          setError(err.message)
+        }
         return
       }
 

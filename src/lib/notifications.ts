@@ -75,16 +75,116 @@ export async function logAdminNotification(data: OrderNotificationData) {
 }
 
 /**
- * Envoie la notification SMS au client (si pas d'e-mail renseigné ou e-mail synthétique)
+ * Envoie la notification SMS au client via l'API Twilio (ou log de secours)
  */
 export async function sendCustomerSMSNotification(phone: string, text: string) {
-  console.log(`[SMS Notification BRICELO] Envoi SMS à ${phone} : "${text}"`)
+  console.log(`[SMS Notification BRICELO] Traitement SMS pour ${phone} : "${text}"`)
+
+  const sid = process.env.TWILIO_ACCOUNT_SID
+  const token = process.env.TWILIO_AUTH_TOKEN
+  const fromNumber = process.env.TWILIO_PHONE_NUMBER
+
+  if (!sid || !token || !fromNumber || sid === 'placeholder') {
+    console.log('[SMS Notification BRICELO] Twilio non configuré dans .env.local (ajouter TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN et TWILIO_PHONE_NUMBER)')
+    return
+  }
+
+  const rawPhone = phone.replace(/\D/g, '')
+  const formattedPhone = rawPhone.startsWith('237') ? `+${rawPhone}` : `+237${rawPhone}`
+
+  try {
+    const authHeader = 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64')
+    const params = new URLSearchParams()
+    params.append('To', formattedPhone)
+    params.append('From', fromNumber)
+    params.append('Body', text)
+
+    const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': authHeader,
+      },
+      body: params.toString(),
+    })
+
+    const resData = await res.json()
+    console.log('[Twilio SMS API Result]:', resData)
+  } catch (err) {
+    console.error('[Twilio SMS Error]:', err)
+  }
+}
+
+/**
+ * Envoie l'e-mail de réinitialisation de mot de passe directement via Resend API
+ */
+export async function sendPasswordResetEmail(email: string, redirectToUrl: string) {
+  try {
+    const adminClient = getAdminClient()
+    const { data, error } = await adminClient.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+      options: { redirectTo: redirectToUrl },
+    })
+
+    if (error || !data?.properties?.action_link) {
+      console.error('[sendPasswordResetEmail] Erreur génération lien Supabase:', error)
+      return { error: error?.message || 'Impossible de générer le lien de réinitialisation.' }
+    }
+
+    const resetLink = data.properties.action_link
+
+    if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'placeholder') {
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        },
+        body: JSON.stringify({
+          from: 'BRICELO Marketplace <onboarding@resend.dev>',
+          to: [email],
+          subject: '🔑 Réinitialisation de votre mot de passe BRICELO',
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b; background-color: #f8fafc; border-radius: 12px;">
+              <div style="background-color: #0f172a; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 24px;">
+                <h1 style="color: #f59e0b; margin: 0; font-size: 22px;">🔑 RÉINITIALISATION DE VOTRE MOT DE PASSE</h1>
+              </div>
+              <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                <p style="font-size: 15px; color: #0f172a;">Bonjour,</p>
+                <p style="font-size: 14px; color: #334155; line-height: 1.6;">
+                  Vous avez demandé la réinitialisation de votre mot de passe sur <strong>BRICELO</strong>. Cliquez sur le bouton ci-dessous pour choisir votre nouveau mot de passe :
+                </p>
+                <div style="text-align: center; margin: 28px 0;">
+                  <a href="${resetLink}" style="background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: bold; font-size: 14px; display: inline-block;">
+                    Réinitialiser mon mot de passe
+                  </a>
+                </div>
+                <p style="font-size: 12px; color: #64748b;">
+                  Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité.
+                </p>
+              </div>
+            </div>
+          `,
+        }),
+      })
+
+      const resData = await res.json()
+      console.log('[Resend Password Reset Email Result]:', resData)
+      return { success: true }
+    } else {
+      return { error: 'Clé API Resend non configurée.' }
+    }
+  } catch (err: any) {
+    console.error('[sendPasswordResetEmail] Erreur:', err)
+    return { error: err.message }
+  }
 }
 
 /**
  * Envoie les e-mails de notification complets :
  * 1. E-mail exhaustif pour l'Admin (avec bouton WhatsApp direct Vendeur)
- * 2. E-mail ou SMS de confirmation pour le Client
+ * 2. E-mail complet et détaillé ou SMS de confirmation pour le Client
  */
 export async function sendOrderNotificationEmail(data: OrderNotificationData) {
   try {
@@ -106,8 +206,8 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
       </tr>
     `).join('')
 
-    // 1. ENVOI E-MAIL EXHAUSTIF À L'ADMIN
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'placeholder') {
+      // 1. ENVOI E-MAIL EXHAUSTIF À L'ADMIN
       const resAdmin = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -174,7 +274,7 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
                 </div>
               </div>
 
-              <!-- BOUTON TRANSMISSIOIN WHATSAPP AU VENDEUR -->
+              <!-- BOUTON TRANSMISSION WHATSAPP AU VENDEUR -->
               <div style="text-align: center; margin: 28px 0 16px 0;">
                 <a href="${vendorWhatsAppUrl}" target="_blank" style="background-color: #25D366; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: bold; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3);">
                   📲 Transmettre la commande au Vendeur (${data.storeName}) sur WhatsApp
@@ -195,11 +295,11 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
       const resAdminData = await resAdmin.json()
       console.log('[Resend Admin Email Result]:', resAdminData)
 
-      // 2. ENVOI DE LA CONFIRMATION CLIENT (EMAIL OU SMS)
+      // 2. ENVOI DE LA CONFIRMATION CLIENT (E-MAIL DÉTAILLÉ OU SMS)
       const hasRealEmail = data.customerEmail && !data.customerEmail.includes('@bricelo.phone')
 
       if (hasRealEmail) {
-        // Envoi E-mail de confirmation au client
+        // Envoi E-mail de confirmation très détaillé au client
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -209,23 +309,65 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
           body: JSON.stringify({
             from: 'BRICELO Marketplace <onboarding@resend.dev>',
             to: [data.customerEmail!],
-            subject: `🎉 Confirmation de votre commande #${data.orderId.slice(0, 8).toUpperCase()} sur BRICELO`,
+            subject: `🎉 Confirmation de votre commande #${data.orderId.slice(0, 8).toUpperCase()} - BRICELO`,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e293b;">
-                <h2 style="color: #0f172a;">Bonjour ${data.customerName},</h2>
-                <p>Merci pour votre commande sur BRICELO ! Nous avons bien reçu votre commande <strong>#${data.orderId.slice(0, 8).toUpperCase()}</strong>.</p>
-                <p><strong>Montant Total :</strong> ${data.totalAmount.toLocaleString('fr-FR')} FCFA</p>
-                <p><strong>Lieu de livraison :</strong> ${data.city} — ${data.addressLine || ''}</p>
-                <p>Un agent BRICELO vous contactera rapidement pour la confirmation de votre livraison.</p>
-                <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-                <p style="font-size: 12px; color: #64748b;">L'équipe BRICELO — Service Client</p>
+              <div style="font-family: Arial, sans-serif; max-width: 620px; margin: 0 auto; padding: 24px; color: #1e293b; background-color: #f8fafc; border-radius: 12px;">
+                <div style="background-color: #0f172a; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 24px;">
+                  <h1 style="color: #f59e0b; margin: 0; font-size: 22px;">🎉 MERCI POUR VOTRE COMMANDE !</h1>
+                  <p style="color: #94a3b8; margin: 6px 0 0 0; font-size: 14px;">Commande N° #${data.orderId.slice(0, 8).toUpperCase()}</p>
+                </div>
+
+                <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                  <p style="font-size: 15px; color: #0f172a; margin-top: 0;">Bonjour <strong>${data.customerName}</strong>,</p>
+                  <p style="font-size: 14px; color: #334155; line-height: 1.5;">
+                    Nous avons bien enregistré votre commande. Un agent de livraison BRICELO vous contactera très rapidement pour planifier votre livraison.
+                  </p>
+                </div>
+
+                <!-- TABLEAU DÉTAILLÉ POUR LE CLIENT -->
+                <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+                  <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">🛒 Récapitulatif des Articles</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead>
+                      <tr style="background-color: #f1f5f9; text-align: left;">
+                        <th style="padding: 8px;">Article</th>
+                        <th style="padding: 8px; text-align: center;">Qté</th>
+                        <th style="padding: 8px; text-align: right;">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${(data.items || []).map(i => `
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                          <td style="padding: 10px; font-weight: bold; color: #0f172a;">${i.name}${i.variantName ? ` (${i.variantName})` : ''}</td>
+                          <td style="padding: 10px; text-align: center; color: #334155;">x${i.quantity}</td>
+                          <td style="padding: 10px; text-align: right; font-weight: bold; color: #0f172a;">${i.totalPrice.toLocaleString('fr-FR')} FCFA</td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+
+                  <div style="margin-top: 16px; text-align: right; font-size: 14px;">
+                    <p style="margin: 4px 0;">Livraison fixe : <strong>${data.shippingCost.toLocaleString('fr-FR')} FCFA</strong></p>
+                    <p style="margin: 8px 0 0 0; font-size: 18px; color: #059669; font-weight: bold;">TOTAL PAYÉ / À PAYER : ${data.totalAmount.toLocaleString('fr-FR')} FCFA</p>
+                  </div>
+                </div>
+
+                <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; border: 1px solid #e2e8f0;">
+                  <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">📍 Lieu de livraison</h3>
+                  <p style="margin: 4px 0; font-size: 14px;"><strong>Ville :</strong> ${data.city}</p>
+                  <p style="margin: 4px 0; font-size: 14px;"><strong>Adresse :</strong> ${data.addressLine || 'Centre-ville'}</p>
+                </div>
+
+                <div style="text-align: center; margin-top: 24px; font-size: 12px; color: #94a3b8;">
+                  © BRICELO.com — Service Client
+                </div>
               </div>
             `,
           }),
         })
       } else if (data.customerPhone) {
-        // Envoi SMS automatique si pas d'e-mail
-        const smsText = `BRICELO: Votre commande #${data.orderId.slice(0, 8).toUpperCase()} de ${data.totalAmount.toLocaleString('fr-FR')} FCFA a ete recue avec succes. Un agent vous contactera pour la livraison.`
+        // Envoi SMS automatique au téléphone client
+        const smsText = `BRICELO: Votre commande #${data.orderId.slice(0, 8).toUpperCase()} de ${data.totalAmount.toLocaleString('fr-FR')} FCFA a ete recue. Livraison a ${data.city}. Un agent vous contactera.`
         await sendCustomerSMSNotification(data.customerPhone, smsText)
       }
     }

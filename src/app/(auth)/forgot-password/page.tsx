@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { sendPasswordResetEmail } from '@/lib/notifications'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardBody } from '@/components/ui/card'
 import { useLanguage } from '@/components/providers/language-provider'
 
 export default function ForgotPasswordPage() {
-  const { t, lang } = useLanguage()
+  const { lang } = useLanguage()
   const [email, setEmail]     = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
@@ -27,16 +27,13 @@ export default function ForgotPasswordPage() {
     }
 
     setLoading(true)
-    const supabase = createClient()
 
     try {
       const origin = typeof window !== 'undefined' ? window.location.origin : 'https://bricelo.cm'
-      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(targetEmail, {
-        redirectTo: `${origin}/reset-password`,
-      })
+      const res = await sendPasswordResetEmail(targetEmail, `${origin}/reset-password`)
 
-      if (resetErr) {
-        setError(resetErr.message)
+      if (res?.error) {
+        setError(res.error)
       } else {
         setSent(true)
       }
@@ -60,8 +57,8 @@ export default function ForgotPasswordPage() {
         </h1>
         <p className="text-sm text-[var(--color-slate-500)] mb-6 leading-relaxed">
           {lang === 'fr'
-            ? <>Un lien sécurisé de réinitialisation a été envoyé à <strong>{email}</strong>. Consultez votre boîte de réception et vos spams.</>
-            : <>A secure reset link was sent to <strong>{email}</strong>. Check your inbox and spam folder.</>}
+            ? <>Un lien sécurisé de réinitialisation a été envoyé à <strong>{email}</strong>. Consultez votre boîte de réception.</>
+            : <>A secure reset link was sent to <strong>{email}</strong>. Check your inbox.</>}
         </p>
         <Link
           href="/login"
@@ -81,8 +78,8 @@ export default function ForgotPasswordPage() {
         </h1>
         <p className="text-sm text-[var(--color-slate-500)] mt-1">
           {lang === 'fr'
-            ? 'Saisissez votre e-mail pour recevoir un lien de réinitialisation.'
-            : 'Enter your email to receive a password reset link.'}
+            ? 'Saisissez votre e-mail pour recevoir un lien de réinitialisation instantané.'
+            : 'Enter your email to receive an instant reset link.'}
         </p>
       </div>
 
