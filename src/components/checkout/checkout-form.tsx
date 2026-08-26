@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Plus, Calendar, Clock, Building2, Navigation, Smartphone, Banknote, CreditCard } from 'lucide-react'
+import { MapPin, Plus, CreditCard, Building2, Calendar, Clock, Navigation } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { formatPrice } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Card, CardHeader, CardBody } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
 import { useLanguage } from '@/components/providers/language-provider'
+import { createClient } from '@/lib/supabase/client'
 import { sendOrderNotificationEmail } from '@/lib/notifications'
 import type { Address } from '@/types'
 
@@ -40,18 +40,6 @@ interface NewDelivery {
   delivery_time: string
 }
 
-const PAYMENT_BASE: { id: PaymentMethod; bg: string; border: string; activeBg: string }[] = [
-  { id: 'cash',        bg: 'bg-green-100',  border: 'border-green-400',  activeBg: 'bg-green-50'  },
-  { id: 'orange_money', bg: 'bg-orange-100', border: 'border-orange-400', activeBg: 'bg-orange-50' },
-  { id: 'mtn_momo',    bg: 'bg-yellow-100', border: 'border-yellow-400', activeBg: 'bg-yellow-50' },
-]
-
-const PAYMENT_ICONS: Record<PaymentMethod, React.ReactNode> = {
-  cash:        <Banknote className="h-5 w-5 text-green-600" />,
-  orange_money: <Smartphone className="h-5 w-5 text-orange-500" />,
-  mtn_momo:    <Smartphone className="h-5 w-5 text-yellow-500" />,
-}
-
 export function CheckoutForm({ addresses, userId }: Props) {
   const router = useRouter()
   const { t, lang } = useLanguage()
@@ -60,9 +48,36 @@ export function CheckoutForm({ addresses, userId }: Props) {
   const DAYS = lang === 'fr' ? DAYS_FR : DAYS_EN
 
   const PAYMENT_OPTIONS = [
-    { ...PAYMENT_BASE[0], label: lang === 'fr' ? 'Paiement à la livraison' : 'Payment on delivery', sub: lang === 'fr' ? 'Payez en cash à la réception' : 'Pay cash upon receipt' },
-    { ...PAYMENT_BASE[1], label: 'Orange Money',      sub: lang === 'fr' ? 'Paiement mobile - prompt immédiat' : 'Mobile payment - instant prompt' },
-    { ...PAYMENT_BASE[2], label: 'MTN Mobile Money',  sub: lang === 'fr' ? 'Paiement mobile - prompt immédiat' : 'Mobile payment - instant prompt' },
+    {
+      id: 'cash' as PaymentMethod,
+      label: lang === 'fr' ? 'Paiement à la livraison' : 'Cash on delivery',
+      shortLabel: lang === 'fr' ? 'Espèces' : 'Cash',
+      imageSrc: '/payments/cash.jpg',
+      logoBg: 'bg-emerald-50 dark:bg-emerald-950 border border-emerald-200/80',
+      border: 'border-emerald-500',
+      activeBg: 'bg-emerald-50/70 border-emerald-500',
+      checkColor: 'bg-emerald-600 border-emerald-600',
+    },
+    {
+      id: 'orange_money' as PaymentMethod,
+      label: 'Orange Money',
+      shortLabel: 'Orange Money',
+      imageSrc: '/payments/orange-money.jpg',
+      logoBg: 'bg-black border border-orange-500/50',
+      border: 'border-orange-500',
+      activeBg: 'bg-orange-50/70 border-orange-500',
+      checkColor: 'bg-orange-600 border-orange-600',
+    },
+    {
+      id: 'mtn_momo' as PaymentMethod,
+      label: 'MTN Mobile Money',
+      shortLabel: 'MTN MoMo',
+      imageSrc: '/payments/mtn-momo.png',
+      logoBg: 'bg-amber-400 border border-amber-500/50',
+      border: 'border-amber-500',
+      activeBg: 'bg-amber-50/70 border-amber-500',
+      checkColor: 'bg-amber-600 border-amber-600',
+    },
   ]
 
   const isGuest = !userId
@@ -78,9 +93,10 @@ export function CheckoutForm({ addresses, userId }: Props) {
     delivery_day: 'Lundi',
     delivery_time: '9h - 10h',
   })
+
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
-  const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState<string | null>(null)
+  const [loading, setLoading]             = useState(false)
+  const [error, setError]                 = useState<string | null>(null)
 
   const selectedCity = selectedAddress === 'new' || isGuest
     ? newDelivery.city
@@ -102,63 +118,67 @@ export function CheckoutForm({ addresses, userId }: Props) {
     setError(null)
     if (items.length === 0) { setError(t.cartEmpty); return }
 
-    setLoading(true)
-    const supabase = createClient()
-
-    let shippingAddress: Record<string, string>
+    let shippingAddress: { full_name: string; phone: string; city: string; address_line: string }
 
     if (selectedAddress === 'new' || isGuest) {
-      const { full_name, phone, quartier, city, delivery_day, delivery_time } = newDelivery
-      if (!full_name || !phone || !quartier || !city || !delivery_day || !delivery_time) {
-        setError(lang === 'fr' ? 'Veuillez remplir tous les champs de livraison.' : 'Please fill in all delivery fields.')
-        setLoading(false)
+      if (!newDelivery.full_name.trim() || !newDelivery.phone.trim() || !newDelivery.quartier.trim()) {
+        setError(lang === 'fr' ? 'Veuillez remplir tous les champs obligatoires' : 'Please fill in all required fields')
         return
       }
-      shippingAddress = { full_name, phone, address_line: quartier, city, delivery_day, delivery_time, country: 'Cameroun' }
+
+      shippingAddress = {
+        full_name: newDelivery.full_name.trim(),
+        phone: newDelivery.phone.trim(),
+        city: newDelivery.city,
+        address_line: `${newDelivery.quartier.trim()} (Créneau : ${newDelivery.delivery_day} ${newDelivery.delivery_time})`,
+      }
     } else {
       const addr = addresses.find((a) => a.id === selectedAddress)
-      if (!addr) { setError(lang === 'fr' ? 'Adresse introuvable.' : 'Address not found.'); setLoading(false); return }
+      if (!addr) { setError(lang === 'fr' ? 'Veuillez choisir une adresse de livraison' : 'Please select a delivery address'); return }
       shippingAddress = {
         full_name: addr.full_name,
         phone: addr.phone,
-        address_line: addr.address_line,
         city: addr.city,
-        country: addr.country,
+        address_line: addr.address_line,
       }
     }
 
-    const byStore: Record<string, typeof items> = {}
-    for (const item of items) {
-      const sid = item.product.store_id
-      if (!byStore[sid]) byStore[sid] = []
-      byStore[sid].push(item)
-    }
+    setLoading(true)
+    const supabase = createClient()
 
     try {
+      const storeMap: Record<string, typeof items> = {}
+      for (const item of items) {
+        const sId = item.product.store_id ?? 'default'
+        if (!storeMap[sId]) storeMap[sId] = []
+        storeMap[sId].push(item)
+      }
+
       const orderIds: string[] = []
-      const storeEntries = Object.entries(byStore)
+      const storeEntries = Object.entries(storeMap)
+
       for (let index = 0; index < storeEntries.length; index++) {
         const [storeId, storeItems] = storeEntries[index]
-        const storeCity = (storeItems[0]?.product.store as any)?.city || 'Douala'
-        const storeShipping = index === 0 ? getShippingForStore(storeCity) : 0
-        const storeSub = storeItems.reduce(
-          (s, i) => s + (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity, 0,
-        )
+        const storeSub = storeItems.reduce((a, i) => a + (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity, 0)
+        const storeShipping = index === 0 ? shipping : 0
+        const storeCity = (storeItems[0]?.product?.store as any)?.city || 'Douala'
+
         const { data: order, error: orderErr } = await supabase
           .from('orders')
           .insert({
-            user_id: userId,
-            store_id: storeId,
+            user_id: userId ?? null,
+            store_id: storeId === 'default' ? null : storeId,
             status: 'pending',
+            payment_method: paymentMethod,
             subtotal: storeSub,
             shipping_cost: storeShipping,
             total: storeSub + storeShipping,
             shipping_address: shippingAddress,
-            payment_method: paymentMethod,
           })
           .select('id')
           .single()
-        if (orderErr) throw orderErr
+
+        if (orderErr || !order) throw orderErr ?? new Error(lang === 'fr' ? 'Erreur lors de la création de la commande' : 'Error creating order')
 
         const orderItems = storeItems.map((i) => ({
           order_id: order.id,
@@ -233,8 +253,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
                 onChange={() => setSelectedAddress(addr.id)} className="mt-0.5" />
               <div className="text-sm">
                 <p className="font-semibold text-[var(--color-navy-900)]">{addr.label} - {addr.full_name}</p>
-                <p className="text-[var(--color-slate-500)]">{addr.address_line}, {addr.city}</p>
-                <p className="text-[var(--color-slate-500)]">{addr.phone}</p>
+                <p className="text-[var(--color-slate-500)]">{addr.address_line}, {addr.city} • {addr.phone}</p>
               </div>
             </label>
           ))}
@@ -311,44 +330,61 @@ export function CheckoutForm({ addresses, userId }: Props) {
         </CardBody>
       </Card>
 
+      {/* CHOIX DU MODE DE PAIEMENT : SUR UNE SEULE LIGNE SUR MOBILE (grid-cols-3) */}
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-[var(--color-navy-900)] flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-[var(--color-accent)]" /> {t.paymentMethod}
           </h2>
         </CardHeader>
-        <CardBody className="flex flex-col gap-3">
-          {PAYMENT_OPTIONS.map((opt) => (
-            <label
-              key={opt.id}
-              className={`flex items-center gap-3 p-3.5 rounded-[var(--radius-lg)] border-2 cursor-pointer transition-all ${
-                paymentMethod === opt.id
-                  ? `${opt.border} ${opt.activeBg}`
-                  : 'border-[var(--color-slate-200)] hover:bg-[var(--color-slate-50)]'
-              }`}
-            >
-              <input
-                type="radio"
-                name="payment"
-                value={opt.id}
-                checked={paymentMethod === opt.id}
-                onChange={() => setPaymentMethod(opt.id)}
-                className="sr-only"
-              />
-              <div className={`h-9 w-9 rounded-full flex items-center justify-center shrink-0 ${opt.bg}`}>
-                {PAYMENT_ICONS[opt.id]}
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-[var(--color-navy-900)]">{opt.label}</p>
-                <p className="text-xs text-[var(--color-slate-500)]">{opt.sub}</p>
-              </div>
-              <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                paymentMethod === opt.id ? `${opt.border} ${opt.bg}` : 'border-[var(--color-slate-300)]'
-              }`}>
-                {paymentMethod === opt.id && <div className="h-2 w-2 rounded-full bg-current" />}
-              </div>
-            </label>
-          ))}
+        <CardBody>
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            {PAYMENT_OPTIONS.map((opt) => {
+              const isSelected = paymentMethod === opt.id
+              return (
+                <label
+                  key={opt.id}
+                  className={`flex flex-col items-center justify-between p-2.5 sm:p-3 rounded-xl border-2 cursor-pointer transition-all text-center relative ${
+                    isSelected
+                      ? `${opt.activeBg}`
+                      : 'border-[var(--color-slate-200)] bg-white hover:bg-[var(--color-slate-50)]'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="payment"
+                    value={opt.id}
+                    checked={isSelected}
+                    onChange={() => setPaymentMethod(opt.id)}
+                    className="sr-only"
+                  />
+
+                  {/* Radio check indicator (top right) */}
+                  <div className="absolute top-2 right-2">
+                    <div className={`h-3.5 w-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                      isSelected ? `${opt.checkColor} text-white` : 'border-[var(--color-slate-300)] bg-white'
+                    }`}>
+                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    </div>
+                  </div>
+
+                  {/* Image de logo avec container adaptatif clair/sombre */}
+                  <div className={`h-11 w-full max-w-[85px] rounded-lg flex items-center justify-center overflow-hidden p-1.5 my-1.5 transition-transform ${opt.logoBg} ${isSelected ? 'scale-105 shadow-2xs' : 'opacity-90'}`}>
+                    <img
+                      src={opt.imageSrc}
+                      alt={opt.label}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+
+                  {/* Libellé court et lisible */}
+                  <span className={`text-[11px] sm:text-xs font-extrabold leading-tight line-clamp-1 ${isSelected ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
+                    {opt.shortLabel}
+                  </span>
+                </label>
+              )
+            })}
+          </div>
         </CardBody>
       </Card>
 
@@ -358,39 +394,50 @@ export function CheckoutForm({ addresses, userId }: Props) {
             {t.orderSummary(items.length)}
           </h2>
         </CardHeader>
-        <CardBody className="flex flex-col gap-2 text-sm">
-          {items.map((item) => (
-            <div key={item.id} className="flex justify-between text-[var(--color-slate-700)]">
-              <span className="truncate max-w-[70%]">{item.product.name} ×{item.quantity}</span>
-              <span className="font-medium">
-                {formatPrice((item.product.price + (item.variant?.price_adjustment ?? 0)) * item.quantity)}
-              </span>
+        <CardBody className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2 divide-y divide-[var(--color-slate-100)]">
+            {items.map((item) => (
+              <div key={`${item.product.id}-${item.variant?.id}`} className="flex items-center justify-between pt-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-[var(--color-navy-900)]">{item.product.name}</span>
+                  {item.variant && <span className="text-xs text-[var(--color-slate-400)]">({item.variant.value})</span>}
+                  <span className="text-xs text-[var(--color-slate-500)]">× {item.quantity}</span>
+                </div>
+                <span className="text-sm font-semibold text-[var(--color-navy-900)]">
+                  {formatPrice((item.product.price + (item.variant?.price_adjustment ?? 0)) * item.quantity)}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-[var(--color-slate-200)] pt-3 flex flex-col gap-1.5">
+            <div className="flex justify-between text-sm text-[var(--color-slate-500)]">
+              <span>{t.subtotal}</span>
+              <span>{formatPrice(total())}</span>
             </div>
-          ))}
-          <hr className="border-[var(--color-slate-200)] my-1" />
-          <div className="flex justify-between text-[var(--color-slate-600)]">
-            <span>{t.delivery}</span><span>{formatPrice(shipping)}</span>
+            <div className="flex justify-between text-sm text-[var(--color-slate-500)]">
+              <span>{t.shipping}</span>
+              <span className="font-semibold text-[var(--color-navy-900)]">{formatPrice(shipping)}</span>
+            </div>
+            <div className="flex justify-between text-base font-bold text-[var(--color-navy-900)] pt-2 border-t border-[var(--color-slate-100)]">
+              <span>{t.total}</span>
+              <span className="text-lg text-[var(--color-accent)]">{formatPrice(grandTotal)}</span>
+            </div>
           </div>
-          <div className="flex justify-between font-bold text-base text-[var(--color-navy-900)]">
-            <span>{t.total}</span><span>{formatPrice(grandTotal)}</span>
-          </div>
+
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-[var(--radius-md)] text-xs text-red-700 font-medium">
+              {error}
+            </div>
+          )}
+
+          <Button onClick={handleOrder} loading={loading} size="lg" className="w-full mt-2 font-bold py-4">
+            {paymentMethod === 'cash'
+              ? (lang === 'fr' ? 'Valider la commande (Paiement à la livraison)' : 'Confirm order (Cash on delivery)')
+              : (lang === 'fr' ? 'Procéder au paiement mobile' : 'Proceed to mobile payment')}
+          </Button>
         </CardBody>
       </Card>
-
-      {error && (
-        <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2.5 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      <Button
-        onClick={handleOrder}
-        loading={loading}
-        size="lg"
-        className="w-full py-4 text-base font-extrabold shadow-lg bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] border-none btn-animate-attention"
-      >
-        {paymentMethod === 'cash' ? (lang === 'fr' ? 'Confirmer la commande' : t.confirmOrder) : t.payNow}
-      </Button>
     </div>
   )
 }
