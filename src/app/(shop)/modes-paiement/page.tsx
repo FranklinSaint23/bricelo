@@ -11,7 +11,7 @@ export default function ModesPaiementPage() {
   const methods = fr ? [
     {
       name: 'Paiement à la livraison',
-      img: '/payments/cash.jpg',
+      img: '/payments/cash.jpeg',
       desc: 'Payez en main propre au livreur lors de la réception de votre commande. Aucune information bancaire requise.',
       steps: [
         'Sélectionnez « Paiement à la livraison »',
@@ -35,7 +35,7 @@ export default function ModesPaiementPage() {
     },
     {
       name: 'MTN Mobile Money',
-      img: '/payments/mtn-momo.png',
+      img: '/payments/mtn-momo.jpeg',
       desc: 'Payez depuis votre compte MTN MoMo. Rapide, sans frais cachés, confirmé en quelques secondes.',
       steps: [
         'Sélectionnez « MTN Mobile Money » lors du paiement',
@@ -48,7 +48,7 @@ export default function ModesPaiementPage() {
   ] : [
     {
       name: 'Cash on delivery',
-      img: '/payments/cash.jpg',
+      img: '/payments/cash.jpeg',
       desc: 'Pay the delivery person directly when you receive your order. No banking information required.',
       steps: [
         'Select "Cash on delivery"',
@@ -72,7 +72,7 @@ export default function ModesPaiementPage() {
     },
     {
       name: 'MTN Mobile Money',
-      img: '/payments/mtn-momo.png',
+      img: '/payments/mtn-momo.jpeg',
       desc: 'Pay from your MTN MoMo account. Fast, no hidden fees, confirmed in seconds.',
       steps: [
         'Select "MTN Mobile Money" at checkout',
