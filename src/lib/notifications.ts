@@ -129,7 +129,7 @@ export async function sendPasswordResetEmail(email: string, redirectToUrl: strin
 
     if (error || !data?.properties?.action_link) {
       console.error('[sendPasswordResetEmail] Erreur génération lien Supabase:', error)
-      return { error: error?.message || 'Impossible de générer le lien de réinitialisation.' }
+      return { error: error?.message || 'Aucun compte utilisateur trouvé avec cette adresse e-mail.' }
     }
 
     const resetLink = data.properties.action_link
@@ -171,6 +171,17 @@ export async function sendPasswordResetEmail(email: string, redirectToUrl: strin
 
       const resData = await res.json()
       console.log('[Resend Password Reset Email Result]:', resData)
+
+      if (resData.error || (resData.statusCode && resData.statusCode >= 400)) {
+        const msg = resData.message || resData.name || 'Erreur Resend'
+        if (msg.includes('only send to your own email address') || msg.includes('validation_error')) {
+          return {
+            error: `Mode Test Resend Sandbox : Resend n'autorise l'envoi d'e-mails qu'à l'adresse du propriétaire du compte Resend (${email === 'bricelo237@gmail.com' ? 'bricelo237@gmail.com' : 'bricelo237@gmail.com'}). Veuillez tester la réinitialisation avec bricelo237@gmail.com ou vérifier votre domaine sur Resend.`
+          }
+        }
+        return { error: msg }
+      }
+
       return { success: true }
     } else {
       return { error: 'Clé API Resend non configurée.' }
