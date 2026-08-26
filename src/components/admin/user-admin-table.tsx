@@ -254,15 +254,16 @@ export function UserAdminTable({ initialUsers, currentAdminId }: Props) {
                               onClick={() => openEditModal(u)}
                               variant="outline"
                               size="sm"
-                              className="gap-1.5"
+                              className="px-2.5"
+                              title="Modifier le profil et le mot de passe"
                             >
-                              <Pencil className="h-3.5 w-3.5 text-[var(--color-accent)]" /> Modifier & Pwd
+                              <Pencil className="h-3.5 w-3.5 text-[var(--color-navy-900)]" />
                             </Button>
                             <Button
                               onClick={() => { setDeleteTarget(u); setDeleteError(null) }}
                               variant="danger"
                               size="sm"
-                              className="gap-1 px-2.5"
+                              className="px-2.5"
                               title="Supprimer définitivement cet utilisateur"
                             >
                               <Trash2 className="h-3.5 w-3.5" />

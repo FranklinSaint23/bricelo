@@ -173,7 +173,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
             {tickerIdx === 1 && (
               <>
                 <span className="text-[var(--color-accent)] font-black tracking-wider uppercase text-xs sm:text-sm">LIVRAISON EXPRESS ...</span>
-                <span className="text-white font-bold hidden sm:inline text-xs sm:text-sm">1 000 FCFA même ville / 2 000 FCFA inter-villes ...</span>
+                <span className="text-white font-bold hidden sm:inline text-xs sm:text-sm">1 000 FCFA seulement ...</span>
                 <span className="text-amber-300 font-extrabold bg-amber-400/20 border border-amber-400/30 px-2 py-0.5 rounded text-[11px] sm:text-xs">
                   Paiement à la livraison
                 </span>

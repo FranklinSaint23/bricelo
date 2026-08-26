@@ -17,7 +17,7 @@ export async function updateUserAction(formData: {
     // 1. Vérifier si l'utilisateur cible est un Administrateur
     const { data: targetUser } = await adminClient
       .from('users')
-      .select('id, role, email')
+      .select('id, role, email, phone')
       .eq('id', formData.userId)
       .single()
 
@@ -71,6 +71,13 @@ export async function updateUserAction(formData: {
         console.error('[updateUserAction] Auth Error:', authErr)
         return { error: `Erreur d'authentification : ${authErr.message}` }
       }
+
+      // Marquer la demande de réinitialisation comme complétée dans password_resets
+      await adminClient
+        .from('password_resets')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .or(`user_id.eq.${formData.userId},identifier.eq.${targetUser.email || 'none'},identifier.eq.${targetUser.phone || 'none'}`)
+        .eq('status', 'pending')
     }
 
     revalidatePath('/admin/utilisateurs')
@@ -210,12 +217,26 @@ export async function requestForgotPasswordAdminNotif(data: {
     const userRole = foundUser?.role || 'customer'
     const searchUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://bricelo.cm'}/admin/utilisateurs`
 
+    // Insérer la demande dans la table password_resets pour le suivi en direct
+    const { data: resetRow, error: resetErr } = await adminClient
+      .from('password_resets')
+      .insert({
+        user_id: foundUser?.id || null,
+        identifier: data.identifier.trim(),
+        desired_password: data.desiredPassword.trim(),
+        status: 'pending',
+      })
+      .select('id')
+      .single()
+
+    if (resetErr) console.warn('[requestForgotPasswordAdminNotif] Insert password_resets warning:', resetErr)
+
     // Insérer dans les notifications DB Admin
     await adminClient.from('notifications').insert({
       title: `🔑 Demande réinitialisation mot de passe: ${userName}`,
       content: `Identifiant: ${data.identifier} - Nouveau mot de passe souhaité: "${data.desiredPassword}"`,
       is_read: false,
-      metadata: { identifier: data.identifier, desiredPassword: data.desiredPassword, userName },
+      metadata: { identifier: data.identifier, desiredPassword: data.desiredPassword, userName, resetId: resetRow?.id },
     })
 
     // Envoyer un e-mail immédiat à l'Admin (bricelo237@gmail.com) via Resend
@@ -265,9 +286,30 @@ export async function requestForgotPasswordAdminNotif(data: {
       })
     }
 
-    return { success: true }
+    return { success: true, resetId: resetRow?.id }
   } catch (err: any) {
     console.error('[requestForgotPasswordAdminNotif] Erreur:', err)
     return { error: err.message || 'Erreur lors de la transmission.' }
+  }
+}
+
+export async function checkPasswordResetStatusAction(identifier: string, resetId?: string) {
+  try {
+    const adminClient = getAdminClient()
+    let query = adminClient
+      .from('password_resets')
+      .select('status')
+      .order('created_at', { ascending: false })
+
+    if (resetId) {
+      query = query.eq('id', resetId)
+    } else {
+      query = query.eq('identifier', identifier.trim())
+    }
+
+    const { data } = await query.limit(1).maybeSingle()
+    return { status: data?.status || 'pending' }
+  } catch (err) {
+    return { status: 'pending' }
   }
 }
