@@ -67,18 +67,25 @@ function LoginForm() {
       }
     }
 
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: targetEmail,
-      password,
-    })
+    try {
+      const { data: signInData, error: err } = await supabase.auth.signInWithPassword({
+        email: targetEmail,
+        password,
+      })
 
-    if (err) {
-      setError(t.loginError)
+      if (err) {
+        setError(lang === 'fr' ? 'Identifiants incorrects ou compte inexistant.' : 'Invalid credentials or non-existent account.')
+        return
+      }
+
+      if (signInData?.user) {
+        window.location.href = redirect
+      }
+    } catch (catchedErr: any) {
+      setError(catchedErr.message || 'Erreur de connexion.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    window.location.href = redirect
   }
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ShoppingCart, Minus, Plus, Zap } from 'lucide-react'
+import { ShoppingCart, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/store/cart-store'
 import { useLanguage } from '@/components/providers/language-provider'
@@ -39,6 +39,7 @@ export function AddToCartSection({ product }: Props) {
   }
 
   const outOfStock = product.stock === 0 || (variant && variant.stock === 0)
+  const unitPrice = product.price + (variant?.price_adjustment ?? 0)
 
   return (
     <div className="flex flex-col gap-4">
@@ -106,6 +107,24 @@ export function AddToCartSection({ product }: Props) {
           <ShoppingCart className="h-4 w-4" />
           {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
         </Button>
+      </div>
+
+      {/* Barre flottante sticky "Commander maintenant" toujours visible en bas d'écran lors du scroll */}
+      <div className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-[var(--color-slate-200)] p-3 shadow-2xl flex items-center justify-between gap-3 sm:gap-4 md:hidden">
+        <div className="flex flex-col min-w-0">
+          <span className="text-[10px] text-[var(--color-slate-400)] uppercase font-semibold">Montant</span>
+          <span className="text-sm font-extrabold text-[var(--color-navy-900)] truncate">
+            {(unitPrice * qty).toLocaleString('fr-FR')} FCFA
+          </span>
+        </div>
+        <button
+          onClick={handleBuyNow}
+          disabled={!!outOfStock}
+          className="flex-1 py-3 px-4 rounded-xl text-xs font-extrabold shadow-md bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] flex items-center justify-center gap-2 border-none transition-transform active:scale-95 disabled:opacity-50"
+        >
+          <ShoppingCart className="h-4 w-4 fill-current shrink-0" />
+          <span className="truncate">{t.buyNow}</span>
+        </button>
       </div>
     </div>
   )

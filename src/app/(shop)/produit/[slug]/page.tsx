@@ -103,12 +103,18 @@ export default async function ProductPage({ params }: PageProps) {
 
           {/* Prix */}
           <div className="flex flex-col gap-2">
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-extrabold text-[var(--color-navy-900)]">{formatPrice(product.price)}</span>
-              {product.compare_at_price && (
+            <div className="flex items-center flex-wrap gap-2 sm:gap-3">
+              <span className="text-xl sm:text-2xl font-extrabold text-[var(--color-navy-900)]">
+                {formatPrice(product.price)}
+              </span>
+              {product.compare_at_price && product.compare_at_price > product.price && (
                 <>
-                  <span className="text-lg text-[var(--color-slate-400)] line-through">{formatPrice(product.compare_at_price)}</span>
-                  <Badge variant="danger">-{discount}%</Badge>
+                  <span className="text-xl sm:text-2xl font-extrabold text-[var(--color-slate-400)] line-through">
+                    {formatPrice(product.compare_at_price)}
+                  </span>
+                  <Badge variant="danger" className="shrink-0 text-xs font-bold px-2 py-0.5">
+                    -{discount}%
+                  </Badge>
                 </>
               )}
             </div>

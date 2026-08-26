@@ -55,7 +55,7 @@ export function OrderStatusBadge({ status, role = 'admin' }: { status: string; r
   }
 
   const vendorLabels: Record<string, string> = {
-    pending:   'À emballer',
+    pending:   'Emballer maintenant',
     confirmed: 'Prêt pour ramassage BRICELO',
     preparing: 'Récupéré par BRICELO',
     shipped:   'En livraison BRICELO',

@@ -3,7 +3,6 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ShoppingBag } from 'lucide-react'
 import { OrderStatusBadge } from '@/components/ui/badge'
-import { ValidateCashButton } from '@/components/admin/validate-cash-button'
 import { formatPrice, formatDate } from '@/lib/utils'
 
 export default async function VendorOrdersPage() {
@@ -27,7 +26,7 @@ export default async function VendorOrdersPage() {
     .order('created_at', { ascending: false })
 
   const statusLabels: Record<string, string> = {
-    pending: 'À emballer',
+    pending: 'Emballer maintenant',
     confirmed: 'Prêt pour ramassage BRICELO',
     shipped: 'En livraison BRICELO',
     delivered: 'Livré au client',
@@ -79,9 +78,6 @@ export default async function VendorOrdersPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  {order.payment_method === 'cash' && order.status === 'pending' && (
-                    <ValidateCashButton orderId={order.id} />
-                  )}
                   <p className="text-lg font-bold text-[var(--color-navy-900)]">{formatPrice(order.total)}</p>
                   <OrderStatusBadge status={order.status} role="vendor" />
                 </div>
