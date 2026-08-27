@@ -444,13 +444,19 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
           {/* Tiroir latéral (78% de la largeur sur mobile: w-[78%] max-w-xs) */}
           <div className="relative w-[78%] max-w-xs h-full bg-[var(--color-surface)] shadow-2xl flex flex-col z-50 overflow-y-auto">
             {/* Header du Tiroir avec logo et bouton fermer */}
-            <div className="p-4 border-b border-[var(--color-slate-100)] flex items-center justify-between bg-[var(--color-slate-50)]">
-              <span className="font-extrabold text-base tracking-tight text-[var(--color-navy-900)]">
-                BRICE<span className="text-[var(--color-accent)]">LO</span>
-              </span>
+            <div className="p-3.5 border-b border-slate-700/60 flex items-center justify-between bg-[var(--color-navy-950)]">
+              <Link href="/" onClick={() => setMobileOpen(false)} className="shrink-0 flex items-center">
+                <Image
+                  src="/logo.jpg"
+                  alt="BRICÉLO.com"
+                  width={130}
+                  height={38}
+                  className="h-9 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/60"
+                />
+              </Link>
               <button
                 onClick={() => setMobileOpen(false)}
-                className="p-1.5 rounded-lg text-[var(--color-slate-500)] hover:bg-[var(--color-slate-200)] transition-colors"
+                className="p-1.5 rounded-lg text-slate-300 hover:bg-slate-800 transition-colors"
                 aria-label="Fermer le menu"
               >
                 <X className="h-5 w-5" />

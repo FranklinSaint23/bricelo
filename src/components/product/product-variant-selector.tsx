@@ -117,17 +117,17 @@ export function ProductVariantSelector({
   }
 
   return (
-    <div className="space-y-4 py-3 border-y border-[var(--color-slate-200)] my-4">
+    <div className="space-y-4 py-3 border-y border-slate-700/50 my-4">
       {options.map((opt) => {
         const currentSelected = selectedValues[opt.name]
 
         return (
           <div key={opt.name} className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-[var(--color-navy-900)] tracking-wide uppercase">
+              <span className="font-bold text-slate-100 tracking-wide uppercase">
                 {opt.name} :
               </span>
-              <span className="font-semibold text-[var(--color-accent)]">
+              <span className="font-extrabold text-amber-400">
                 {currentSelected || 'Choisissez une option'}
               </span>
             </div>
@@ -148,21 +148,21 @@ export function ProductVariantSelector({
                       onClick={() => handleSelectValue(opt.name, val.value)}
                       className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
                         !avail.exists
-                          ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400 line-through'
+                          ? 'opacity-35 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-500 line-through'
                           : isSelected
-                          ? 'border-[var(--color-navy-900)] bg-slate-100 ring-2 ring-[var(--color-navy-900)]/20 shadow-2xs font-bold'
-                          : 'border-[var(--color-slate-300)] hover:border-[var(--color-slate-400)] bg-white'
+                          ? 'border-amber-400 bg-amber-400 text-slate-950 font-black shadow-md'
+                          : 'border-slate-700/80 bg-slate-900/80 hover:border-slate-500 text-slate-100'
                       }`}
                     >
                       <span
-                        className="w-4 h-4 rounded-full border border-black/20 shrink-0"
+                        className="w-4 h-4 rounded-full border border-black/30 shrink-0"
                         style={{ backgroundColor: hexColor }}
                       />
                       <span>{val.label || val.value}</span>
                       {!avail.inStock && avail.exists && (
-                        <span className="text-[10px] text-rose-500 font-bold ml-1">(Épuisé)</span>
+                        <span className="text-[10px] text-rose-400 font-bold ml-1">(Épuisé)</span>
                       )}
-                      {isSelected && <Check className="h-3.5 w-3.5 text-[var(--color-navy-900)] ml-0.5" />}
+                      {isSelected && <Check className="h-3.5 w-3.5 text-slate-950 ml-0.5" />}
                     </button>
                   )
                 })}
@@ -171,7 +171,7 @@ export function ProductVariantSelector({
               <select
                 value={currentSelected || ''}
                 onChange={(e) => handleSelectValue(opt.name, e.target.value)}
-                className="w-full h-10 px-3 text-xs rounded-lg border border-[var(--color-slate-300)] bg-white font-semibold text-[var(--color-navy-900)] focus:outline-none focus:border-[var(--color-navy-900)] cursor-pointer"
+                className="w-full h-10 px-3 text-xs rounded-lg border border-slate-700 bg-slate-900 text-slate-100 font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
               >
                 {!currentSelected && (
                   <option value="" disabled>
@@ -206,22 +206,22 @@ export function ProductVariantSelector({
                       }}
                       className={`flex items-center justify-between p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
                         !avail.exists
-                          ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400 line-through'
+                          ? 'opacity-35 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-500 line-through'
                           : isSelected
-                          ? 'border-[var(--color-navy-900)] bg-slate-50 ring-2 ring-[var(--color-navy-900)]/20 shadow-2xs font-bold'
-                          : 'border-[var(--color-slate-300)] hover:border-[var(--color-slate-400)] bg-white text-[var(--color-navy-900)]'
+                          ? 'border-amber-400 bg-amber-400 text-slate-950 font-black shadow-md'
+                          : 'border-slate-700/80 bg-slate-900/80 hover:border-slate-500 text-slate-100'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
-                          isSelected ? 'border-[var(--color-navy-900)] bg-[var(--color-navy-900)]' : 'border-[var(--color-slate-400)] bg-white'
+                          isSelected ? 'border-slate-950 bg-slate-950' : 'border-slate-400 bg-slate-800'
                         }`}>
-                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                         </div>
                         <span>{val.label || val.value}</span>
                       </div>
                       {!avail.inStock && avail.exists && (
-                        <span className="text-[10px] text-rose-500 font-bold ml-1.5">(Épuisé)</span>
+                        <span className="text-[10px] text-rose-400 font-bold ml-1.5">(Épuisé)</span>
                       )}
                     </label>
                   )
@@ -242,15 +242,15 @@ export function ProductVariantSelector({
                       onClick={() => handleSelectValue(opt.name, val.value)}
                       className={`px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
                         !avail.exists
-                          ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400 line-through'
+                          ? 'opacity-35 cursor-not-allowed bg-slate-900 border-slate-800 text-slate-500 line-through'
                           : isSelected
-                          ? 'border-[var(--color-navy-900)] bg-[var(--color-navy-900)] text-white shadow-xs font-bold'
-                          : 'border-[var(--color-slate-300)] hover:border-[var(--color-slate-400)] bg-white text-[var(--color-navy-900)]'
+                          ? 'border-amber-400 bg-amber-400 text-slate-950 font-black shadow-md'
+                          : 'border-slate-700/80 bg-slate-900/80 hover:border-slate-500 text-slate-100'
                       }`}
                     >
                       <span>{val.label || val.value}</span>
                       {!avail.inStock && avail.exists && (
-                        <span className="text-[10px] text-rose-500 font-bold ml-1.5">(Épuisé)</span>
+                        <span className="text-[10px] text-rose-400 font-bold ml-1.5">(Épuisé)</span>
                       )}
                     </button>
                   )
@@ -263,17 +263,17 @@ export function ProductVariantSelector({
 
       {/* Renseignements SKU & Stock de la variante active */}
       {activeVariant && (
-        <div className="p-3 rounded-lg bg-[var(--color-slate-100)]/70 text-xs flex flex-wrap items-center justify-between gap-2 border border-[var(--color-slate-200)]">
-          <div className="flex items-center gap-1.5 font-mono text-[11px] text-[var(--color-slate-600)]">
-            <Tag className="h-3.5 w-3.5 text-[var(--color-slate-400)]" />
-            <span>SKU : {activeVariant.sku || 'N/A'}</span>
+        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs flex flex-wrap items-center justify-between gap-2 shadow-xs">
+          <div className="flex items-center gap-1.5 font-mono text-[11px] text-slate-300">
+            <Tag className="h-3.5 w-3.5 text-amber-400" />
+            <span className="font-semibold text-slate-200">SKU : {activeVariant.sku || 'N/A'}</span>
           </div>
           <div className="flex items-center gap-1.5 font-semibold">
-            <Box className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+            <Box className="h-3.5 w-3.5 text-amber-400" />
             {isAvailable ? (
-              <span className="text-emerald-700 font-bold">{effectiveStock} unité(s) disponible(s)</span>
+              <span className="text-emerald-400 font-bold">{effectiveStock} unité(s) disponible(s)</span>
             ) : (
-              <span className="text-rose-600 font-bold flex items-center gap-1">
+              <span className="text-rose-400 font-bold flex items-center gap-1">
                 <AlertCircle className="h-3.5 w-3.5" /> En rupture de stock
               </span>
             )}
