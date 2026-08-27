@@ -29,8 +29,8 @@ export default async function VendorProductsPage() {
     .order('created_at', { ascending: false })
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-8 max-w-5xl pb-24">
+      <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">Mes produits</h1>
           <p className="text-sm text-[var(--color-slate-500)] mt-0.5">{products?.length ?? 0} produit{(products?.length ?? 0) > 1 ? 's' : ''}</p>
@@ -56,8 +56,8 @@ export default async function VendorProductsPage() {
           </Button>
         </div>
       ) : (
-        <div className="bg-white rounded-[var(--radius-xl)] border border-[var(--color-slate-200)] overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white rounded-xl border border-[var(--color-slate-200)] overflow-x-auto shadow-xs">
+          <table className="w-full min-w-[650px] text-sm whitespace-nowrap">
             <thead className="bg-[var(--color-slate-50)] border-b border-[var(--color-slate-200)]">
               <tr>
                 {['Produit', 'Catégorie', 'Prix', 'Stock', 'Statut', 'Actions'].map(h => (
