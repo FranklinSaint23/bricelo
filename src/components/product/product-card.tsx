@@ -130,7 +130,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
             {formatPrice(product.price)}
           </span>
           {product.compare_at_price && product.compare_at_price > product.price && (
-            <span className="text-xs text-[var(--color-slate-400)] line-through">
+            <span className="text-sm font-bold text-[var(--color-slate-400)] line-through">
               {formatPrice(product.compare_at_price)}
             </span>
           )}
