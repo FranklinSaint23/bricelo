@@ -179,16 +179,16 @@ export function VariantMatrixEditor({
   return (
     <div className="space-y-6">
       {/* ── 1. Sélecteur de Type de Produit (Presets du monde) ── */}
-      <Card className="border-[var(--color-slate-200)] shadow-xs">
-        <CardHeader className="bg-[var(--color-navy-950)] text-white py-3.5 px-4 rounded-t-xl flex flex-row items-center justify-between">
+      <Card className="border-slate-800 shadow-xs bg-slate-900 text-white">
+        <CardHeader className="bg-[var(--color-navy-950)] text-white py-3.5 px-4 rounded-t-xl flex flex-row items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
+            <Sparkles className="h-5 w-5 text-amber-400" />
             <h3 className="text-sm font-bold tracking-wide">Type de Produit & Modèle Prédéfini</h3>
           </div>
           <span className="text-[11px] text-white/60">Génération automatique des variantes</span>
         </CardHeader>
         <CardBody className="p-4 space-y-3">
-          <p className="text-xs text-[var(--color-slate-600)]">
+          <p className="text-xs text-slate-300">
             Choisissez la catégorie du produit pour pré-remplir les critères de variantes usuels (*Smartphones, Mode, Meubles, Électroménager, Parfums...*) ou créez vos propres critères sur-mesure.
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
@@ -197,14 +197,18 @@ export function VariantMatrixEditor({
                 key={preset.id}
                 type="button"
                 onClick={() => applyPreset(preset.id)}
-                className={`text-left p-3 rounded-lg border text-xs transition-all ${
+                className={`text-left p-3 rounded-xl border text-xs transition-all ${
                   selectedPresetId === preset.id
-                    ? 'border-[var(--color-navy-900)] bg-[var(--color-slate-100)] ring-2 ring-[var(--color-navy-900)]/20 font-bold'
-                    : 'border-[var(--color-slate-200)] hover:border-[var(--color-slate-400)] bg-white'
+                    ? 'border-amber-400 bg-amber-400 text-slate-950 font-extrabold shadow-md'
+                    : 'border-slate-800 bg-slate-950 hover:border-slate-600 text-slate-100'
                 }`}
               >
-                <p className="font-semibold text-[var(--color-navy-900)]">{preset.categoryLabel}</p>
-                <p className="text-[10px] text-[var(--color-slate-500)] line-clamp-1 mt-0.5">{preset.description}</p>
+                <p className={`font-bold ${selectedPresetId === preset.id ? 'text-slate-950' : 'text-slate-100'}`}>
+                  {preset.categoryLabel}
+                </p>
+                <p className={`text-[10px] line-clamp-1 mt-0.5 ${selectedPresetId === preset.id ? 'text-slate-800 font-semibold' : 'text-slate-400'}`}>
+                  {preset.description}
+                </p>
               </button>
             ))}
           </div>
@@ -212,35 +216,39 @@ export function VariantMatrixEditor({
       </Card>
 
       {/* ── 2. Configuration des Critères / Options ── */}
-      <Card className="border-[var(--color-slate-200)] shadow-xs">
-        <CardHeader className="bg-[var(--color-slate-100)] py-3 px-4 flex flex-row items-center justify-between border-b border-[var(--color-slate-200)]">
+      <Card className="border-slate-800 shadow-xs bg-slate-900 text-white">
+        <CardHeader className="bg-[var(--color-navy-950)] py-3 px-4 flex flex-row items-center justify-between border-b border-slate-800 rounded-t-xl text-white">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="h-4 w-4 text-[var(--color-navy-900)]" />
-            <h4 className="text-sm font-bold text-[var(--color-navy-900)]">Critères & Options du Produit</h4>
+            <SlidersHorizontal className="h-4 w-4 text-amber-400" />
+            <h4 className="text-sm font-bold text-white">Critères & Options du Produit</h4>
           </div>
-          <Button type="button" variant="outline" size="sm" onClick={addOption} className="h-8 text-xs gap-1">
+          <Button type="button" size="sm" onClick={addOption} className="h-8 text-xs gap-1 bg-amber-400 text-slate-950 font-bold hover:bg-amber-500">
             <Plus className="h-3.5 w-3.5" /> Ajouter un critère
           </Button>
         </CardHeader>
         <CardBody className="p-4 space-y-4">
           {options.map((opt, optIdx) => (
-            <div key={optIdx} className="p-3.5 rounded-lg border border-[var(--color-slate-200)] bg-[var(--color-slate-50)]/50 space-y-3">
+            <div key={optIdx} className="p-4 rounded-xl border border-slate-700/80 bg-slate-950 space-y-3 shadow-xs">
               <div className="flex flex-wrap items-center gap-3">
                 <div className="flex-1 min-w-[180px]">
-                  <label className="block text-[11px] font-semibold text-[var(--color-slate-600)] mb-1">Nom du critère</label>
+                  <label className="block text-xs font-black uppercase tracking-wider text-amber-400 mb-1">
+                    Nom du critère
+                  </label>
                   <Input
                     value={opt.name}
                     onChange={(e) => updateOption(optIdx, 'name', e.target.value)}
                     placeholder="ex: Couleur, Taille, RAM..."
-                    className="h-9 text-xs bg-white font-semibold"
+                    className="h-9 text-xs bg-slate-900 text-white border-slate-700 font-semibold focus:border-amber-400 placeholder:text-slate-500"
                   />
                 </div>
-                <div className="w-40">
-                  <label className="block text-[11px] font-semibold text-[var(--color-slate-600)] mb-1">Affichage client</label>
+                <div className="w-44">
+                  <label className="block text-xs font-black uppercase tracking-wider text-amber-400 mb-1">
+                    Affichage client
+                  </label>
                   <select
                     value={opt.display_type}
                     onChange={(e) => updateOption(optIdx, 'display_type', e.target.value as DisplayType)}
-                    className="w-full h-9 px-2 text-xs border border-[var(--color-slate-300)] rounded-lg bg-white font-semibold text-[var(--color-navy-900)] focus:outline-none"
+                    className="w-full h-9 px-2 text-xs border border-slate-700 rounded-lg bg-slate-900 text-white font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
                   >
                     <option value="color">Boutons Couleur (Swatches)</option>
                     <option value="button">Boutons Texte</option>
@@ -251,7 +259,7 @@ export function VariantMatrixEditor({
                 <button
                   type="button"
                   onClick={() => removeOption(optIdx)}
-                  className="mt-5 p-2 text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                  className="mt-5 p-2 text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors"
                   title="Supprimer ce critère"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -260,12 +268,14 @@ export function VariantMatrixEditor({
 
               {/* Liste des valeurs du critère */}
               <div>
-                <label className="block text-[11px] font-semibold text-[var(--color-slate-600)] mb-1.5">Valeurs de {opt.name}</label>
+                <label className="block text-xs font-black uppercase tracking-wider text-amber-400 mb-2">
+                  Valeurs de {opt.name}
+                </label>
                 <div className="flex flex-wrap items-center gap-2">
                   {opt.values.map((val, valIdx) => (
                     <div
                       key={valIdx}
-                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--color-slate-300)] bg-white text-xs shadow-2xs"
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 text-xs font-bold text-slate-100 shadow-2xs"
                     >
                       {opt.display_type === 'color' && (
                         <input
@@ -279,13 +289,13 @@ export function VariantMatrixEditor({
                           className="w-4 h-4 rounded-full border-0 p-0 cursor-pointer"
                         />
                       )}
-                      <span className="font-semibold text-[var(--color-navy-900)]">{val.value}</span>
+                      <span className="font-bold text-slate-100">{val.value}</span>
                       <button
                         type="button"
                         onClick={() => removeOptionValue(optIdx, valIdx)}
-                        className="text-[var(--color-slate-400)] hover:text-rose-600 transition-colors"
+                        className="text-slate-400 hover:text-rose-400 transition-colors ml-0.5"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   ))}
@@ -592,13 +602,13 @@ function QuickAddValueForm({ onAdd, isColor }: { onAdd: (val: string, hex: strin
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1.5">
       {isColor && (
         <input
           type="color"
           value={hex}
           onChange={(e) => setHex(e.target.value)}
-          className="w-5 h-5 rounded-full border-0 p-0 cursor-pointer"
+          className="w-5 h-5 rounded-full border-0 p-0 cursor-pointer shrink-0"
         />
       )}
       <input
@@ -613,12 +623,12 @@ function QuickAddValueForm({ onAdd, isColor }: { onAdd: (val: string, hex: strin
           }
         }}
         placeholder="+ Valeur (Entrée)"
-        className="h-7 text-xs px-2 rounded border border-dashed border-[var(--color-slate-300)] focus:border-[var(--color-navy-900)] focus:outline-none w-28 bg-white"
+        className="h-8 text-xs px-2.5 rounded-lg border border-dashed border-slate-600 focus:border-amber-400 focus:outline-none w-36 bg-slate-900 text-white font-semibold placeholder:text-slate-500"
       />
       <button
         type="button"
         onClick={handleAddAction}
-        className="h-7 px-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded border border-slate-300 transition-colors"
+        className="h-8 w-8 text-xs font-black text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow-xs transition-colors shrink-0 flex items-center justify-center"
       >
         +
       </button>
