@@ -22,7 +22,7 @@ export function ProductGallery({ images, name }: Props) {
 
     const timer = setInterval(() => {
       setActive((prev) => (prev + 1) % images.length)
-    }, 2500)
+    }, 3000)
 
     return () => clearInterval(timer)
   }, [images, isHovered])

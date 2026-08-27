@@ -55,16 +55,16 @@ export function ProductDetailClient({ product, options, variants }: Props) {
 
           {/* Prix Réactif */}
           <div className="flex flex-col gap-2 bg-[var(--color-navy-950)] text-white p-4 rounded-xl border border-slate-800 shadow-md">
-            <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl font-black text-amber-400">
+            <div className="flex items-center whitespace-nowrap overflow-x-auto scrollbar-none gap-2 sm:gap-3">
+              <span className="text-2xl sm:text-3xl font-black text-amber-400 shrink-0">
                 {formatPrice(effectivePrice)}
               </span>
               {effectiveComparePrice && effectiveComparePrice > effectivePrice && (
                 <>
-                  <span className="text-xl sm:text-2xl font-extrabold text-slate-400 line-through decoration-2 opacity-80">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-400 line-through decoration-2 opacity-80 shrink-0">
                     {formatPrice(effectiveComparePrice)}
                   </span>
-                  <Badge variant="danger" className="shrink-0 text-xs font-bold px-2 py-0.5 shadow-2xs">
+                  <Badge variant="danger" className="shrink-0 text-xs sm:text-sm font-bold px-2 py-0.5 shadow-2xs">
                     -{discount}%
                   </Badge>
                 </>
