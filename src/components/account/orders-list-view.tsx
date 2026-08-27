@@ -56,7 +56,7 @@ export function OrdersListView({ orders: initialOrders }: { orders: Order[] }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
         <div>
           <h1 className="text-2xl font-extrabold text-[var(--color-navy-900)]">
             {fr ? 'Mes commandes' : 'My orders'}
@@ -65,6 +65,13 @@ export function OrdersListView({ orders: initialOrders }: { orders: Order[] }) {
             💡 {fr ? 'Glissez une commande vers la gauche pour la supprimer' : 'Swipe left to delete an order'}
           </p>
         </div>
+        <Link
+          href="/catalogue"
+          className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-[var(--color-navy-900)] text-white hover:bg-[var(--color-navy-950)] shadow-xs transition-all shrink-0"
+        >
+          <ShoppingBag className="h-4 w-4 text-[var(--color-accent)]" />
+          <span>{fr ? 'Retour au catalogue' : 'Back to catalog'}</span>
+        </Link>
       </div>
 
       {ordersList.length === 0 ? (

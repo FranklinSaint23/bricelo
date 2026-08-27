@@ -61,7 +61,7 @@ export function ProductDetailClient({ product, options, variants }: Props) {
               </span>
               {effectiveComparePrice && effectiveComparePrice > effectivePrice && (
                 <>
-                  <span className="text-lg sm:text-xl font-bold text-[var(--color-slate-400)] line-through">
+                  <span className="text-2xl sm:text-3xl font-black text-[var(--color-slate-400)] line-through decoration-2">
                     {formatPrice(effectiveComparePrice)}
                   </span>
                   <Badge variant="danger" className="shrink-0 text-xs font-bold px-2 py-0.5">
