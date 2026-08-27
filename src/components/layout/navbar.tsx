@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -107,6 +108,18 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  /* Bloquer le défilement de l'arrière-plan quand le menu mobile (catégories) est ouvert */
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
 
   const tickerItems = [
     { icon: TICKER_ICONS[0], text: t.ticker1 },
@@ -235,11 +248,15 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
           <div className="flex items-center gap-3 lg:gap-5 py-2.5">
 
           {/* Logo */}
-          <Link href="/" className="shrink-0">
-            <span className="text-[var(--color-navy-900)] font-extrabold text-2xl sm:text-2xl tracking-tight leading-none">
-              BRICE<span className="text-[var(--color-accent)]">LO</span>
-              <span className="text-[var(--color-slate-400)] font-light text-base">.com</span>
-            </span>
+          <Link href="/" className="shrink-0 flex items-center">
+            <Image
+              src="/logo.jpg"
+              alt="BRICÉLO.com"
+              width={170}
+              height={48}
+              className="h-10 sm:h-12 w-auto object-contain rounded-xl overflow-hidden shadow-2xs border border-slate-200/60"
+              priority
+            />
           </Link>
 
           {/* Recherche desktop */}

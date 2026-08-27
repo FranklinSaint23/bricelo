@@ -29,6 +29,18 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
     setMobileOpen(false)
   }, [pathname])
 
+  // Bloquer le scroll de la page arrière lorsque le menu mobile est ouvert
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
+
   const isAdmin = variant === 'admin'
   const bgColor = isAdmin ? 'bg-[var(--color-navy-950)]' : 'bg-[var(--color-navy-900)]'
 
@@ -45,17 +57,14 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
             <Menu className="h-6 w-6" />
           </button>
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.jpeg" alt="BRICELO" width={28} height={28} className="rounded-md object-contain" />
-            <span className="text-white font-extrabold text-base">
-              BRICE<span className="text-[var(--color-accent)]">LO</span>
+            <Image src="/logo.jpg" alt="BRICÉLO.com" width={140} height={40} className="h-8.5 w-auto object-contain rounded-md" />
+            <span className="text-[11px] text-[var(--color-accent)] font-semibold px-2 py-0.5 rounded bg-white/10">
+              {isAdmin ? 'Admin' : 'Vendeur'}
             </span>
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs px-2 py-0.5 rounded bg-white/10 text-[var(--color-accent)] font-semibold">
-            {isAdmin ? 'Admin' : 'Vendeur'}
-          </span>
           <Avatar src={profile.avatar_url} name={profile.full_name} size="sm" />
         </div>
       </header>
@@ -64,24 +73,21 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
       <aside className={`hidden md:flex w-64 ${bgColor} flex-col shrink-0 h-full border-r border-white/10`}>
         {/* Logo + badge */}
         <div className="px-5 py-4 border-b border-white/10">
-          <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/logo.jpeg" alt="BRICELO" width={36} height={36} className="rounded-md object-contain" />
-            <div>
-              <span className="text-white font-extrabold text-base leading-none">
-                BRICE<span className="text-[var(--color-accent)]">LO</span>
-              </span>
-              <p className="text-[10px] text-white/40 leading-none mt-0.5 flex items-center gap-1">
-                {isAdmin ? (
-                  <>
-                    <ShieldAlert className="h-2.5 w-2.5 text-[var(--color-accent)]" /> Administration
-                  </>
-                ) : (
-                  <>
-                    <Store className="h-2.5 w-2.5 text-[var(--color-accent)]" /> Espace Vendeur
-                  </>
-                )}
-              </p>
-            </div>
+          <Link href="/" className="flex flex-col items-start gap-1.5">
+            <Image src="/logo.jpg" alt="BRICÉLO.com" width={160} height={46} className="h-10 w-auto object-contain rounded-md" />
+            <p className="text-[11px] text-white/70 font-semibold leading-none mt-1 flex items-center gap-1.5">
+              {isAdmin ? (
+                <>
+                  <ShieldAlert className="h-3 w-3 text-[var(--color-accent)] shrink-0" />
+                  <span>Administration</span>
+                </>
+              ) : (
+                <>
+                  <Store className="h-3 w-3 text-[var(--color-accent)] shrink-0" />
+                  <span>Espace Vendeur</span>
+                </>
+              )}
+            </p>
           </Link>
         </div>
 
@@ -123,12 +129,12 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
           {/* Panneau latéral */}
           <aside className={`relative w-4/5 max-w-xs ${bgColor} flex flex-col h-full shadow-2xl z-10 animate-slide-right`}>
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <Image src="/logo.jpeg" alt="BRICELO" width={30} height={30} className="rounded-md object-contain" />
-                <span className="text-white font-bold text-sm">
-                  BRICE<span className="text-[var(--color-accent)]">LO</span> ({isAdmin ? 'Admin' : 'Vendeur'})
-                </span>
-              </div>
+              <Link href="/" className="flex flex-col items-start gap-1">
+                <Image src="/logo.jpg" alt="BRICÉLO.com" width={130} height={36} className="h-8.5 w-auto object-contain rounded-md" />
+                <p className="text-[10px] text-white/70 font-semibold leading-none flex items-center gap-1">
+                  {isAdmin ? 'Administration' : 'Espace Vendeur'}
+                </p>
+              </Link>
               <button
                 onClick={() => setMobileOpen(false)}
                 className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10"
