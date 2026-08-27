@@ -171,8 +171,13 @@ export function ProductVariantSelector({
               <select
                 value={currentSelected || ''}
                 onChange={(e) => handleSelectValue(opt.name, e.target.value)}
-                className="w-full h-10 px-3 text-xs rounded-lg border border-[var(--color-slate-300)] bg-white font-semibold text-[var(--color-navy-900)] focus:outline-none focus:border-[var(--color-navy-900)]"
+                className="w-full h-10 px-3 text-xs rounded-lg border border-[var(--color-slate-300)] bg-white font-semibold text-[var(--color-navy-900)] focus:outline-none focus:border-[var(--color-navy-900)] cursor-pointer"
               >
+                {!currentSelected && (
+                  <option value="" disabled>
+                    -- Sélectionnez {opt.name} --
+                  </option>
+                )}
                 {opt.values.map((val) => {
                   const avail = checkValueAvailability(opt.name, val.value)
                   return (
@@ -186,8 +191,44 @@ export function ProductVariantSelector({
                   )
                 })}
               </select>
+            ) : opt.display_type === 'radio' ? (
+              /* Boutons Radio dédiés avec pastilles */
+              <div className="flex flex-col gap-2">
+                {opt.values.map((val) => {
+                  const isSelected = currentSelected === val.value
+                  const avail = checkValueAvailability(opt.name, val.value)
+
+                  return (
+                    <label
+                      key={val.value}
+                      onClick={() => {
+                        if (avail.exists) handleSelectValue(opt.name, val.value)
+                      }}
+                      className={`flex items-center justify-between p-3 rounded-xl border text-xs font-semibold cursor-pointer transition-all ${
+                        !avail.exists
+                          ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400 line-through'
+                          : isSelected
+                          ? 'border-[var(--color-navy-900)] bg-slate-50 ring-2 ring-[var(--color-navy-900)]/20 shadow-2xs font-bold'
+                          : 'border-[var(--color-slate-300)] hover:border-[var(--color-slate-400)] bg-white text-[var(--color-navy-900)]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-colors ${
+                          isSelected ? 'border-[var(--color-navy-900)] bg-[var(--color-navy-900)]' : 'border-[var(--color-slate-400)] bg-white'
+                        }`}>
+                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                        </div>
+                        <span>{val.label || val.value}</span>
+                      </div>
+                      {!avail.inStock && avail.exists && (
+                        <span className="text-[10px] text-rose-500 font-bold ml-1.5">(Épuisé)</span>
+                      )}
+                    </label>
+                  )
+                })}
+              </div>
             ) : (
-              /* Type button / radio */
+              /* Type button (defaut) */
               <div className="flex flex-wrap items-center gap-2">
                 {opt.values.map((val) => {
                   const isSelected = currentSelected === val.value
