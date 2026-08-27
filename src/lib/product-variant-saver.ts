@@ -73,33 +73,89 @@ export async function saveProductOptionsAndVariants(
 
   // 3. Insérer les variantes SKU (product_variants)
   for (const v of variants) {
-    const { data: newVariant, error: varErr } = await supabase
+    const varName = v.option_values?.map((o) => o.value).join(' / ') || 'Variante'
+    const varVal  = v.combination_key || 'defaut'
+    const varPrice = Number(v.price) || 0
+    const varStock = Number(v.stock_quantity) || 0
+
+    // Payload complet avec nouvelles colonnes (migration 013 & 014)
+    const fullPayload: any = {
+      product_id: productId,
+      name: varName,
+      value: varVal,
+      price: varPrice,
+      direct_price: varPrice,
+      price_adjustment: 0,
+      compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+      stock_quantity: varStock,
+      stock: varStock,
+      sku: v.sku?.trim() || null,
+      description: v.description?.trim() || null,
+      status: v.status || 'active',
+      combination_key: v.combination_key || null,
+      weight_kg: v.weight_kg || v.weight || null,
+      length_cm: v.length_cm || null,
+      width_cm: v.width_cm || null,
+      height_cm: v.height_cm || null,
+    }
+
+    // Essai 1 : Payload complet
+    let { data: newVariant, error: varErr } = await supabase
       .from('product_variants')
-      .insert({
+      .insert(fullPayload)
+      .select('id')
+      .single()
+
+    // Essai 2 : Fallback si la colonne 'price' ou 'direct_price' n'existe pas encore dans le schéma local
+    if (varErr) {
+      console.warn('[VariantSaver] Premier essai échoué, fallback legacy:', varErr.message || JSON.stringify(varErr))
+      const legacyPayload: any = {
         product_id: productId,
-        name: v.option_values?.map((o) => o.value).join(' / ') || 'Variante',
-        value: v.combination_key || 'defaut',
-        price_adjustment: 0,
-        price: v.price || 0,
-        direct_price: v.price || 0,
-        compare_at_price: v.compare_at_price || null,
-        stock_quantity: v.stock_quantity || 0,
-        stock: v.stock_quantity || 0,
-        weight: v.weight_kg || v.weight || null,
-        weight_kg: v.weight_kg || v.weight || null,
-        length_cm: v.length_cm || null,
-        width_cm: v.width_cm || null,
-        height_cm: v.height_cm || null,
+        name: varName,
+        value: varVal,
+        price_adjustment: varPrice,
+        stock: varStock,
+        stock_quantity: varStock,
         sku: v.sku?.trim() || null,
         description: v.description?.trim() || null,
         status: v.status || 'active',
         combination_key: v.combination_key || null,
-      })
-      .select('id')
-      .single()
+      }
+
+      const fallbackRes = await supabase
+        .from('product_variants')
+        .insert(legacyPayload)
+        .select('id')
+        .single()
+
+      newVariant = fallbackRes.data
+      varErr = fallbackRes.error
+
+      // Essai 3 : Fallback ultra-minimaliste pour compatibilité absolue avec l'ancien schéma
+      if (varErr) {
+        console.warn('[VariantSaver] Deuxième essai échoué, fallback ultra-minimaliste:', varErr.message || JSON.stringify(varErr))
+        const ultraMinimal: any = {
+          product_id: productId,
+          name: varName,
+          value: varVal,
+          price_adjustment: varPrice,
+          stock: varStock,
+          sku: v.sku?.trim() || null,
+        }
+
+        const minimalRes = await supabase
+          .from('product_variants')
+          .insert(ultraMinimal)
+          .select('id')
+          .single()
+
+        newVariant = minimalRes.data
+        varErr = minimalRes.error
+      }
+    }
 
     if (varErr || !newVariant) {
-      console.error('[VariantSaver] Erreur insertion product_variant:', varErr)
+      console.error('[VariantSaver] Erreur finale insertion product_variant:', varErr?.message || varErr?.details || JSON.stringify(varErr))
       continue
     }
 
