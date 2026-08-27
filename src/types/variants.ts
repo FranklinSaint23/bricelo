@@ -42,6 +42,10 @@ export interface AdvancedProductVariant {
   compare_at_price?: number | null
   stock_quantity: number
   weight?: number | null
+  weight_kg?: number | null
+  length_cm?: number | null
+  width_cm?: number | null
+  height_cm?: number | null
   description?: string | null
   status: VariantStatus
   combination_key: string // ex: "noir|256go"

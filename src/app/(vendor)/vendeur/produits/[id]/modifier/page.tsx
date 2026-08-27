@@ -31,11 +31,38 @@ export default async function EditProductPage({ params }: Props) {
 
   if (!product) notFound()
 
-  const { data: variants } = await supabase
-    .from('product_variants')
-    .select('id, name, value, price_adjustment, stock')
+  // Récupérer les options relationnelles du produit
+  const { data: optionsData } = await supabase
+    .from('product_options')
+    .select(`
+      id,
+      name,
+      display_type,
+      position,
+      required,
+      values:product_option_values(*)
+    `)
     .eq('product_id', id)
-    .order('created_at', { ascending: true })
+    .order('position')
+
+  // Récupérer les variantes relationnelles SKU du produit
+  const { data: variantsData } = await supabase
+    .from('product_variants')
+    .select(`
+      *,
+      variant_values:product_variant_values(
+        option_value:product_option_values(*)
+      ),
+      images:variant_images(*)
+    `)
+    .eq('product_id', id)
+
+  const formattedVariants = (variantsData ?? []).map((v: any) => ({
+    ...v,
+    stock_quantity: v.stock_quantity ?? v.stock ?? 0,
+    price: v.price ?? v.direct_price ?? product.price,
+    option_values: v.variant_values?.map((vv: any) => vv.option_value).filter(Boolean) ?? [],
+  }))
 
   const { data: categories } = await supabase
     .from('categories')
@@ -59,7 +86,8 @@ export default async function EditProductPage({ params }: Props) {
         storeId={store.id}
         categories={categories ?? []}
         initialData={product}
-        initialVariants={variants ?? []}
+        initialOptions={(optionsData as any) ?? []}
+        initialAdvancedVariants={formattedVariants as any}
         mode="edit"
       />
     </div>

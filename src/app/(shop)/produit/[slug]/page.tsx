@@ -81,7 +81,12 @@ export default async function ProductPage({ params }: PageProps) {
   const formattedVariants = (variantsData ?? []).map((v: any) => ({
     ...v,
     stock_quantity: v.stock_quantity ?? v.stock ?? 0,
-    price: v.price ?? v.direct_price ?? product.price,
+    price: (v.price && Number(v.price) > 0) ? Number(v.price) : (v.direct_price && Number(v.direct_price) > 0) ? Number(v.direct_price) : product.price,
+    compare_at_price: (v.compare_at_price && Number(v.compare_at_price) > 0)
+      ? Number(v.compare_at_price)
+      : (product.compare_at_price && Number(product.compare_at_price) > 0)
+      ? Number(product.compare_at_price)
+      : null,
     option_values: v.variant_values?.map((vv: any) => vv.option_value).filter(Boolean) ?? [],
   }))
 

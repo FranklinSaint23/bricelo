@@ -24,7 +24,19 @@ export default async function SearchPage({ searchParams }: Props) {
     .eq('is_active', true)
 
   if (query) {
-    dbQuery = dbQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+    const { data: matchedVariants } = await supabase
+      .from('product_variants')
+      .select('product_id')
+      .or(`sku.ilike.%${query}%,name.ilike.%${query}%`)
+      .limit(100)
+
+    const variantProductIds = (matchedVariants ?? []).map((v) => v.product_id).filter(Boolean)
+
+    if (variantProductIds.length > 0) {
+      dbQuery = dbQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%,id.in.(${variantProductIds.join(',')})`)
+    } else {
+      dbQuery = dbQuery.or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+    }
   }
 
   switch (tri) {

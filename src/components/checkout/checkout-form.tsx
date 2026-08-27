@@ -192,6 +192,16 @@ export function CheckoutForm({ addresses, userId }: Props) {
           const sku = v?.sku || null
           const itemImage = v?.images?.[0]?.url || i.product.images?.[0] || null
 
+          // Extraire le snapshot des options pour conservation historique immuable
+          const optionsMap: Record<string, string> = {}
+          if (v?.option_values && Array.isArray(v.option_values)) {
+            v.option_values.forEach((ov: any) => {
+              if (ov.option?.name && ov.value) {
+                optionsMap[ov.option.name] = ov.value
+              }
+            })
+          }
+
           return {
             order_id: order.id,
             product_id: i.product.id,
@@ -200,15 +210,34 @@ export function CheckoutForm({ addresses, userId }: Props) {
             unit_price: unitPrice,
             total_price: unitPrice * i.quantity,
             snapshot: {
+              product_id: i.product.id,
+              variant_id: i.variant?.id ?? null,
               name: i.product.name,
               variant_name: variantName,
               sku: sku,
               image: itemImage,
               unit_price: unitPrice,
+              quantity: i.quantity,
+              options_snapshot: optionsMap,
             },
           }
         })
         await supabase.from('order_items').insert(orderItems)
+
+        // Décrémenter de façon transactionnelle le stock de variante
+        for (const item of storeItems) {
+          if (item.variant?.id && !item.variant.id.includes('_')) {
+            try {
+              await supabase.rpc('decrement_variant_stock', {
+                p_variant_id: item.variant.id,
+                p_quantity: item.quantity,
+              })
+            } catch (rpcErr) {
+              console.warn('RPC decrement_variant_stock fallback:', rpcErr)
+            }
+          }
+        }
+
         orderIds.push(order.id)
 
         const storeData = storeItems[0]?.product?.store as any

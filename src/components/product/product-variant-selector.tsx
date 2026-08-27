@@ -97,6 +97,25 @@ export function ProductVariantSelector({
     }))
   }
 
+  // Vérifier la faisabilité & le stock d'une valeur au regard des autres sélections actives
+  function checkValueAvailability(targetOptName: string, candidateVal: string) {
+    const simulated = { ...selectedValues, [targetOptName]: candidateVal }
+    
+    // Trouver si au moins une variante correspond à la simulation
+    const matched = variants.find((v) => {
+      if (!v.option_values || v.option_values.length === 0) return false
+      return options.every((opt) => {
+        const sel = simulated[opt.name]
+        if (!sel) return true
+        return v.option_values?.some((oVal) => oVal.value === sel)
+      })
+    })
+
+    if (!matched) return { exists: false, inStock: false }
+    const inStock = matched.status === 'active' && matched.stock_quantity > 0
+    return { exists: true, inStock }
+  }
+
   return (
     <div className="space-y-4 py-3 border-y border-[var(--color-slate-200)] my-4">
       {options.map((opt) => {
@@ -119,14 +138,18 @@ export function ProductVariantSelector({
                 {opt.values.map((val) => {
                   const isSelected = currentSelected === val.value
                   const hexColor = val.metadata?.hex || '#000000'
+                  const avail = checkValueAvailability(opt.name, val.value)
 
                   return (
                     <button
                       key={val.value}
                       type="button"
+                      disabled={!avail.exists}
                       onClick={() => handleSelectValue(opt.name, val.value)}
                       className={`relative flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
-                        isSelected
+                        !avail.exists
+                          ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400 line-through'
+                          : isSelected
                           ? 'border-[var(--color-navy-900)] bg-slate-100 ring-2 ring-[var(--color-navy-900)]/20 shadow-2xs font-bold'
                           : 'border-[var(--color-slate-300)] hover:border-[var(--color-slate-400)] bg-white'
                       }`}
@@ -136,6 +159,9 @@ export function ProductVariantSelector({
                         style={{ backgroundColor: hexColor }}
                       />
                       <span>{val.label || val.value}</span>
+                      {!avail.inStock && avail.exists && (
+                        <span className="text-[10px] text-rose-500 font-bold ml-1">(Épuisé)</span>
+                      )}
                       {isSelected && <Check className="h-3.5 w-3.5 text-[var(--color-navy-900)] ml-0.5" />}
                     </button>
                   )
@@ -147,30 +173,44 @@ export function ProductVariantSelector({
                 onChange={(e) => handleSelectValue(opt.name, e.target.value)}
                 className="w-full h-10 px-3 text-xs rounded-lg border border-[var(--color-slate-300)] bg-white font-semibold text-[var(--color-navy-900)] focus:outline-none focus:border-[var(--color-navy-900)]"
               >
-                {opt.values.map((val) => (
-                  <option key={val.value} value={val.value}>
-                    {val.label || val.value}
-                  </option>
-                ))}
+                {opt.values.map((val) => {
+                  const avail = checkValueAvailability(opt.name, val.value)
+                  return (
+                    <option
+                      key={val.value}
+                      value={val.value}
+                      disabled={!avail.exists}
+                    >
+                      {val.label || val.value} {!avail.exists ? ' (Indisponible)' : !avail.inStock ? ' (Épuisé)' : ''}
+                    </option>
+                  )
+                })}
               </select>
             ) : (
               /* Type button / radio */
               <div className="flex flex-wrap items-center gap-2">
                 {opt.values.map((val) => {
                   const isSelected = currentSelected === val.value
+                  const avail = checkValueAvailability(opt.name, val.value)
 
                   return (
                     <button
                       key={val.value}
                       type="button"
+                      disabled={!avail.exists}
                       onClick={() => handleSelectValue(opt.name, val.value)}
                       className={`px-3.5 py-2 rounded-lg border text-xs font-semibold transition-all ${
-                        isSelected
+                        !avail.exists
+                          ? 'opacity-35 cursor-not-allowed bg-slate-100 border-slate-200 text-slate-400 line-through'
+                          : isSelected
                           ? 'border-[var(--color-navy-900)] bg-[var(--color-navy-900)] text-white shadow-xs font-bold'
                           : 'border-[var(--color-slate-300)] hover:border-[var(--color-slate-400)] bg-white text-[var(--color-navy-900)]'
                       }`}
                     >
-                      {val.label || val.value}
+                      <span>{val.label || val.value}</span>
+                      {!avail.inStock && avail.exists && (
+                        <span className="text-[10px] text-rose-500 font-bold ml-1.5">(Épuisé)</span>
+                      )}
                     </button>
                   )
                 })}

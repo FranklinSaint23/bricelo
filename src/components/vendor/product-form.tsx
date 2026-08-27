@@ -44,10 +44,20 @@ interface Props {
   categories: Category[]
   initialData?: ProductData
   initialVariants?: VariantFormItem[]
+  initialOptions?: ProductOption[]
+  initialAdvancedVariants?: AdvancedProductVariant[]
   mode: 'create' | 'edit'
 }
 
-export function ProductForm({ storeId, categories, initialData, initialVariants = [], mode }: Props) {
+export function ProductForm({
+  storeId,
+  categories,
+  initialData,
+  initialVariants = [],
+  initialOptions = [],
+  initialAdvancedVariants = [],
+  mode,
+}: Props) {
   const router = useRouter()
   const [loading, setLoading]         = useState(false)
   const [error, setError]             = useState<string | null>(null)
@@ -68,9 +78,9 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
   const [promoLabel, setPromoLabel]   = useState((initialData as any)?.promotion_label ?? '')
 
   // --- Gestion des Variantes Dynamiques ---
-  const [hasVariants, setHasVariants] = useState(initialVariants.length > 0)
-  const [options, setOptions]         = useState<ProductOption[]>([])
-  const [advancedVariants, setAdvancedVariants] = useState<AdvancedProductVariant[]>([])
+  const [hasVariants, setHasVariants] = useState(initialOptions.length > 0 || initialAdvancedVariants.length > 0 || initialVariants.length > 0)
+  const [options, setOptions]         = useState<ProductOption[]>(initialOptions)
+  const [advancedVariants, setAdvancedVariants] = useState<AdvancedProductVariant[]>(initialAdvancedVariants)
 
   function handleNameChange(val: string) {
     setName(val)

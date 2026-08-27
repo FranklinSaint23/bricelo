@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Layers, Sparkles, AlertCircle, Edit3, Image as ImageIcon, Check, X, SlidersHorizontal, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Plus, Trash2, Layers, Sparkles, AlertCircle, Edit3, Image as ImageIcon, Check, X, SlidersHorizontal, ArrowRight, ShieldCheck, Upload, Loader2 } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
-import { DisplayType, ProductOption, ProductOptionValue, AdvancedProductVariant, VariantStatus } from '@/types/variants'
+import { DisplayType, ProductOption, ProductOptionValue, AdvancedProductVariant, VariantStatus, VariantImage } from '@/types/variants'
 import { WORLD_PRODUCT_PRESETS } from '@/lib/product-presets'
 import { generateVariantMatrix, MAX_VARIANTS_LIMIT } from '@/lib/variant-generator'
 
@@ -56,7 +57,8 @@ export function VariantMatrixEditor({
   // Modal d'édition détaillée de variante
   const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null)
   const [tempVariantDesc, setTempVariantDesc]         = useState('')
-  const [tempVariantImage, setTempVariantImage]       = useState('')
+  const [tempVariantImages, setTempVariantImages]     = useState<VariantImage[]>([])
+  const [uploadingVariantImg, setUploadingVariantImg] = useState(false)
 
   // Outils d'action en masse (Bulk Apply)
   const [bulkPrice, setBulkPrice] = useState('')
@@ -421,11 +423,17 @@ export function VariantMatrixEditor({
                         onClick={() => {
                           setEditingVariantIndex(varIdx)
                           setTempVariantDesc(v.description || '')
+                          setTempVariantImages(v.images || [])
                         }}
                         className="h-7 px-2 text-xs gap-1 text-[var(--color-navy-900)] hover:bg-slate-200"
                         title="Images & Description spécifique"
                       >
                         <Edit3 className="h-3.5 w-3.5" /> Édit
+                        {v.images && v.images.length > 0 && (
+                          <span className="ml-1 bg-amber-500 text-white font-extrabold text-[10px] px-1.5 py-0.2 rounded-full">
+                            {v.images.length}
+                          </span>
+                        )}
                       </Button>
                     </td>
                   </tr>
@@ -452,6 +460,69 @@ export function VariantMatrixEditor({
               </button>
             </div>
             <div className="p-5 space-y-4">
+              {/* Upload d'images spécifiques pour la variante */}
+              <div>
+                <label className="block text-xs font-semibold text-[var(--color-slate-700)] mb-1">
+                  Images spécifiques à cette variante (Couleur / Modèle)
+                </label>
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {tempVariantImages.map((img, idx) => (
+                    <div key={idx} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-300 group">
+                      <img src={img.url} alt="Variante" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setTempVariantImages((prev) => prev.filter((_, i) => i !== idx))}
+                        className="absolute top-1 right-1 bg-red-600 text-white rounded-full p-0.5 opacity-90 hover:opacity-100"
+                        title="Supprimer cette image"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="w-16 h-16 rounded-lg border-2 border-dashed border-slate-300 hover:border-slate-400 flex flex-col items-center justify-center gap-1 cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                    {uploadingVariantImg ? (
+                      <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 text-slate-500" />
+                        <span className="text-[9px] font-bold text-slate-600">Ajouter</span>
+                      </>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files ?? [])
+                        if (!files.length) return
+                        setUploadingVariantImg(true)
+                        const supabase = createClient()
+                        try {
+                          for (const file of files) {
+                            const ext = file.name.split('.').pop()
+                            const path = `variant-${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
+                            const { error: uploadErr } = await supabase.storage.from('products').upload(path, file)
+                            if (uploadErr) throw uploadErr
+
+                            const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(path)
+                            setTempVariantImages((prev) => [...prev, { url: publicUrl, position: prev.length }])
+                          }
+                        } catch (err: any) {
+                          alert(err.message || 'Erreur lors de l’envoi de l’image')
+                        } finally {
+                          setUploadingVariantImg(false)
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <p className="text-[10px] text-slate-500 italic">
+                  Si aucune image spécifique n'est ajoutée, les visuels généraux du produit principal seront utilisés.
+                </p>
+              </div>
+
+              {/* Description spécifique */}
               <div>
                 <label className="block text-xs font-semibold text-[var(--color-slate-700)] mb-1">
                   Description spécifique à cette variante (Optionnel)
@@ -473,7 +544,14 @@ export function VariantMatrixEditor({
                   type="button"
                   size="sm"
                   onClick={() => {
-                    updateVariant(editingVariantIndex, 'description', tempVariantDesc)
+                    const updated = [...variants]
+                    updated[editingVariantIndex] = {
+                      ...updated[editingVariantIndex],
+                      description: tempVariantDesc,
+                      images: tempVariantImages,
+                    }
+                    setVariants(updated)
+                    onChangeVariants(updated)
                     setEditingVariantIndex(null)
                   }}
                   className="bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-950)] text-white font-semibold"
@@ -489,13 +567,16 @@ export function VariantMatrixEditor({
   )
 }
 
-// Composant formulaire d'ajout rapide de valeur
+// Composant formulaire d'ajout rapide de valeur (sans balise <form> imbriquée)
 function QuickAddValueForm({ onAdd, isColor }: { onAdd: (val: string, hex: string) => void; isColor: boolean }) {
   const [val, setVal] = useState('')
   const [hex, setHex] = useState('#000000')
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
+  function handleAddAction(e?: React.SyntheticEvent) {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
     if (val.trim()) {
       onAdd(val.trim(), isColor ? hex : '')
       setVal('')
@@ -503,7 +584,7 @@ function QuickAddValueForm({ onAdd, isColor }: { onAdd: (val: string, hex: strin
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-1">
+    <div className="flex items-center gap-1">
       {isColor && (
         <input
           type="color"
@@ -516,9 +597,23 @@ function QuickAddValueForm({ onAdd, isColor }: { onAdd: (val: string, hex: strin
         type="text"
         value={val}
         onChange={(e) => setVal(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault()
+            e.stopPropagation()
+            handleAddAction(e)
+          }
+        }}
         placeholder="+ Valeur (Entrée)"
         className="h-7 text-xs px-2 rounded border border-dashed border-[var(--color-slate-300)] focus:border-[var(--color-navy-900)] focus:outline-none w-28 bg-white"
       />
-    </form>
+      <button
+        type="button"
+        onClick={handleAddAction}
+        className="h-7 px-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded border border-slate-300 transition-colors"
+      >
+        +
+      </button>
+    </div>
   )
 }
