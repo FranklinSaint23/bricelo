@@ -501,10 +501,18 @@ export function VariantMatrixEditor({
                           for (const file of files) {
                             const ext = file.name.split('.').pop()
                             const path = `variant-${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
-                            const { error: uploadErr } = await supabase.storage.from('products').upload(path, file)
+                            let bucketName = 'product-images'
+
+                            let { error: uploadErr } = await supabase.storage.from(bucketName).upload(path, file)
+                            if (uploadErr && uploadErr.message?.toLowerCase().includes('bucket not found')) {
+                              bucketName = 'products'
+                              const res = await supabase.storage.from(bucketName).upload(path, file)
+                              uploadErr = res.error
+                            }
+
                             if (uploadErr) throw uploadErr
 
-                            const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(path)
+                            const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(path)
                             setTempVariantImages((prev) => [...prev, { url: publicUrl, position: prev.length }])
                           }
                         } catch (err: any) {
