@@ -313,16 +313,16 @@ export function VariantMatrixEditor({
       </Card>
 
       {/* ── 3. Synthèse & Génération de la Matrice ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-950">
+      <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl bg-[var(--color-navy-950)] border border-amber-400/50 text-white shadow-md">
         <div className="flex items-center gap-2 text-xs font-semibold">
-          <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+          <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
           <span>
-            Cette configuration générera <strong className="text-amber-900 text-sm font-extrabold">{variants.length} variante(s)/SKU</strong> commerciale(s) indépendante(s).
+            Cette configuration générera <strong className="text-amber-400 text-sm font-black">{variants.length} variante(s)/SKU</strong> commerciale(s) indépendante(s).
           </span>
         </div>
         {excedesLimit && (
-          <div className="flex items-center gap-1.5 text-xs text-rose-700 font-bold bg-rose-100 px-3 py-1 rounded-md">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+          <div className="flex items-center gap-1.5 text-xs text-rose-300 font-bold bg-rose-950/80 border border-rose-700/60 px-3 py-1 rounded-md">
+            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
             <span>Limite de sécurité dépassée (max {MAX_VARIANTS_LIMIT} variantes). Réduisez les critères.</span>
           </div>
         )}
@@ -330,34 +330,34 @@ export function VariantMatrixEditor({
 
       {/* ── 4. Tableau de Gestion des Variantes (SKU Matrix Table) ── */}
       {variants.length > 0 && (
-        <Card className="border-[var(--color-slate-200)] shadow-xs">
-          <CardHeader className="bg-[var(--color-navy-950)] text-white py-3 px-4 rounded-t-xl flex flex-wrap items-center justify-between gap-3">
-            <h4 className="text-sm font-bold">Matrice des Variantes & Stocks ({variants.length})</h4>
+        <Card className="border-slate-800 shadow-xs bg-slate-900 text-white">
+          <CardHeader className="bg-[var(--color-navy-950)] text-white py-3 px-4 rounded-t-xl flex flex-wrap items-center justify-between gap-3 border-b border-slate-800">
+            <h4 className="text-sm font-bold text-white">Matrice des Variantes & Stocks ({variants.length})</h4>
 
             {/* Actions en masse */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1 bg-white/10 p-1 rounded-md">
+              <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 p-1.5 rounded-lg">
                 <Input
                   type="number"
                   value={bulkPrice}
                   onChange={(e) => setBulkPrice(e.target.value)}
                   placeholder="Prix FCFA..."
-                  className="h-7 text-xs w-28 bg-white text-[var(--color-navy-900)] font-semibold"
+                  className="h-8 text-xs w-28 bg-slate-950 text-white border-slate-700 font-semibold focus:border-amber-400"
                 />
-                <Button type="button" size="sm" onClick={applyBulkPrice} className="h-7 text-[11px] bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] font-bold">
+                <Button type="button" size="sm" onClick={applyBulkPrice} className="h-8 text-xs bg-amber-400 hover:bg-amber-500 text-slate-950 font-black shadow-2xs px-3 rounded-md">
                   Prix Tous
                 </Button>
               </div>
 
-              <div className="flex items-center gap-1 bg-white/10 p-1 rounded-md">
+              <div className="flex items-center gap-1.5 bg-slate-900 border border-slate-700/80 p-1.5 rounded-lg">
                 <Input
                   type="number"
                   value={bulkStock}
                   onChange={(e) => setBulkStock(e.target.value)}
                   placeholder="Stock..."
-                  className="h-7 text-xs w-20 bg-white text-[var(--color-navy-900)] font-semibold"
+                  className="h-8 text-xs w-20 bg-slate-950 text-white border-slate-700 font-semibold focus:border-amber-400"
                 />
-                <Button type="button" size="sm" onClick={applyBulkStock} className="h-7 text-[11px] bg-white hover:bg-slate-100 text-[var(--color-navy-950)] font-bold">
+                <Button type="button" size="sm" onClick={applyBulkStock} className="h-8 text-xs bg-slate-100 hover:bg-white text-slate-950 font-black shadow-2xs px-3 rounded-md">
                   Stock Tous
                 </Button>
               </div>
@@ -366,27 +366,27 @@ export function VariantMatrixEditor({
           <CardBody className="p-0 overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[var(--color-slate-100)] border-b border-[var(--color-slate-200)] text-[var(--color-slate-700)] font-bold uppercase text-[10px]">
-                  <th className="py-2.5 px-3">Combinaison</th>
-                  <th className="py-2.5 px-3">SKU</th>
-                  <th className="py-2.5 px-3">Prix (FCFA)</th>
-                  <th className="py-2.5 px-3">Prix Barré</th>
-                  <th className="py-2.5 px-3">Stock</th>
-                  <th className="py-2.5 px-3">Statut</th>
-                  <th className="py-2.5 px-3 text-right">Actions</th>
+                <tr className="bg-[var(--color-navy-950)] border-b border-slate-800 text-amber-400 font-extrabold uppercase text-[10px]">
+                  <th className="py-3 px-3">Combinaison</th>
+                  <th className="py-3 px-3">SKU</th>
+                  <th className="py-3 px-3">Prix (FCFA)</th>
+                  <th className="py-3 px-3">Prix Barré</th>
+                  <th className="py-3 px-3">Stock</th>
+                  <th className="py-3 px-3">Statut</th>
+                  <th className="py-3 px-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[var(--color-slate-200)]">
+              <tbody className="divide-y divide-slate-800 bg-slate-900">
                 {variants.map((v, varIdx) => (
-                  <tr key={varIdx} className={v.status === 'inactive' ? 'bg-slate-50 opacity-60' : 'hover:bg-slate-50/70 transition-colors'}>
-                    <td className="py-2.5 px-3 font-bold text-[var(--color-navy-900)]">
+                  <tr key={varIdx} className={v.status === 'inactive' ? 'bg-slate-950/80 opacity-50' : 'hover:bg-slate-800/80 transition-colors'}>
+                    <td className="py-2.5 px-3 font-bold text-slate-100">
                       {v.option_values?.map((o) => o.value).join(' / ') || 'Par défaut'}
                     </td>
                     <td className="py-2.5 px-3">
                       <Input
                         value={v.sku || ''}
                         onChange={(e) => updateVariant(varIdx, 'sku', e.target.value)}
-                        className="h-7 text-xs w-32 font-mono uppercase bg-white"
+                        className="h-8 text-xs w-32 font-mono uppercase bg-slate-950 text-white border-slate-700"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -394,7 +394,7 @@ export function VariantMatrixEditor({
                         type="number"
                         value={v.price || 0}
                         onChange={(e) => updateVariant(varIdx, 'price', parseFloat(e.target.value) || 0)}
-                        className="h-7 text-xs w-28 font-semibold bg-white"
+                        className="h-8 text-xs w-28 font-bold bg-slate-950 text-amber-400 border-slate-700"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -403,7 +403,7 @@ export function VariantMatrixEditor({
                         value={v.compare_at_price || ''}
                         onChange={(e) => updateVariant(varIdx, 'compare_at_price', e.target.value ? parseFloat(e.target.value) : null)}
                         placeholder="Optionnel"
-                        className="h-7 text-xs w-24 bg-white"
+                        className="h-8 text-xs w-24 bg-slate-950 text-slate-300 border-slate-700"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -411,14 +411,14 @@ export function VariantMatrixEditor({
                         type="number"
                         value={v.stock_quantity || 0}
                         onChange={(e) => updateVariant(varIdx, 'stock_quantity', parseInt(e.target.value, 10) || 0)}
-                        className="h-7 text-xs w-20 font-semibold bg-white"
+                        className="h-8 text-xs w-20 font-bold bg-slate-950 text-emerald-400 border-slate-700"
                       />
                     </td>
                     <td className="py-2.5 px-3">
                       <select
                         value={v.status}
                         onChange={(e) => updateVariant(varIdx, 'status', e.target.value as VariantStatus)}
-                        className="h-7 text-xs w-28 bg-white border border-[var(--color-slate-300)] rounded px-1 font-semibold text-[var(--color-navy-900)] focus:outline-none"
+                        className="h-8 text-xs w-28 bg-slate-950 text-white border border-slate-700 rounded px-1.5 font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
                       >
                         <option value="active">Actif</option>
                         <option value="inactive">Inactif</option>
@@ -428,19 +428,18 @@ export function VariantMatrixEditor({
                     <td className="py-2.5 px-3 text-right">
                       <Button
                         type="button"
-                        variant="ghost"
                         size="sm"
                         onClick={() => {
                           setEditingVariantIndex(varIdx)
                           setTempVariantDesc(v.description || '')
                           setTempVariantImages(v.images || [])
                         }}
-                        className="h-7 px-2 text-xs gap-1 text-[var(--color-navy-900)] hover:bg-slate-200"
+                        className="h-8 px-2.5 text-xs gap-1.5 bg-amber-400 text-slate-950 font-extrabold hover:bg-amber-500 shadow-xs"
                         title="Images & Description spécifique"
                       >
                         <Edit3 className="h-3.5 w-3.5" /> Édit
                         {v.images && v.images.length > 0 && (
-                          <span className="ml-1 bg-amber-500 text-white font-extrabold text-[10px] px-1.5 py-0.2 rounded-full">
+                          <span className="ml-1 bg-slate-950 text-amber-400 font-extrabold text-[10px] px-1.5 py-0.2 rounded-full">
                             {v.images.length}
                           </span>
                         )}
