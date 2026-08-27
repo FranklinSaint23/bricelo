@@ -16,7 +16,7 @@ export function ProductGallery({ images, name }: Props) {
     setActive(0)
   }, [images])
 
-  // Défilé automatique (Auto-play) toutes les 3.5 secondes si non survolé
+  // Défilé automatique (Auto-play) toutes les 3 secondes si non survolé
   useEffect(() => {
     if (!images || images.length <= 1 || isHovered) return
 
