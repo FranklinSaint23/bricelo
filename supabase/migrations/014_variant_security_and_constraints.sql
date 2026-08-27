@@ -2,7 +2,12 @@
 -- BRICELO — Migration 014 : Contraintes d'intégrité, RLS Multi-vendeurs & Gestion Transactionnelle du Stock pour Variantes
 -- ============================================================
 
--- 1. Dimensions logistiques physiques sur product_variants
+-- 1. Ajout des colonnes de prix et dimensions logistiques physiques sur product_variants
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS price NUMERIC(12,0) DEFAULT 0;
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS direct_price NUMERIC(12,0) DEFAULT 0;
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS compare_at_price NUMERIC(12,0) DEFAULT NULL;
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS stock_quantity INT NOT NULL DEFAULT 0;
+ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS combination_key TEXT;
 ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS weight_kg NUMERIC(8,3) DEFAULT 0 CHECK (weight_kg >= 0);
 ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS length_cm NUMERIC(8,2) DEFAULT 0 CHECK (length_cm >= 0);
 ALTER TABLE product_variants ADD COLUMN IF NOT EXISTS width_cm NUMERIC(8,2) DEFAULT 0 CHECK (width_cm >= 0);
