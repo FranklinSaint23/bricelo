@@ -11,6 +11,10 @@ import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { slugify } from '@/lib/utils'
 import Image from 'next/image'
 
+import { VariantMatrixEditor } from '@/components/vendor/variant-matrix-editor'
+import { saveProductOptionsAndVariants } from '@/lib/product-variant-saver'
+import { ProductOption, AdvancedProductVariant } from '@/types/variants'
+
 interface Category { id: string; name: string }
 
 export interface VariantFormItem {
@@ -65,93 +69,12 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
 
   // --- Gestion des Variantes Dynamiques ---
   const [hasVariants, setHasVariants] = useState(initialVariants.length > 0)
-  const [variantsList, setVariantsList] = useState<VariantFormItem[]>(initialVariants)
-
-  // Formulaire d'ajout personnalisé
-  const [customName, setCustomName]     = useState('Nombre de places')
-  const [customValue, setCustomValue]   = useState('')
-  const [customAdj, setCustomAdj]       = useState('0')
-  const [variantError, setVariantError] = useState<string | null>(null)
+  const [options, setOptions]         = useState<ProductOption[]>([])
+  const [advancedVariants, setAdvancedVariants] = useState<AdvancedProductVariant[]>([])
 
   function handleNameChange(val: string) {
     setName(val)
     if (mode === 'create') setSlug(slugify(val))
-  }
-
-  // Preset Matelas (Nombre de places & Épaissseurs)
-  function applyMattressPreset() {
-    setHasVariants(true)
-    const mattressVariants: VariantFormItem[] = [
-      // Places
-      { name: 'Nombre de places', value: '2 places (140/190)', price_adjustment: 0, stock: Number(stock) || 10 },
-      { name: 'Nombre de places', value: '3 places (160/190)', price_adjustment: 15000, stock: Number(stock) || 10 },
-      { name: 'Nombre de places', value: '4 places (180/190)', price_adjustment: 25000, stock: Number(stock) || 10 },
-      { name: 'Nombre de places', value: '5 places Carré (200/200)', price_adjustment: 40000, stock: Number(stock) || 10 },
-      // Épaisseurs
-      { name: 'Épaisseur', value: '10 CM', price_adjustment: 0, stock: Number(stock) || 10 },
-      { name: 'Épaisseur', value: '12 CM', price_adjustment: 5000, stock: Number(stock) || 10 },
-      { name: 'Épaisseur', value: '15 CM', price_adjustment: 10000, stock: Number(stock) || 10 },
-      { name: 'Épaisseur', value: '17 CM', price_adjustment: 15000, stock: Number(stock) || 10 },
-      { name: 'Épaisseur', value: '18 CM', price_adjustment: 20000, stock: Number(stock) || 10 },
-      { name: 'Épaisseur', value: '20 CM', price_adjustment: 25000, stock: Number(stock) || 10 },
-      { name: 'Épaisseur', value: '25 CM', price_adjustment: 35000, stock: Number(stock) || 10 },
-    ]
-    setVariantsList(mattressVariants)
-  }
-
-  // Preset Vêtements
-  function applyClothingPreset() {
-    setHasVariants(true)
-    const items: VariantFormItem[] = ['S', 'M', 'L', 'XL', 'XXL'].map(v => ({
-      name: 'Taille',
-      value: v,
-      price_adjustment: 0,
-      stock: Number(stock) || 10,
-    }))
-    setVariantsList(items)
-  }
-
-  // Preset Chaussures
-  function applyShoesPreset() {
-    setHasVariants(true)
-    const items: VariantFormItem[] = ['39', '40', '41', '42', '43', '44', '45'].map(v => ({
-      name: 'Pointure',
-      value: v,
-      price_adjustment: 0,
-      stock: Number(stock) || 10,
-    }))
-    setVariantsList(items)
-  }
-
-  function addCustomVariant(e?: React.SyntheticEvent) {
-    if (e) e.preventDefault()
-    setVariantError(null)
-    const nameVal = customName.trim() || 'Option'
-    const optVal  = customValue.trim()
-
-    if (!optVal) {
-      setVariantError('Veuillez remplir la "Valeur / Option" (ex: 3 places, 15 CM, XL, Bleu...).')
-      return
-    }
-
-    const newItem: VariantFormItem = {
-      name: nameVal,
-      value: optVal,
-      price_adjustment: Number(customAdj) || 0,
-      stock: Number(stock) || 10,
-    }
-
-    setVariantsList((prev) => [...prev, newItem])
-    setCustomValue('')
-    setCustomAdj('0')
-  }
-
-  function removeVariant(index: number) {
-    setVariantsList((prev) => prev.filter((_, i) => i !== index))
-  }
-
-  function updateVariantPrice(index: number, newAdj: number) {
-    setVariantsList((prev) => prev.map((item, i) => i === index ? { ...item, price_adjustment: newAdj } : item))
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -221,22 +144,15 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
       if (err) { setError(err.message); setLoading(false); return }
     }
 
-    // --- Synchronisation des Variantes dans product_variants ---
+    // --- Enregistrement relationnel des Options & Variantes ---
     if (productId) {
-      // Nettoyer les anciennes variantes
-      await supabase.from('product_variants').delete().eq('product_id', productId)
-
-      if (hasVariants && variantsList.length > 0) {
-        const rows = variantsList.map(v => ({
-          product_id: productId,
-          name: v.name.trim(),
-          value: v.value.trim(),
-          price_adjustment: Number(v.price_adjustment) || 0,
-          stock: Number(v.stock) || Number(stock) || 10,
-        }))
-        const { error: vErr } = await supabase.from('product_variants').insert(rows)
-        if (vErr) console.error('[ProductForm] Erreur insertion variantes:', vErr)
-      }
+      await saveProductOptionsAndVariants(
+        supabase,
+        productId,
+        hasVariants,
+        options,
+        advancedVariants
+      )
     }
 
     router.push('/vendeur/produits')
@@ -346,149 +262,18 @@ export function ProductForm({ storeId, categories, initialData, initialVariants 
         <CardBody className="flex flex-col gap-5 p-5">
           {!hasVariants ? (
             <p className="text-xs text-[var(--color-slate-500)] italic text-center py-2">
-              Basculez l'interrupteur ci-dessus pour ajouter des choix dynamiques (ex: Matelas 2 à 5 places, Épaisseurs 10 à 25cm, Pointures...).
+              Basculez l'interrupteur ci-dessus pour ajouter des critères de variantes (*Couleur, Taille, Stockage, RAM, Processeur, Matière, Nombre de places, etc.*).
             </p>
           ) : (
-            <>
-              {/* Presets rapides */}
-              <div className="bg-white p-3.5 rounded-xl border border-amber-200 flex flex-col gap-2">
-                <p className="text-xs font-bold text-[var(--color-navy-900)] flex items-center gap-1.5">
-                  <Sparkles className="h-4 w-4 text-[var(--color-accent)]" /> Modèles de variantes rapides :
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={applyMattressPreset}
-                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200 transition-colors flex items-center gap-1.5"
-                  >
-                    <BedDouble className="h-4 w-4 text-amber-700" />
-                    <span>Matelas (Places & Épaisseurs)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={applyClothingPreset}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--color-slate-100)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-200)] transition-colors flex items-center gap-1.5"
-                  >
-                    <Shirt className="h-4 w-4 text-slate-600" />
-                    <span>Vêtements (S, M, L, XL, XXL)</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={applyShoesPreset}
-                    className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[var(--color-slate-100)] text-[var(--color-navy-900)] hover:bg-[var(--color-slate-200)] transition-colors flex items-center gap-1.5"
-                  >
-                    <Footprints className="h-4 w-4 text-slate-600" />
-                    <span>Chaussures (Pointures 39-45)</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Formulaire d'ajout personnalisé */}
-              <div className="bg-white p-4 rounded-xl border border-[var(--color-slate-200)] flex flex-col gap-3">
-                <p className="text-xs font-bold text-[var(--color-navy-900)] flex items-center gap-1.5">
-                  <Plus className="h-4 w-4 text-[var(--color-accent)]" /> Ajouter une option personnalisée :
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Nom du Type (ex: Places, Épaisseur)</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: Nombre de places, Épaisseur"
-                      value={customName}
-                      onChange={(e) => setCustomName(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomVariant(e) } }}
-                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Valeur / Option *</label>
-                    <input
-                      type="text"
-                      placeholder="Ex: 3 places (160/190) ou 15 CM"
-                      value={customValue}
-                      onChange={(e) => setCustomValue(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomVariant(e) } }}
-                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg font-semibold text-[var(--color-navy-900)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-semibold text-[var(--color-slate-500)] block mb-1">Supplément Prix (FCFA)</label>
-                    <input
-                      type="number"
-                      placeholder="0 (+15000 FCFA...)"
-                      value={customAdj}
-                      onChange={(e) => setCustomAdj(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomVariant(e) } }}
-                      className="w-full h-9 px-3 text-xs border border-[var(--color-slate-300)] rounded-lg font-bold text-[var(--color-navy-900)]"
-                    />
-                  </div>
-                </div>
-
-                {variantError && (
-                  <p className="text-xs text-red-600 font-semibold bg-red-50 p-2.5 rounded-lg border border-red-200 flex items-center gap-1.5">
-                    <AlertCircle className="h-4 w-4 shrink-0 text-red-600" />
-                    <span>{variantError}</span>
-                  </p>
-                )}
-
-                <Button type="button" onClick={(e) => addCustomVariant(e)} size="sm" className="self-end gap-1 text-xs font-bold">
-                  <Plus className="h-3.5 w-3.5" /> Ajouter l'option
-                </Button>
-              </div>
-
-              {/* Liste des variantes enregistrées */}
-              {variantsList.length > 0 && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-xs font-bold text-[var(--color-navy-900)]">
-                    Variantes configurées ({variantsList.length}) :
-                  </p>
-                  <div className="overflow-x-auto border border-[var(--color-slate-200)] rounded-xl bg-white">
-                    <table className="w-full text-xs text-left">
-                      <thead className="bg-[var(--color-slate-50)] border-b border-[var(--color-slate-200)]">
-                        <tr>
-                          <th className="px-3.5 py-2.5 font-bold text-[var(--color-slate-600)]">Type</th>
-                          <th className="px-3.5 py-2.5 font-bold text-[var(--color-slate-600)]">Option / Valeur</th>
-                          <th className="px-3.5 py-2.5 font-bold text-[var(--color-slate-600)]">Ajustement Prix (FCFA)</th>
-                          <th className="px-3.5 py-2.5 font-bold text-[var(--color-slate-600)] text-right">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[var(--color-slate-100)]">
-                        {variantsList.map((item, idx) => (
-                          <tr key={idx} className="hover:bg-amber-50/40">
-                            <td className="px-3.5 py-2 font-semibold text-[var(--color-navy-900)]">
-                              <span className="inline-flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded text-[11px]">
-                                <Tag className="h-3 w-3 text-slate-500" /> {item.name}
-                              </span>
-                            </td>
-                            <td className="px-3.5 py-2 font-bold text-[var(--color-navy-900)]">{item.value}</td>
-                            <td className="px-3.5 py-2">
-                              <div className="flex items-center gap-1">
-                                <input
-                                  type="number"
-                                  value={item.price_adjustment}
-                                  onChange={(e) => updateVariantPrice(idx, Number(e.target.value))}
-                                  className="w-24 px-2 py-1 border border-slate-300 rounded font-bold text-xs"
-                                />
-                                <span className="text-[11px] text-slate-500">FCFA</span>
-                              </div>
-                            </td>
-                            <td className="px-3.5 py-2 text-right">
-                              <button
-                                type="button"
-                                onClick={() => removeVariant(idx)}
-                                className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </>
+            <VariantMatrixEditor
+              productName={name}
+              basePrice={Number(price) || 0}
+              baseStock={Number(stock) || 10}
+              initialOptions={options}
+              initialVariants={advancedVariants}
+              onChangeOptions={(newOpts) => setOptions(newOpts)}
+              onChangeVariants={(newVars) => setAdvancedVariants(newVars)}
+            />
           )}
         </CardBody>
       </Card>

@@ -180,15 +180,34 @@ export function CheckoutForm({ addresses, userId }: Props) {
 
         if (orderErr || !order) throw orderErr ?? new Error(lang === 'fr' ? 'Erreur lors de la création de la commande' : 'Error creating order')
 
-        const orderItems = storeItems.map((i) => ({
-          order_id: order.id,
-          product_id: i.product.id,
-          variant_id: i.variant?.id ?? null,
-          quantity: i.quantity,
-          unit_price: i.product.price + (i.variant?.price_adjustment ?? 0),
-          total_price: (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity,
-          snapshot: { name: i.product.name, image: i.product.images?.[0] ?? null },
-        }))
+        const orderItems = storeItems.map((i) => {
+          const v = i.variant as any
+          const unitPrice = (v?.price && v.price > 0)
+            ? v.price
+            : (v?.direct_price && v.direct_price > 0)
+            ? v.direct_price
+            : i.product.price + (v?.price_adjustment ?? 0)
+
+          const variantName = v?.name || v?.value || null
+          const sku = v?.sku || null
+          const itemImage = v?.images?.[0]?.url || i.product.images?.[0] || null
+
+          return {
+            order_id: order.id,
+            product_id: i.product.id,
+            variant_id: (i.variant?.id && !i.variant.id.includes('_')) ? i.variant.id : null,
+            quantity: i.quantity,
+            unit_price: unitPrice,
+            total_price: unitPrice * i.quantity,
+            snapshot: {
+              name: i.product.name,
+              variant_name: variantName,
+              sku: sku,
+              image: itemImage,
+              unit_price: unitPrice,
+            },
+          }
+        })
         await supabase.from('order_items').insert(orderItems)
         orderIds.push(order.id)
 
@@ -209,13 +228,22 @@ export function CheckoutForm({ addresses, userId }: Props) {
           shippingCost: storeShipping,
           paymentMethod: paymentMethod,
           itemsCount: storeItems.length,
-          items: storeItems.map(i => ({
-            name: i.product.name,
-            variantName: i.variant?.value ?? null,
-            quantity: i.quantity,
-            unitPrice: i.product.price + (i.variant?.price_adjustment ?? 0),
-            totalPrice: (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity,
-          })),
+          items: storeItems.map(i => {
+            const v = i.variant as any
+            const uPrice = (v?.price && v.price > 0)
+              ? v.price
+              : (v?.direct_price && v.direct_price > 0)
+              ? v.direct_price
+              : i.product.price + (v?.price_adjustment ?? 0)
+
+            return {
+              name: i.product.name,
+              variantName: v?.name || v?.value || null,
+              quantity: i.quantity,
+              unitPrice: uPrice,
+              totalPrice: uPrice * i.quantity,
+            }
+          }),
         })
       }
 

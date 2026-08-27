@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { Store, Star, Package } from 'lucide-react'
 import { ProductCard } from '@/components/product/product-card'
 import { Badge } from '@/components/ui/badge'
+import { FacebookVerifiedBadge } from '@/components/ui/facebook-verified-badge'
 import type { Product } from '@/types'
 
 interface Props { params: Promise<{ slug: string }> }
@@ -51,9 +52,9 @@ export default async function StorePage({ params }: Props) {
           </div>
 
           <div className="pb-1 flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">{store.name}</h1>
-              <Badge variant="success">Vendeur vérifié</Badge>
+              <FacebookVerifiedBadge className="h-5 w-5 shrink-0" />
             </div>
             <div className="flex items-center gap-4 mt-1 text-sm text-[var(--color-slate-500)]">
               {store.rating > 0 && (

@@ -1,0 +1,524 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Plus, Trash2, Layers, Sparkles, AlertCircle, Edit3, Image as ImageIcon, Check, X, SlidersHorizontal, ArrowRight, ShieldCheck } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Card, CardBody, CardHeader } from '@/components/ui/card'
+import { DisplayType, ProductOption, ProductOptionValue, AdvancedProductVariant, VariantStatus } from '@/types/variants'
+import { WORLD_PRODUCT_PRESETS } from '@/lib/product-presets'
+import { generateVariantMatrix, MAX_VARIANTS_LIMIT } from '@/lib/variant-generator'
+
+interface Props {
+  productName: string
+  basePrice: number
+  baseStock: number
+  initialOptions?: ProductOption[]
+  initialVariants?: AdvancedProductVariant[]
+  onChangeOptions: (options: ProductOption[]) => void
+  onChangeVariants: (variants: AdvancedProductVariant[]) => void
+}
+
+export function VariantMatrixEditor({
+  productName,
+  basePrice,
+  baseStock,
+  initialOptions = [],
+  initialVariants = [],
+  onChangeOptions,
+  onChangeVariants,
+}: Props) {
+  // Preset sélectionné
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('custom_generic')
+
+  // Options et leurs valeurs
+  const [options, setOptions] = useState<ProductOption[]>(
+    initialOptions.length > 0
+      ? initialOptions
+      : [
+          {
+            name: 'Couleur',
+            display_type: 'color',
+            position: 0,
+            required: true,
+            values: [
+              { value: 'Noir', label: 'Noir', position: 0, is_active: true, metadata: { hex: '#000000' } },
+              { value: 'Bleu', label: 'Bleu', position: 1, is_active: true, metadata: { hex: '#0000ff' } },
+            ],
+          },
+        ]
+  )
+
+  // Variantes SKU générées
+  const [variants, setVariants] = useState<AdvancedProductVariant[]>(initialVariants)
+
+  // Modal d'édition détaillée de variante
+  const [editingVariantIndex, setEditingVariantIndex] = useState<number | null>(null)
+  const [tempVariantDesc, setTempVariantDesc]         = useState('')
+  const [tempVariantImage, setTempVariantImage]       = useState('')
+
+  // Outils d'action en masse (Bulk Apply)
+  const [bulkPrice, setBulkPrice] = useState('')
+  const [bulkStock, setBulkStock] = useState('')
+
+  // Récalcul automatique de la matrice de variantes dès que les options changent
+  useEffect(() => {
+    const { variants: newMatrix } = generateVariantMatrix(options, basePrice, baseStock, productName, variants)
+    setVariants(newMatrix)
+    onChangeOptions(options)
+    onChangeVariants(newMatrix)
+  }, [options, basePrice, baseStock, productName])
+
+  // Application d'un preset universel de produit du monde
+  function applyPreset(presetId: string) {
+    setSelectedPresetId(presetId)
+    const preset = WORLD_PRODUCT_PRESETS.find((p) => p.id === presetId)
+    if (!preset || preset.defaultOptions.length === 0) return
+
+    const newOptions: ProductOption[] = preset.defaultOptions.map((opt, optIdx) => ({
+      name: opt.name,
+      display_type: opt.display_type,
+      position: optIdx,
+      required: true,
+      values: opt.defaultValues.map((val, valIdx) => ({
+        value: val.value,
+        label: val.label ?? val.value,
+        position: valIdx,
+        is_active: true,
+        metadata: val.hex ? { hex: val.hex } : null,
+      })),
+    }))
+
+    setOptions(newOptions)
+  }
+
+  // Ajouter une option
+  function addOption() {
+    const newOpt: ProductOption = {
+      name: `Nouvelle Option ${options.length + 1}`,
+      display_type: 'button',
+      position: options.length,
+      required: true,
+      values: [
+        { value: 'Option 1', label: 'Option 1', position: 0, is_active: true },
+        { value: 'Option 2', label: 'Option 2', position: 1, is_active: true },
+      ],
+    }
+    setOptions([...options, newOpt])
+  }
+
+  // Supprimer une option
+  function removeOption(index: number) {
+    setOptions(options.filter((_, i) => i !== index))
+  }
+
+  // Mettre à jour le nom ou le type d'affichage d'une option
+  function updateOption(index: number, field: keyof ProductOption, value: any) {
+    const updated = [...options]
+    updated[index] = { ...updated[index], [field]: value }
+    setOptions(updated)
+  }
+
+  // Ajouter une valeur à une option
+  function addOptionValue(optIdx: number, valText: string = '', hexColor: string = '') {
+    if (!valText.trim()) return
+    const updated = [...options]
+    const opt = updated[optIdx]
+    const newVal: ProductOptionValue = {
+      value: valText.trim(),
+      label: valText.trim(),
+      position: opt.values.length,
+      is_active: true,
+      metadata: hexColor ? { hex: hexColor } : null,
+    }
+    opt.values.push(newVal)
+    setOptions(updated)
+  }
+
+  // Supprimer une valeur d'option
+  function removeOptionValue(optIdx: number, valIdx: number) {
+    const updated = [...options]
+    updated[optIdx].values.splice(valIdx, 1)
+    setOptions(updated)
+  }
+
+  // Mise à jour d'un champ de variante dans la table (SKU, Prix, Stock, Status)
+  function updateVariant(varIdx: number, field: keyof AdvancedProductVariant, val: any) {
+    const updated = [...variants]
+    updated[varIdx] = { ...updated[varIdx], [field]: val }
+    setVariants(updated)
+    onChangeVariants(updated)
+  }
+
+  // Appliquer le prix en masse
+  function applyBulkPrice() {
+    const p = parseFloat(bulkPrice)
+    if (isNaN(p) || p < 0) return
+    const updated = variants.map((v) => ({ ...v, price: p }))
+    setVariants(updated)
+    onChangeVariants(updated)
+    setBulkPrice('')
+  }
+
+  // Appliquer le stock en masse
+  function applyBulkStock() {
+    const s = parseInt(bulkStock, 10)
+    if (isNaN(s) || s < 0) return
+    const updated = variants.map((v) => ({ ...v, stock_quantity: s }))
+    setVariants(updated)
+    onChangeVariants(updated)
+    setBulkStock('')
+  }
+
+  // Calcul du nombre théorique de variantes
+  const { totalCount, excedesLimit } = generateVariantMatrix(options, basePrice, baseStock, productName, variants)
+
+  return (
+    <div className="space-y-6">
+      {/* ── 1. Sélecteur de Type de Produit (Presets du monde) ── */}
+      <Card className="border-[var(--color-slate-200)] shadow-xs">
+        <CardHeader className="bg-[var(--color-navy-950)] text-white py-3.5 px-4 rounded-t-xl flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-5 w-5 text-[var(--color-accent)]" />
+            <h3 className="text-sm font-bold tracking-wide">Type de Produit & Modèle Prédéfini</h3>
+          </div>
+          <span className="text-[11px] text-white/60">Génération automatique des variantes</span>
+        </CardHeader>
+        <CardBody className="p-4 space-y-3">
+          <p className="text-xs text-[var(--color-slate-600)]">
+            Choisissez la catégorie du produit pour pré-remplir les critères de variantes usuels (*Smartphones, Mode, Meubles, Électroménager, Parfums...*) ou créez vos propres critères sur-mesure.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+            {WORLD_PRODUCT_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => applyPreset(preset.id)}
+                className={`text-left p-3 rounded-lg border text-xs transition-all ${
+                  selectedPresetId === preset.id
+                    ? 'border-[var(--color-navy-900)] bg-[var(--color-slate-100)] ring-2 ring-[var(--color-navy-900)]/20 font-bold'
+                    : 'border-[var(--color-slate-200)] hover:border-[var(--color-slate-400)] bg-white'
+                }`}
+              >
+                <p className="font-semibold text-[var(--color-navy-900)]">{preset.categoryLabel}</p>
+                <p className="text-[10px] text-[var(--color-slate-500)] line-clamp-1 mt-0.5">{preset.description}</p>
+              </button>
+            ))}
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* ── 2. Configuration des Critères / Options ── */}
+      <Card className="border-[var(--color-slate-200)] shadow-xs">
+        <CardHeader className="bg-[var(--color-slate-100)] py-3 px-4 flex flex-row items-center justify-between border-b border-[var(--color-slate-200)]">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-4 w-4 text-[var(--color-navy-900)]" />
+            <h4 className="text-sm font-bold text-[var(--color-navy-900)]">Critères & Options du Produit</h4>
+          </div>
+          <Button type="button" variant="outline" size="sm" onClick={addOption} className="h-8 text-xs gap-1">
+            <Plus className="h-3.5 w-3.5" /> Ajouter un critère
+          </Button>
+        </CardHeader>
+        <CardBody className="p-4 space-y-4">
+          {options.map((opt, optIdx) => (
+            <div key={optIdx} className="p-3.5 rounded-lg border border-[var(--color-slate-200)] bg-[var(--color-slate-50)]/50 space-y-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-[11px] font-semibold text-[var(--color-slate-600)] mb-1">Nom du critère</label>
+                  <Input
+                    value={opt.name}
+                    onChange={(e) => updateOption(optIdx, 'name', e.target.value)}
+                    placeholder="ex: Couleur, Taille, RAM..."
+                    className="h-9 text-xs bg-white font-semibold"
+                  />
+                </div>
+                <div className="w-40">
+                  <label className="block text-[11px] font-semibold text-[var(--color-slate-600)] mb-1">Affichage client</label>
+                  <select
+                    value={opt.display_type}
+                    onChange={(e) => updateOption(optIdx, 'display_type', e.target.value as DisplayType)}
+                    className="w-full h-9 px-2 text-xs border border-[var(--color-slate-300)] rounded-lg bg-white font-semibold text-[var(--color-navy-900)] focus:outline-none"
+                  >
+                    <option value="color">Boutons Couleur (Swatches)</option>
+                    <option value="button">Boutons Texte</option>
+                    <option value="select">Liste déroulante</option>
+                    <option value="radio">Boutons Radio</option>
+                  </select>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeOption(optIdx)}
+                  className="mt-5 p-2 text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+                  title="Supprimer ce critère"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Liste des valeurs du critère */}
+              <div>
+                <label className="block text-[11px] font-semibold text-[var(--color-slate-600)] mb-1.5">Valeurs de {opt.name}</label>
+                <div className="flex flex-wrap items-center gap-2">
+                  {opt.values.map((val, valIdx) => (
+                    <div
+                      key={valIdx}
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-[var(--color-slate-300)] bg-white text-xs shadow-2xs"
+                    >
+                      {opt.display_type === 'color' && (
+                        <input
+                          type="color"
+                          value={val.metadata?.hex || '#000000'}
+                          onChange={(e) => {
+                            const updated = [...options]
+                            updated[optIdx].values[valIdx].metadata = { hex: e.target.value }
+                            setOptions(updated)
+                          }}
+                          className="w-4 h-4 rounded-full border-0 p-0 cursor-pointer"
+                        />
+                      )}
+                      <span className="font-semibold text-[var(--color-navy-900)]">{val.value}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeOptionValue(optIdx, valIdx)}
+                        className="text-[var(--color-slate-400)] hover:text-rose-600 transition-colors"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Formulaire d'ajout rapide de valeur */}
+                  <QuickAddValueForm
+                    onAdd={(val, hex) => addOptionValue(optIdx, val, hex)}
+                    isColor={opt.display_type === 'color'}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </CardBody>
+      </Card>
+
+      {/* ── 3. Synthèse & Génération de la Matrice ── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-950">
+        <div className="flex items-center gap-2 text-xs font-semibold">
+          <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+          <span>
+            Cette configuration générera <strong className="text-amber-900 text-sm font-extrabold">{variants.length} variante(s)/SKU</strong> commerciale(s) indépendante(s).
+          </span>
+        </div>
+        {excedesLimit && (
+          <div className="flex items-center gap-1.5 text-xs text-rose-700 font-bold bg-rose-100 px-3 py-1 rounded-md">
+            <AlertCircle className="h-4 w-4 shrink-0" />
+            <span>Limite de sécurité dépassée (max {MAX_VARIANTS_LIMIT} variantes). Réduisez les critères.</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── 4. Tableau de Gestion des Variantes (SKU Matrix Table) ── */}
+      {variants.length > 0 && (
+        <Card className="border-[var(--color-slate-200)] shadow-xs">
+          <CardHeader className="bg-[var(--color-navy-950)] text-white py-3 px-4 rounded-t-xl flex flex-wrap items-center justify-between gap-3">
+            <h4 className="text-sm font-bold">Matrice des Variantes & Stocks ({variants.length})</h4>
+
+            {/* Actions en masse */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1 bg-white/10 p-1 rounded-md">
+                <Input
+                  type="number"
+                  value={bulkPrice}
+                  onChange={(e) => setBulkPrice(e.target.value)}
+                  placeholder="Prix FCFA..."
+                  className="h-7 text-xs w-28 bg-white text-[var(--color-navy-900)] font-semibold"
+                />
+                <Button type="button" size="sm" onClick={applyBulkPrice} className="h-7 text-[11px] bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] font-bold">
+                  Prix Tous
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-1 bg-white/10 p-1 rounded-md">
+                <Input
+                  type="number"
+                  value={bulkStock}
+                  onChange={(e) => setBulkStock(e.target.value)}
+                  placeholder="Stock..."
+                  className="h-7 text-xs w-20 bg-white text-[var(--color-navy-900)] font-semibold"
+                />
+                <Button type="button" size="sm" onClick={applyBulkStock} className="h-7 text-[11px] bg-white hover:bg-slate-100 text-[var(--color-navy-950)] font-bold">
+                  Stock Tous
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardBody className="p-0 overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[var(--color-slate-100)] border-b border-[var(--color-slate-200)] text-[var(--color-slate-700)] font-bold uppercase text-[10px]">
+                  <th className="py-2.5 px-3">Combinaison</th>
+                  <th className="py-2.5 px-3">SKU</th>
+                  <th className="py-2.5 px-3">Prix (FCFA)</th>
+                  <th className="py-2.5 px-3">Prix Barré</th>
+                  <th className="py-2.5 px-3">Stock</th>
+                  <th className="py-2.5 px-3">Statut</th>
+                  <th className="py-2.5 px-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-slate-200)]">
+                {variants.map((v, varIdx) => (
+                  <tr key={varIdx} className={v.status === 'inactive' ? 'bg-slate-50 opacity-60' : 'hover:bg-slate-50/70 transition-colors'}>
+                    <td className="py-2.5 px-3 font-bold text-[var(--color-navy-900)]">
+                      {v.option_values?.map((o) => o.value).join(' / ') || 'Par défaut'}
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Input
+                        value={v.sku || ''}
+                        onChange={(e) => updateVariant(varIdx, 'sku', e.target.value)}
+                        className="h-7 text-xs w-32 font-mono uppercase bg-white"
+                      />
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Input
+                        type="number"
+                        value={v.price || 0}
+                        onChange={(e) => updateVariant(varIdx, 'price', parseFloat(e.target.value) || 0)}
+                        className="h-7 text-xs w-28 font-semibold bg-white"
+                      />
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Input
+                        type="number"
+                        value={v.compare_at_price || ''}
+                        onChange={(e) => updateVariant(varIdx, 'compare_at_price', e.target.value ? parseFloat(e.target.value) : null)}
+                        placeholder="Optionnel"
+                        className="h-7 text-xs w-24 bg-white"
+                      />
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <Input
+                        type="number"
+                        value={v.stock_quantity || 0}
+                        onChange={(e) => updateVariant(varIdx, 'stock_quantity', parseInt(e.target.value, 10) || 0)}
+                        className="h-7 text-xs w-20 font-semibold bg-white"
+                      />
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <select
+                        value={v.status}
+                        onChange={(e) => updateVariant(varIdx, 'status', e.target.value as VariantStatus)}
+                        className="h-7 text-xs w-28 bg-white border border-[var(--color-slate-300)] rounded px-1 font-semibold text-[var(--color-navy-900)] focus:outline-none"
+                      >
+                        <option value="active">Actif</option>
+                        <option value="inactive">Inactif</option>
+                        <option value="out_of_stock">Rupture</option>
+                      </select>
+                    </td>
+                    <td className="py-2.5 px-3 text-right">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingVariantIndex(varIdx)
+                          setTempVariantDesc(v.description || '')
+                        }}
+                        className="h-7 px-2 text-xs gap-1 text-[var(--color-navy-900)] hover:bg-slate-200"
+                        title="Images & Description spécifique"
+                      >
+                        <Edit3 className="h-3.5 w-3.5" /> Édit
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </CardBody>
+        </Card>
+      )}
+
+      {/* ── Modal d'édition avancée d'une variante ── */}
+      {editingVariantIndex !== null && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full overflow-hidden animate-in fade-in zoom-in duration-150">
+            <div className="bg-[var(--color-navy-950)] text-white px-5 py-3.5 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-sm">Édition de Variante Spécifique</h3>
+                <p className="text-[11px] text-[var(--color-accent)] font-semibold">
+                  {variants[editingVariantIndex]?.option_values?.map((o) => o.value).join(' / ')}
+                </p>
+              </div>
+              <button onClick={() => setEditingVariantIndex(null)} className="p-1 hover:bg-white/10 rounded-md">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-[var(--color-slate-700)] mb-1">
+                  Description spécifique à cette variante (Optionnel)
+                </label>
+                <textarea
+                  value={tempVariantDesc}
+                  onChange={(e) => setTempVariantDesc(e.target.value)}
+                  placeholder="Si vide, la description générale du produit sera automatiquement utilisée par le site."
+                  rows={3}
+                  className="w-full text-xs p-2.5 rounded-lg border border-[var(--color-slate-300)] focus:border-[var(--color-navy-900)] focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-[var(--color-slate-200)]">
+                <Button type="button" variant="outline" size="sm" onClick={() => setEditingVariantIndex(null)}>
+                  Annuler
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    updateVariant(editingVariantIndex, 'description', tempVariantDesc)
+                    setEditingVariantIndex(null)
+                  }}
+                  className="bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-950)] text-white font-semibold"
+                >
+                  Enregistrer la variante
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Composant formulaire d'ajout rapide de valeur
+function QuickAddValueForm({ onAdd, isColor }: { onAdd: (val: string, hex: string) => void; isColor: boolean }) {
+  const [val, setVal] = useState('')
+  const [hex, setHex] = useState('#000000')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (val.trim()) {
+      onAdd(val.trim(), isColor ? hex : '')
+      setVal('')
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex items-center gap-1">
+      {isColor && (
+        <input
+          type="color"
+          value={hex}
+          onChange={(e) => setHex(e.target.value)}
+          className="w-5 h-5 rounded-full border-0 p-0 cursor-pointer"
+        />
+      )}
+      <input
+        type="text"
+        value={val}
+        onChange={(e) => setVal(e.target.value)}
+        placeholder="+ Valeur (Entrée)"
+        className="h-7 text-xs px-2 rounded border border-dashed border-[var(--color-slate-300)] focus:border-[var(--color-navy-900)] focus:outline-none w-28 bg-white"
+      />
+    </form>
+  )
+}

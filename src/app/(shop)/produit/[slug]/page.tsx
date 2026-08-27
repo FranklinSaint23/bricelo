@@ -23,6 +23,8 @@ import {
   ProductDescriptionHeading,
 } from '@/components/product/product-page-client'
 
+import { ProductDetailClient } from '@/components/product/product-detail-client'
+
 interface PageProps { params: Promise<{ slug: string }> }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -42,14 +44,46 @@ export default async function ProductPage({ params }: PageProps) {
     .select(`
       *,
       store:stores(id, name, slug, logo_url, rating, review_count, is_active),
-      category:categories(id, name, slug),
-      variants:product_variants(*)
+      category:categories(id, name, slug)
     `)
     .eq('slug', slug)
     .eq('is_active', true)
     .single()
 
   if (!product) notFound()
+
+  // Récupérer les options relationnelles du produit
+  const { data: optionsData } = await supabase
+    .from('product_options')
+    .select(`
+      id,
+      name,
+      display_type,
+      position,
+      required,
+      values:product_option_values(*)
+    `)
+    .eq('product_id', product.id)
+    .order('position')
+
+  // Récupérer les variantes relationnelles SKU
+  const { data: variantsData } = await supabase
+    .from('product_variants')
+    .select(`
+      *,
+      variant_values:product_variant_values(
+        option_value:product_option_values(*)
+      ),
+      images:variant_images(*)
+    `)
+    .eq('product_id', product.id)
+
+  const formattedVariants = (variantsData ?? []).map((v: any) => ({
+    ...v,
+    stock_quantity: v.stock_quantity ?? v.stock ?? 0,
+    price: v.price ?? v.direct_price ?? product.price,
+    option_values: v.variant_values?.map((vv: any) => vv.option_value).filter(Boolean) ?? [],
+  }))
 
   const { data: { user: authUser } } = await supabase.auth.getUser()
 
@@ -74,10 +108,6 @@ export default async function ProductPage({ params }: PageProps) {
     .neq('id', product.id)
     .limit(4)
 
-  const discount = product.compare_at_price
-    ? Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)
-    : 0
-
   return (
     <>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -87,67 +117,12 @@ export default async function ProductPage({ params }: PageProps) {
       {/* Breadcrumb */}
       <ProductBreadcrumb product={product as any} />
 
-      {/* Produit principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white rounded-[var(--radius-2xl)] p-6 sm:p-8 border border-[var(--color-slate-200)]">
-        <ProductGallery images={product.images} name={product.name} />
-
-        <div className="flex flex-col gap-5">
-          {/* En-tête */}
-          <div>
-            {product.category && <ProductCategoryBadge category={product.category as any} />}
-            <h1 className="text-2xl sm:text-3xl font-bold text-[var(--color-navy-900)] leading-tight">{product.name}</h1>
-            {product.review_count > 0 && (
-              <ProductRatingLine rating={product.rating} count={product.review_count} />
-            )}
-          </div>
-
-          {/* Prix */}
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center flex-wrap gap-2 sm:gap-3">
-              <span className="text-xl sm:text-2xl font-extrabold text-[var(--color-navy-900)]">
-                {formatPrice(product.price)}
-              </span>
-              {product.compare_at_price && product.compare_at_price > product.price && (
-                <>
-                  <span className="text-xl sm:text-2xl font-extrabold text-[var(--color-slate-400)] line-through">
-                    {formatPrice(product.compare_at_price)}
-                  </span>
-                  <Badge variant="danger" className="shrink-0 text-xs font-bold px-2 py-0.5">
-                    -{discount}%
-                  </Badge>
-                </>
-              )}
-            </div>
-            {(product.compare_at_price && product.compare_at_price > product.price || product.promo_ends_at || product.promotion_label) && (
-              <PromoTimer endsAt={product.promo_ends_at} />
-            )}
-          </div>
-
-          {/* Stock */}
-          <div className="flex items-center gap-2 text-sm">
-            <ProductStockStatus stock={product.stock} />
-          </div>
-
-          {/* Add to cart */}
-          <AddToCartSection product={product as any} />
-
-          {/* Garanties */}
-          <ProductGuarantees />
-
-          {/* Vendeur */}
-          {product.store && <ProductStoreLink store={product.store as any} />}
-        </div>
-      </div>
-
-      {/* Description */}
-      {product.description && (
-        <div className="mt-8 bg-white rounded-[var(--radius-2xl)] p-6 sm:p-8 border border-[var(--color-slate-200)]">
-          <ProductDescriptionHeading />
-          <div className="prose prose-sm max-w-none text-[var(--color-slate-700)] leading-relaxed whitespace-pre-line">
-            {product.description}
-          </div>
-        </div>
-      )}
+      {/* Composant Produit Client Réactif avec variantes */}
+      <ProductDetailClient
+        product={product}
+        options={(optionsData as any) ?? []}
+        variants={formattedVariants as any}
+      />
 
       {/* Avis */}
       <ProductReviews reviews={reviews ?? []} rating={product.rating} count={product.review_count}>

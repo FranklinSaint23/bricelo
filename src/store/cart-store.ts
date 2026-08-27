@@ -56,7 +56,12 @@ export const useCartStore = create<CartStore>()(
 
       total() {
         return get().items.reduce((sum, item) => {
-          const price = item.product.price + (item.variant?.price_adjustment ?? 0)
+          const v = item.variant as any
+          const price = (v?.price && v.price > 0)
+            ? v.price
+            : (v?.direct_price && v.direct_price > 0)
+            ? v.direct_price
+            : item.product.price + (v?.price_adjustment ?? 0)
           return sum + price * item.quantity
         }, 0)
       },

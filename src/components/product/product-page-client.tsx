@@ -128,6 +128,8 @@ export function ProductGuarantees() {
   )
 }
 
+import { FacebookVerifiedBadge } from '@/components/ui/facebook-verified-badge'
+
 export function StoreCard({ store }: { store: { name: string; slug: string; logo_url?: string | null; rating: number; review_count: number } }) {
   const { lang } = useLanguage()
   return (
@@ -138,7 +140,7 @@ export function StoreCard({ store }: { store: { name: string; slug: string; logo
         <p className="text-[10px] font-extrabold tracking-widest text-[var(--color-slate-400)] uppercase mb-0.5">VENDEUR</p>
         <div className="flex items-center gap-1.5 flex-wrap">
           <p className="text-sm font-bold text-[var(--color-navy-900)] truncate">{store.name}</p>
-          <BadgeCheck className="h-4 w-4 text-sky-500 fill-sky-100 shrink-0" />
+          <FacebookVerifiedBadge className="h-4 w-4 shrink-0" />
         </div>
         {store.review_count > 0 && (
           <div className="flex items-center gap-1 mt-0.5">

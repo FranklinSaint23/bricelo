@@ -8,9 +8,14 @@ import { useCartStore } from '@/store/cart-store'
 import { useLanguage } from '@/components/providers/language-provider'
 import type { Product, ProductVariant } from '@/types'
 
-interface Props { product: Product }
+interface Props {
+  product: Product
+  resolvedVariant?: any
+  overridePrice?: number
+  isAvailable?: boolean
+}
 
-export function AddToCartSection({ product }: Props) {
+export function AddToCartSection({ product, resolvedVariant, overridePrice, isAvailable = true }: Props) {
   const [qty, setQty]                 = useState(1)
   const [selectedMap, setSelectedMap] = useState<Record<string, ProductVariant>>({})
   const [added, setAdded]             = useState(false)
@@ -38,31 +43,32 @@ export function AddToCartSection({ product }: Props) {
     })
   }
 
-  // Cumul des ajustements de prix de toutes les variantes sélectionnées
+  // Cumul des ajustements de prix ou variante résolue
   const selectedValues = Object.values(selectedMap)
   const combinedAdjustment = selectedValues.reduce((acc, v) => acc + (v.price_adjustment ?? 0), 0)
-  const unitPrice = product.price + combinedAdjustment
+  const unitPrice = overridePrice ?? (product.price + combinedAdjustment)
 
-  // Générer une variante synthétique combinée pour le panier
-  const primaryVariant: ProductVariant | undefined = selectedValues.length > 0 ? {
+  // Variante finale pour le panier
+  const finalVariant: any = resolvedVariant || (selectedValues.length > 0 ? {
     id: selectedValues.map(v => v.id).join('_'),
     product_id: product.id,
     name: selectedValues.map(v => v.name).join(' / '),
     value: selectedValues.map(v => v.value).join(' — '),
     price_adjustment: combinedAdjustment,
+    price: unitPrice,
     stock: Math.min(...selectedValues.map(v => v.stock ?? 10)),
     sku: null,
-  } : undefined
+  } : undefined)
 
   function handleAdd() {
-    addItem(product, primaryVariant, qty)
+    addItem(product, finalVariant, qty)
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
 
   function handleBuyNow() {
     clearCart()
-    addItem(product, primaryVariant, qty)
+    addItem(product, finalVariant, qty)
     router.push('/checkout')
   }
 

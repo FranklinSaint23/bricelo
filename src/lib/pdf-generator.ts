@@ -13,6 +13,7 @@ export function generateOrderReceiptPDF(order: {
     quantity: number
     unit_price: number
     product?: { name: string } | null
+    snapshot?: { name?: string; variant_name?: string; sku?: string; image?: string; unit_price?: number } | null
   }>
 }) {
   const doc = new jsPDF()
@@ -135,8 +136,15 @@ export function generateOrderReceiptPDF(order: {
     doc.line(15, y + 9, 195, y + 9)
 
     doc.setTextColor(30, 41, 59)
-    const name = item.product?.name ?? 'Produit BRICELO'
-    const truncatedName = name.length > 50 ? name.slice(0, 47) + '...' : name
+    const baseName = item.snapshot?.name || item.product?.name || 'Produit BRICELO'
+    const varName = item.snapshot?.variant_name || null
+    const sku = item.snapshot?.sku || null
+    
+    let fullName = baseName
+    if (varName) fullName += ` (${varName})`
+    if (sku) fullName += ` [SKU: ${sku}]`
+
+    const truncatedName = fullName.length > 55 ? fullName.slice(0, 52) + '...' : fullName
     const itemTotal = item.unit_price * item.quantity
 
     doc.text(truncatedName, 20, y + 6)
