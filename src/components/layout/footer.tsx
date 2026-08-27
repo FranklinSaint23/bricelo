@@ -61,7 +61,7 @@ function LinkList({ links }: { links: { href: string; label: string }[] }) {
 }
 
 export function Footer() {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
 
   const features = [
     { icon: Truck,        title: t.footerDelivery,     desc: t.footerDeliveryDesc },
@@ -246,7 +246,10 @@ export function Footer() {
 
       {/* ── Payment methods ── */}
       <div className="bg-[var(--color-navy-950)] border-t border-white/10 py-5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-center gap-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--color-accent)]">
+            {lang === 'fr' ? 'Moyens de paiement acceptés' : 'Accepted payment methods'}
+          </p>
           <div className="flex items-center justify-center gap-3 sm:gap-6 max-w-md mx-auto">
             <div className="flex items-center justify-center shrink-0">
               <Image src="/payments/cash.jpg" alt={t.cash} width={96} height={56} className="h-9 sm:h-12 w-auto object-contain rounded-xs" />

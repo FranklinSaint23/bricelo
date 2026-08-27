@@ -155,7 +155,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
     const t = setInterval(() => {
       setTickerIdx((i) => (i + 1) % 4)
       setTickerKey((k) => k + 1)
-    }, 3500)
+    }, 3000)
     return () => clearInterval(t)
   }, [])
 
@@ -254,7 +254,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               alt="BRICÉLO.com"
               width={170}
               height={48}
-              className="h-10 sm:h-12 w-auto object-contain rounded-xl overflow-hidden shadow-2xs border border-slate-200/60"
+              className="h-10 sm:h-12 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/30"
               priority
             />
           </Link>
@@ -451,7 +451,7 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                   alt="BRICÉLO.com"
                   width={130}
                   height={38}
-                  className="h-9 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/60"
+                  className="h-9 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/30"
                 />
               </Link>
               <button
