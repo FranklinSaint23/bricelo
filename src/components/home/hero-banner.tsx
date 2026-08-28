@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import {
   ChevronLeft, ChevronRight,
-  Smartphone, Zap, ShoppingBag, Laptop, ShoppingCart, Store, Plug, Gamepad2,
+  Smartphone, Zap, ShoppingBag, Laptop, ShoppingCart, Store, Plug, Gamepad2, Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
@@ -33,8 +33,46 @@ const slideTexts: Record<string, SlideTextFn> = {
 }
 
 const sideBannerConfigs = [
-  { id:1, photo:'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=700&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(120,5,5,0.88) 0%, rgba(60,2,2,0.70) 100%)', Icon:Plug, href:'/catalogue?categorie=electromenager', badge:'DU 08 AU 22 AOÛT' },
-  { id:2, photo:'https://images.unsplash.com/photo-1603145733146-ae562a55031e?w=1400&q=85&auto=format&fit=crop', overlay:'linear-gradient(160deg, rgba(20,10,90,0.88) 0%, rgba(60,20,120,0.72) 100%)', Icon:Gamepad2, href:'/catalogue?categorie=electronique', badge: null },
+  {
+    id: 1,
+    photo: 'https://images.unsplash.com/photo-1584568694244-14fbdf83bd30?w=700&q=85&auto=format&fit=crop',
+    overlay: 'linear-gradient(160deg, rgba(120,5,5,0.92) 0%, rgba(55,2,2,0.85) 100%)',
+    Icon: Plug,
+    href: '/catalogue?categorie=electromenager',
+    badge: 'DU 08 AU 22 AOÛT',
+    titleKey: 'electrochoc',
+    subKey: 'electrochoc_sub'
+  },
+  {
+    id: 2,
+    photo: 'https://images.unsplash.com/photo-1603145733146-ae562a55031e?w=700&q=85&auto=format&fit=crop',
+    overlay: 'linear-gradient(160deg, rgba(25,12,70,0.92) 0%, rgba(55,20,110,0.85) 100%)',
+    Icon: Gamepad2,
+    href: '/catalogue?categorie=electronique',
+    badge: null,
+    titleKey: 'gaming',
+    subKey: 'gaming_sub'
+  },
+  {
+    id: 3,
+    photo: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=700&q=85&auto=format&fit=crop',
+    overlay: 'linear-gradient(160deg, rgba(90,10,50,0.92) 0%, rgba(140,20,80,0.85) 100%)',
+    Icon: Sparkles,
+    href: '/catalogue?categorie=beaute-sante',
+    badge: "JUSQU'À -50%",
+    titleKey: 'beaute',
+    subKey: 'beaute_sub'
+  },
+  {
+    id: 4,
+    photo: 'https://images.unsplash.com/photo-1445205170230-053b83016050?w=700&q=85&auto=format&fit=crop',
+    overlay: 'linear-gradient(160deg, rgba(5,60,35,0.92) 0%, rgba(10,100,60,0.85) 100%)',
+    Icon: ShoppingBag,
+    href: '/catalogue?categorie=mode-vetements',
+    badge: null,
+    titleKey: 'fashion',
+    subKey: 'fashion_sub'
+  }
 ]
 
 /* ── COMPOSANT ───────────────────────────────────────────────────────────── */
@@ -43,6 +81,7 @@ export function HeroBanner() {
   const { t, lang } = useLanguage()
   const [current,  setCurrent]  = useState(0)
   const [slideKey, setSlideKey] = useState(0)
+  const [sideScrollIndex, setSideScrollIndex] = useState(0)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
   const timerRef    = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -73,6 +112,14 @@ export function HeroBanner() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [goNext])
 
+  // Défilement automatique vertical pour les bannières latérales sur Ordinateur
+  useEffect(() => {
+    const vTimer = setInterval(() => {
+      setSideScrollIndex((prev) => (prev + 1) % sideBannerConfigs.length)
+    }, 4000)
+    return () => clearInterval(vTimer)
+  }, [])
+
   function onTouchStart(e: React.TouchEvent) {
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
@@ -92,21 +139,26 @@ export function HeroBanner() {
   })
 
   const sideBanners = [
-    { ...sideBannerConfigs[0], title: lang === 'fr' ? 'ÉLECTROCHOC' : 'POWER DEALS', sub: lang === 'fr' ? 'DÉCOUVREZ NOTRE SÉLECTION' : 'DISCOVER OUR SELECTION' },
-    { ...sideBannerConfigs[1], title: 'GAMING ZONE', sub: lang === 'fr' ? 'CONSOLES & ACCESSOIRES' : 'CONSOLES & ACCESSORIES' },
+    { ...sideBannerConfigs[0], title: 'ÉLECTROCHOC', sub: 'DÉCOUVREZ NOTRE SÉLECTION' },
+    { ...sideBannerConfigs[1], title: 'GAMING ZONE', sub: 'CONSOLES & ACCESSOIRES' },
+    { ...sideBannerConfigs[2], title: 'BEAUTÉ & BIO', sub: 'SÉLECTION EXCLUSIVE' },
+    { ...sideBannerConfigs[3], title: 'FASHION TRENDS', sub: 'NOUVELLE COLLECTION' },
   ]
 
   const slide = slides[current]
+
+  // Doubler la liste des bannières pour un défilement vertical fluide en boucle sur PC
+  const infiniteSideBanners = [...sideBanners, ...sideBanners]
 
   return (
     <section className="bg-[var(--color-slate-100)]">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 pt-3 pb-3">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_288px] xl:grid-cols-[1fr_308px] gap-3">
 
-          {/* ── CARROUSEL ── */}
+          {/* ── CARROUSEL PRINCIPAL ── */}
           <div
             className="relative rounded-2xl overflow-hidden select-none"
-            style={{ minHeight: 320, background: slide.bgColor }}
+            style={{ minHeight: 340, background: slide.bgColor }}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
           >
@@ -175,7 +227,7 @@ export function HeroBanner() {
               </div>
             </div>
 
-            {/* Flèches desktop */}
+            {/* Flèches carrousel principal desktop */}
             <button
               onClick={() => { goPrev(); resetTimer() }}
               className="hidden sm:flex absolute left-3 top-1/2 -translate-y-1/2 z-20 h-9 w-9 rounded-full border border-white/20 bg-black/30 backdrop-blur-sm items-center justify-center text-white/70 hover:bg-black/50 hover:text-white transition-all"
@@ -190,34 +242,80 @@ export function HeroBanner() {
             </button>
           </div>
 
-          {/* ── BANNIÈRES LATÉRALES ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+          {/* ── BANNIÈRES LATÉRALES (Vertical sur Ordi, Horizontal sur Mobile, Sans Chevrons) ── */}
+          
+          {/* VERSION ORDINATEUR (DEFILEMENT VERTICAL DU BAS VERS LE HAUT) */}
+          <div className="hidden lg:block relative h-[340px] rounded-2xl overflow-hidden bg-transparent">
+            <div
+              className="flex flex-col gap-3 transition-transform duration-700 ease-in-out p-0"
+              style={{
+                transform: `translateY(-${sideScrollIndex * 173}px)`
+              }}
+            >
+              {infiniteSideBanners.map((b, idx) => (
+                <Link
+                  key={`${b.id}-${idx}`}
+                  href={b.href}
+                  className="relative h-[160px] rounded-2xl overflow-hidden flex flex-col justify-between p-5 transition-transform hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0 border border-white/10 shadow-lg"
+                  style={{
+                    backgroundImage: `${b.overlay}, url("${b.photo}")`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                >
+                  <div>
+                    <p className="text-white/75 text-[10px] font-bold tracking-widest uppercase mb-1">
+                      {b.sub}
+                    </p>
+                    <h3 className="text-white font-black text-xl leading-tight flex items-center gap-2">
+                      <b.Icon className="h-6 w-6 text-amber-400" strokeWidth={2.5} />
+                      {b.title}
+                    </h3>
+                    {b.badge && (
+                      <p className="text-yellow-300 text-xs font-black mt-1 uppercase tracking-wide">
+                        {b.badge}
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-white font-black text-xs uppercase tracking-wider flex items-center gap-1">
+                    <span>DÉCOUVRIR</span>
+                    <span className="text-amber-400 font-extrabold text-sm">›</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* VERSION MOBILE (DEFILEMENT HORIZONTAL DE LA GAUCHE VERS LA DROITE) */}
+          <div className="lg:hidden flex flex-row overflow-x-auto snap-x snap-mandatory gap-3 scrollbar-none py-1">
             {sideBanners.map((b) => (
               <Link
                 key={b.id}
                 href={b.href}
-                className="relative rounded-2xl overflow-hidden flex flex-col justify-end p-4 sm:p-5 transition-transform hover:scale-[1.015] active:scale-[0.98] cursor-pointer"
+                className="relative w-[280px] sm:w-[320px] h-[155px] shrink-0 snap-start rounded-2xl overflow-hidden flex flex-col justify-between p-5 transition-transform active:scale-[0.98] cursor-pointer border border-white/10 shadow-md"
                 style={{
-                  minHeight: 148,
                   backgroundImage: `${b.overlay}, url("${b.photo}")`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
                 }}
               >
-                <div className="relative z-10">
-                  <p className="text-white/65 text-[9px] sm:text-[10px] font-bold tracking-widest uppercase mb-0.5">
+                <div>
+                  <p className="text-white/75 text-[10px] font-bold tracking-widest uppercase mb-1">
                     {b.sub}
                   </p>
-                  <h3 className="text-white font-black text-base sm:text-xl leading-tight flex items-center gap-2">
-                    <b.Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2} />
+                  <h3 className="text-white font-black text-lg leading-tight flex items-center gap-2">
+                    <b.Icon className="h-5 w-5 text-amber-400" strokeWidth={2.5} />
                     {b.title}
                   </h3>
                   {b.badge && (
-                    <p className="text-yellow-300 text-[10px] sm:text-xs font-bold mt-1">{b.badge}</p>
+                    <p className="text-yellow-300 text-xs font-black mt-1 uppercase tracking-wide">
+                      {b.badge}
+                    </p>
                   )}
-                  <p className="text-white/70 text-xs font-bold tracking-wide mt-2">
-                    {lang === 'fr' ? 'DÉCOUVRIR' : 'EXPLORE'} &rsaquo;
-                  </p>
+                </div>
+                <div className="text-white font-black text-xs uppercase tracking-wider flex items-center gap-1">
+                  <span>DÉCOUVRIR</span>
+                  <span className="text-amber-400 font-extrabold text-sm">›</span>
                 </div>
               </Link>
             ))}
