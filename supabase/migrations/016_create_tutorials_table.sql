@@ -21,19 +21,21 @@ CREATE TABLE IF NOT EXISTS public.tutorials (
 -- RLS Policies
 ALTER TABLE public.tutorials ENABLE ROW LEVEL SECURITY;
 
--- Lecture publique
+-- Gestion complète par l'administrateur
+DROP POLICY IF EXISTS "Admin write tutorials" ON public.tutorials;
+DROP POLICY IF EXISTS "Public read tutorials" ON public.tutorials;
+
 CREATE POLICY "Public read tutorials"
 ON public.tutorials FOR SELECT
 USING (true);
 
--- Gestion complète par l'administrateur
 CREATE POLICY "Admin write tutorials"
 ON public.tutorials FOR ALL
 USING (
     EXISTS (
-        SELECT 1 FROM public.profiles
-        WHERE profiles.id = auth.uid()
-        AND profiles.role = 'admin'
+        SELECT 1 FROM public.users
+        WHERE users.id = auth.uid()
+        AND users.role = 'admin'
     )
 );
 
