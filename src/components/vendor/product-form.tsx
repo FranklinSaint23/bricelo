@@ -268,9 +268,9 @@ export function ProductForm({
               }}
               className="h-10 px-3 text-xs sm:text-sm border-2 border-amber-300 rounded-[var(--radius-md)] bg-white font-bold text-[var(--color-navy-900)] focus:outline-none focus:border-amber-500 cursor-pointer shadow-2xs"
             >
-              <option value="simple">📦 Produit Simple (Article physique standard sans déclinaisons)</option>
-              <option value="variable">🔀 Produit à Variantes (Tailles, Pointures, Couleurs, Stockage, RAM...)</option>
-              <option value="digital">💻 Produit Digital / Numérique (Livre E-Book, Logiciel, Formation, PDF...)</option>
+              <option value="simple">Produit Simple (Article physique standard sans déclinaisons)</option>
+              <option value="variable">Produit à Variantes (Tailles, Pointures, Couleurs, Stockage, RAM...)</option>
+              <option value="digital">Produit Digital / Numérique (Livre E-Book, Logiciel, Formation, PDF...)</option>
             </select>
           </div>
 
@@ -309,7 +309,7 @@ export function ProductForm({
           {/* Si Produit Variable : Les prix et stocks sont définis par variante dans la matrice */}
           {productType === 'variable' ? (
             <div className="col-span-2 p-3.5 rounded-xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs font-semibold leading-relaxed">
-              💡 Les prix et stocks pour un produit à variantes sont configurés individuellement par déclinaison (Taille, Couleur, RAM...) dans le tableau des variantes ci-dessous.
+              Les prix et stocks pour un produit à variantes sont configurés individuellement par déclinaison (Taille, Couleur, RAM...) dans le tableau des variantes ci-dessous.
             </div>
           ) : (
             <>
@@ -371,7 +371,7 @@ export function ProductForm({
           </CardHeader>
           <CardBody className="p-5 space-y-4">
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium space-y-1">
-              <p className="font-bold">⚠️ Instructions pour les Produits Digitaux :</p>
+              <p className="font-bold">Instructions pour les Produits Digitaux :</p>
               <p>1. Les clients recevront un accès immédiat pour télécharger ce produit après paiement en ligne sécurisé.</p>
               <p>2. Le paiement en espèces à la livraison est automatiquement désactivé lors de l'achat de ce produit.</p>
             </div>
@@ -475,12 +475,12 @@ export function ProductForm({
         </CardBody>
       </Card>
 
-      {/* Options de visibilité */}
+      {/* Visibilité & Badges */}
       <Card>
-        <CardHeader><p className="font-semibold text-[var(--color-navy-900)]">Visibilité & Mise en avant</p></CardHeader>
+        <CardHeader><p className="font-semibold text-[var(--color-navy-900)]">Visibilité & Badges</p></CardHeader>
         <CardBody className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-[var(--color-navy-900)]">Étiquette promotionnelle (ex: SOLDES, PROMO)</label>
+            <label className="text-sm font-medium text-[var(--color-navy-900)]">Étiquette promotionnelle</label>
             <input
               type="text"
               value={promoLabel}
@@ -493,12 +493,23 @@ export function ProductForm({
 
           <label className="flex items-center gap-3 cursor-pointer">
             <div className="relative">
-              <input type="checkbox" className="sr-only peer" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+              <input type="checkbox" className="sr-only peer" checked={isNew} onChange={(e) => setIsNew(e.target.checked)} />
               <div className="w-10 h-6 rounded-full bg-[var(--color-slate-200)] peer-checked:bg-emerald-500 transition-colors" />
               <div className="absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
             </div>
             <div>
-              <p className="text-sm font-medium text-[var(--color-navy-900)]">Produit publié (visible dans le catalogue)</p>
+              <p className="text-sm font-medium text-[var(--color-navy-900)]">Badge "Nouveau"</p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer">
+            <div className="relative">
+              <input type="checkbox" className="sr-only peer" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+              <div className="w-10 h-6 rounded-full bg-[var(--color-slate-200)] peer-checked:bg-[var(--color-accent)] transition-colors" />
+              <div className="absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow transition-transform peer-checked:translate-x-4" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-[var(--color-navy-900)]">Publié (visible dans le catalogue)</p>
             </div>
           </label>
 

@@ -383,7 +383,6 @@ export function CheckoutForm({ addresses, userId }: Props) {
         <CardBody className="space-y-3">
           {hasDigitalItem && (
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-start gap-2">
-              <span className="text-base">💻</span>
               <span>
                 Votre panier contient un produit digital (téléchargement). Le paiement en espèces à la livraison est désactivé. Veuillez choisir un mode de paiement en ligne sécurisé (Orange Money ou MTN Mobile Money).
               </span>
