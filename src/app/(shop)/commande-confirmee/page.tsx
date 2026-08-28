@@ -9,7 +9,8 @@ import { useLanguage } from '@/components/providers/language-provider'
 function ConfirmationContent() {
   const searchParams = useSearchParams()
   const { t } = useLanguage()
-  const orderIds = searchParams.get('orders')?.split(',') ?? []
+  const rawOrders = searchParams.get('orders') ?? ''
+  const orderIds = rawOrders ? rawOrders.split(/[,-]/).filter(Boolean) : []
 
   const steps = [
     { icon: Phone,   title: t.phoneConfirm,  desc: t.phoneConfirmDesc },

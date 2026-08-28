@@ -43,25 +43,32 @@ export async function createCampayPaymentLink(params: {
 }): Promise<{ link: string; reference?: string }> {
   const token = await getCampayToken()
 
+  const payload: Record<string, any> = {
+    amount: String(params.amount),
+    currency: 'XAF',
+    description: params.description,
+    external_reference: params.externalReference,
+    redirect_url: params.redirectUrl,
+  }
+
+  if (params.failureRedirectUrl && params.failureRedirectUrl !== params.redirectUrl) {
+    payload.failure_redirect_url = params.failureRedirectUrl
+  }
+
   const res = await fetch(`${BASE_URL}/get_payment_link/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      amount: String(params.amount),
-      currency: 'XAF',
-      description: params.description,
-      external_reference: params.externalReference,
-      redirect_url: params.redirectUrl,
-      failure_redirect_url: params.failureRedirectUrl || params.redirectUrl,
-    }),
+    body: JSON.stringify(payload),
   })
 
   const data = await res.json()
   if (!res.ok || !data.link) {
-    throw new Error(data.detail || data.message || 'Impossible de générer le lien de paiement CamPay.')
+    const errorDetails = data.detail || data.message || data.redirect_url || data.failure_redirect_url || (typeof data === 'object' ? JSON.stringify(data) : String(data))
+    console.error('[CamPay get_payment_link failure]:', errorDetails, 'Sent payload:', payload)
+    throw new Error(`Erreur CamPay (${res.status}) : ${errorDetails}`)
   }
 
   return { link: data.link, reference: data.reference }
