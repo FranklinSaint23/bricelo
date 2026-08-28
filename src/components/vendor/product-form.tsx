@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Upload, X, Plus, Sparkles, Trash2, Layers, Tag, BedDouble, Shirt, Footprints, AlertCircle, FileText, Download, Link as LinkIcon, Lock } from 'lucide-react'
+import { Upload, X, Plus, Sparkles, Trash2, Layers, Tag, BedDouble, Shirt, Footprints, AlertCircle, FileText, Download, Link as LinkIcon, Lock, FileCheck, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
@@ -410,6 +410,39 @@ export function ProductForm({
               <p>1. Les clients recevront un accès immédiat pour télécharger ce produit après paiement en ligne sécurisé.</p>
               <p>2. Le paiement en espèces à la livraison est automatiquement désactivé lors de l'achat de ce produit.</p>
             </div>
+
+            {/* APERÇU / CONFIRMATION DU FICHIER DIGITAL ASSOCIÉ */}
+            {digitalFileUrl && (
+              <div className="p-3.5 rounded-xl bg-emerald-50 border-2 border-emerald-300 flex items-center justify-between gap-3 text-xs font-semibold text-emerald-950 shadow-2xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="h-9 w-9 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <FileCheck className="h-5 w-5" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-extrabold text-emerald-900 truncate">Fichier digital prêt & associé !</span>
+                    <span className="text-[11px] text-emerald-700 font-mono truncate max-w-xs sm:max-w-md">{digitalFileUrl}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={digitalFileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-8 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center gap-1 transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>Tester</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setDigitalFileUrl('')}
+                    className="h-8 px-2.5 rounded-lg bg-rose-100 hover:bg-rose-200 text-rose-700 font-bold text-[11px] transition-colors"
+                  >
+                    Supprimer
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Option 1 : Upload de fichier (max 500 Ko) */}
             <div>
