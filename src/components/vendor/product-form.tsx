@@ -65,6 +65,7 @@ export function ProductForm({
   const [error, setError]                     = useState<string | null>(null)
   const [uploadingImg, setUploadingImg]       = useState(false)
   const [uploadingDigitalFile, setUploadingDigitalFile] = useState(false)
+  const [digitalUploadError, setDigitalUploadError]   = useState<string | null>(null)
 
   // Type de Produit (Simple, Variable, Digital)
   const initialType: 'simple' | 'variable' | 'digital' = (initialData as any)?.product_type ?? (initialOptions.length > 0 || initialAdvancedVariants.length > 0 ? 'variable' : 'simple')
@@ -90,54 +91,23 @@ export function ProductForm({
   const [options, setOptions]                 = useState<ProductOption[]>(initialOptions)
   const [advancedVariants, setAdvancedVariants] = useState<AdvancedProductVariant[]>(initialAdvancedVariants)
 
-  function handleNameChange(val: string) {
+  const handleNameChange = (val: string) => {
     setName(val)
     if (mode === 'create') setSlug(slugify(val))
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? [])
-    if (!files.length) return
+    const files = e.target.files
+    if (!files?.length) return
+    setError(null)
     setUploadingImg(true)
     const supabase = createClient()
-    const uploaded: string[] = []
-    for (const file of files) {
-      const ext  = file.name.split('.').pop()
-      const path = `products/${storeId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-      const { error: upErr } = await supabase.storage.from('product-images').upload(path, file, { upsert: false })
-      if (!upErr) {
-        const { data } = supabase.storage.from('product-images').getPublicUrl(path)
-        uploaded.push(data.publicUrl)
-      }
-    }
-    setImages((prev) => [...prev, ...uploaded])
-    setUploadingImg(false)
-    e.target.value = ''
-  }
+    const uploadedUrls: string[] = []
 
-  function removeImage(url: string) {
-    setImages((prev) => prev.filter((i) => i !== url))
-  }
-
-  // Upload Fichier Digital (Limite stricte à 500 Ko)
-  async function handleDigitalFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0]
-    if (!file) return
-
-    // Vérification de la limite de taille à 500 Ko (500 * 1024 octets)
-    const maxSizeBytes = 500 * 1024
-    if (file.size > maxSizeBytes) {
-      setError(`Fichier trop lourd (${(file.size / 1024).toFixed(1)} Ko). La limite maximale autorisée pour un produit digital est de 500 Ko. Pour les fichiers plus volumineux, veuillez saisir un lien de téléchargement direct ci-dessous.`)
-      e.target.value = ''
-      return
-    }
-
-    setError(null)
-    setUploadingDigitalFile(true)
-    const supabase = createClient()
-    try {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
       const ext = file.name.split('.').pop()
-      const path = `digital/${storeId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const path = `${storeId}/${Date.now()}-${i}.${ext}`
       let bucketName = 'product-images'
 
       let { error: upErr } = await supabase.storage.from(bucketName).upload(path, file, { upsert: false })
@@ -147,12 +117,66 @@ export function ProductForm({
         upErr = res.error
       }
 
+      if (upErr) {
+        setError(upErr.message)
+        continue
+      }
+
+      const { data } = supabase.storage.from(bucketName).getPublicUrl(path)
+      uploadedUrls.push(data.publicUrl)
+    }
+
+    setImages((prev) => [...prev, ...uploadedUrls])
+    setUploadingImg(false)
+    e.target.value = ''
+  }
+
+  function removeImage(url: string) {
+    setImages((prev) => prev.filter((i) => i !== url))
+  }
+
+  async function handleDigitalFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setDigitalUploadError(null)
+
+    // Vérification de la limite de taille à 500 Ko (500 * 1024 octets)
+    const maxSizeBytes = 500 * 1024
+    if (file.size > maxSizeBytes) {
+      setDigitalUploadError(`Fichier trop lourd (${(file.size / 1024).toFixed(1)} Ko). La limite maximale autorisée pour un produit digital est de 500 Ko. Pour les fichiers plus volumineux, veuillez saisir un lien de téléchargement direct ci-dessous.`)
+      e.target.value = ''
+      return
+    }
+
+    setUploadingDigitalFile(true)
+    const supabase = createClient()
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `digital/${storeId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      
+      // Essai sur bucket 'digital-files' (sans restriction mime-type) puis fallback 'products' / 'product-images'
+      let bucketName = 'digital-files'
+      let { error: upErr } = await supabase.storage.from(bucketName).upload(path, file, { upsert: false })
+
+      if (upErr) {
+        bucketName = 'products'
+        const res1 = await supabase.storage.from(bucketName).upload(path, file, { upsert: false })
+        if (res1.error) {
+          bucketName = 'product-images'
+          const res2 = await supabase.storage.from(bucketName).upload(path, file, { upsert: false })
+          upErr = res2.error
+        } else {
+          upErr = null
+        }
+      }
+
       if (upErr) throw upErr
 
       const { data } = supabase.storage.from(bucketName).getPublicUrl(path)
       setDigitalFileUrl(data.publicUrl)
     } catch (err: any) {
-      setError(err.message || 'Erreur lors du téléversement du fichier digital.')
+      setDigitalUploadError(err.message || 'Erreur lors du téléversement du fichier digital.')
     } finally {
       setUploadingDigitalFile(false)
       e.target.value = ''
@@ -464,6 +488,12 @@ export function ProductForm({
                   />
                 </label>
               </div>
+              {digitalUploadError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-start gap-2 mt-2 shadow-2xs">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-600 mt-0.5" />
+                  <span className="leading-relaxed">{digitalUploadError}</span>
+                </div>
+              )}
             </div>
 
             {/* Option 2 : Lien URL direct d'accès */}
