@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     const campayRes = await collectPayment({
       amount,
       phone,
-      description: `BRICELO - Commande #${transactionRef.slice(-8)}`,
+      description: `BRICELO.com - Commande #${transactionRef.slice(-8)}`,
       externalReference: transactionRef,
     })
 
