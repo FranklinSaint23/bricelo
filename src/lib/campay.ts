@@ -43,11 +43,8 @@ export async function collectPayment(params: {
 }): Promise<{ reference: string; status?: string }> {
   const token = await getCampayToken()
 
-  // S'assurer que le numéro possède l'indicatif 237 requis par l'API CamPay (ex: 237651465231)
+  // Nettoyer le numéro (exactement comme preg_replace('/\D/', '', $phone) de njangimarket)
   let cleanPhone = params.phone.replace(/\D/g, '')
-  if (cleanPhone.length === 9 && cleanPhone.startsWith('6')) {
-    cleanPhone = `237${cleanPhone}`
-  }
 
   // En mode DEMO, CamPay déclenche le Push USSD réel sur téléphone uniquement pour les montants <= 25 FCFA (sans débit réel)
   let collectAmount = params.amount

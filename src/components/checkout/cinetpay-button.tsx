@@ -83,7 +83,8 @@ export function CamPayButton({ orderIds, amount, paymentMethod }: Props) {
       setWaitingPin(true)
       setLoading(false)
 
-      // Démarrer la vérification automatique du statut toutes les 3 secondes (comme njangimarket)
+      // Démarrer la vérification du statut toutes les 8 secondes (exactement comme le setTimeout 10s de njangimarket)
+      let failedAttempts = 0
       pollTimerRef.current = setInterval(async () => {
         try {
           const statusRes = await fetch(`/api/paiement/statut?reference=${data.reference}`)
@@ -93,14 +94,18 @@ export function CamPayButton({ orderIds, amount, paymentMethod }: Props) {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current)
             router.push(`/commande-confirmee?orders=${orderIds.join(',')}&paiement=success`)
           } else if (statusData.status === 'FAILED') {
-            if (pollTimerRef.current) clearInterval(pollTimerRef.current)
-            setWaitingPin(false)
-            setError('Paiement échoué ou annulé sur votre téléphone. Veuillez réessayer.')
+            failedAttempts++
+            // Ne marquer comme échoué qu'après au moins 3 vérifications consécutives (24s) pour laisser le temps au réseau USSD
+            if (failedAttempts >= 3) {
+              if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+              setWaitingPin(false)
+              setError('Paiement non validé ou annulé sur votre téléphone. Veuillez réessayer.')
+            }
           }
         } catch (e) {
           console.error('[Statut Polling Error]:', e)
         }
-      }, 3000)
+      }, 8000)
 
     } catch (err: any) {
       setError(err.message || 'Erreur de paiement.')
