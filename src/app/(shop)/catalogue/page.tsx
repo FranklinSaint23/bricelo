@@ -6,6 +6,8 @@ import { CatalogueFilters } from '@/components/product/catalogue-filters'
 import { CataloguePagination } from '@/components/product/catalogue-pagination'
 import { PAGE_SIZE } from '@/lib/constants'
 
+import { VendorCtaBanner } from '@/components/common/vendor-cta-banner'
+
 export const metadata: Metadata = { title: 'Catalogue' }
 
 interface PageProps {
@@ -70,56 +72,61 @@ export default async function CataloguePage({ searchParams }: PageProps) {
   const totalPages = Math.ceil((count ?? 0) / PAGE_SIZE)
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">
-          {params.q ? `Résultats pour "${params.q}"` : 'Catalogue'}
-        </h1>
-        <p className="text-sm text-[var(--color-slate-500)] mt-0.5">
-          {count ?? 0} produit{(count ?? 0) > 1 ? 's' : ''} trouvé{(count ?? 0) > 1 ? 's' : ''}
-        </p>
-      </div>
+    <>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-[var(--color-navy-900)]">
+            {params.q ? `Résultats pour "${params.q}"` : 'Catalogue'}
+          </h1>
+          <p className="text-sm text-[var(--color-slate-500)] mt-0.5">
+            {count ?? 0} produit{(count ?? 0) > 1 ? 's' : ''} trouvé{(count ?? 0) > 1 ? 's' : ''}
+          </p>
+        </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
-        {/* Filtres */}
-        <aside className="lg:w-60 shrink-0">
-          <Suspense fallback={<div className="h-64 rounded-[var(--radius-lg)] bg-[var(--color-slate-100)] animate-pulse" />}>
-            <CatalogueFilters
-              categories={categories ?? []}
-              currentCategory={params.categorie}
-              currentMin={params.min}
-              currentMax={params.max}
-              currentTri={params.tri}
-            />
-          </Suspense>
-        </aside>
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Filtres */}
+          <aside className="lg:w-60 shrink-0">
+            <Suspense fallback={<div className="h-64 rounded-[var(--radius-lg)] bg-[var(--color-slate-100)] animate-pulse" />}>
+              <CatalogueFilters
+                categories={categories ?? []}
+                currentCategory={params.categorie}
+                currentMin={params.min}
+                currentMax={params.max}
+                currentTri={params.tri}
+              />
+            </Suspense>
+          </aside>
 
-        {/* Grille produits */}
-        <div className="flex-1">
-          {!products?.length ? (
-            <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="text-5xl mb-4">🔍</div>
-              <h3 className="text-lg font-semibold text-[var(--color-navy-900)]">Aucun produit trouvé</h3>
-              <p className="text-sm text-[var(--color-slate-500)] mt-1">Essayez avec d'autres filtres ou termes de recherche.</p>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product as any} />
-                ))}
+          {/* Grille produits */}
+          <div className="flex-1">
+            {!products?.length ? (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="text-5xl mb-4">🔍</div>
+                <h3 className="text-lg font-semibold text-[var(--color-navy-900)]">Aucun produit trouvé</h3>
+                <p className="text-sm text-[var(--color-slate-500)] mt-1">Essayez avec d'autres filtres ou termes de recherche.</p>
               </div>
-              {totalPages > 1 && (
-                <div className="mt-8">
-                  <Suspense fallback={null}>
-                    <CataloguePagination currentPage={page} totalPages={totalPages} />
-                  </Suspense>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product as any} />
+                  ))}
                 </div>
-              )}
-            </>
-          )}
+                {totalPages > 1 && (
+                  <div className="mt-8">
+                    <Suspense fallback={null}>
+                      <CataloguePagination currentPage={page} totalPages={totalPages} />
+                    </Suspense>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Bannière de CTA Vendeur & Académie */}
+      <VendorCtaBanner />
+    </>
   )
 }
