@@ -43,10 +43,10 @@ export async function collectPayment(params: {
 }): Promise<{ reference: string; status?: string }> {
   const token = await getCampayToken()
 
-  // Nettoyer le numéro de téléphone : garder uniquement 9 chiffres (comme njangimarket)
+  // S'assurer que le numéro possède l'indicatif 237 requis par l'API CamPay (ex: 237651465231)
   let cleanPhone = params.phone.replace(/\D/g, '')
-  if (cleanPhone.startsWith('237') && cleanPhone.length === 12) {
-    cleanPhone = cleanPhone.slice(3)
+  if (cleanPhone.length === 9 && cleanPhone.startsWith('6')) {
+    cleanPhone = `237${cleanPhone}`
   }
 
   const payload = {
