@@ -37,8 +37,28 @@ export function ProductVariantSelector({
   // Map des sélections courantes par nom d'option (ex: { "Couleur": "Noir", "Stockage": "256 Go" })
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({})
 
-  // Pré-sélectionner la 1ère valeur active pour chaque option au chargement
+  // Pré-sélectionner la 1ère variante active au chargement avec ses prix
   useEffect(() => {
+    if (variants && variants.length > 0) {
+      const activeV = variants.find((v) => v.status === 'active' && v.stock_quantity > 0) || variants[0]
+      if (activeV && activeV.option_values && activeV.option_values.length > 0) {
+        const initial: Record<string, string> = {}
+        options.forEach((opt) => {
+          const matchVal = activeV.option_values?.find((ov) =>
+            opt.values.some((val) => val.value === ov.value)
+          )
+          if (matchVal) {
+            initial[opt.name] = matchVal.value
+          } else {
+            const firstActive = opt.values.find((v) => v.is_active)
+            if (firstActive) initial[opt.name] = firstActive.value
+          }
+        })
+        setSelectedValues(initial)
+        return
+      }
+    }
+
     if (options && options.length > 0) {
       const initial: Record<string, string> = {}
       options.forEach((opt) => {
@@ -49,7 +69,7 @@ export function ProductVariantSelector({
       })
       setSelectedValues(initial)
     }
-  }, [options])
+  }, [options, variants])
 
   // Résoudre la variante active d'après les sélections
   const activeVariant = variants.find((v) => {

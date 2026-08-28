@@ -24,13 +24,34 @@ interface Props {
 }
 
 export function ProductDetailClient({ product, options, variants }: Props) {
-  const [effectivePrice, setEffectivePrice]                 = useState<number>(product.price)
-  const [effectiveComparePrice, setEffectiveComparePrice] = useState<number | null>(product.compare_at_price)
-  const [effectiveStock, setEffectiveStock]               = useState<number>(product.stock)
-  const [effectiveImages, setEffectiveImages]             = useState<string[]>(product.images || [])
-  const [effectiveDescription, setEffectiveDescription]   = useState<string>(product.description || '')
-  const [activeVariant, setActiveVariant]                 = useState<AdvancedProductVariant | null>(null)
-  const [isAvailable, setIsAvailable]                     = useState<boolean>(product.stock > 0)
+  // Prédéfinir la 1ère variante disponible si le produit est à variantes
+  const firstVariant = (variants && variants.length > 0)
+    ? (variants.find((v) => v.status === 'active' && v.stock_quantity > 0) || variants[0])
+    : null
+
+  const initialPrice = firstVariant && firstVariant.price && firstVariant.price > 0
+    ? firstVariant.price
+    : product.price
+  const initialComparePrice = firstVariant
+    ? (firstVariant.compare_at_price ?? product.compare_at_price)
+    : product.compare_at_price
+  const initialStock = firstVariant ? firstVariant.stock_quantity : product.stock
+
+  const [effectivePrice, setEffectivePrice]                 = useState<number>(initialPrice)
+  const [effectiveComparePrice, setEffectiveComparePrice] = useState<number | null>(initialComparePrice)
+  const [effectiveStock, setEffectiveStock]               = useState<number>(initialStock)
+  const [effectiveImages, setEffectiveImages]             = useState<string[]>(
+    firstVariant && firstVariant.images && firstVariant.images.length > 0
+      ? [...firstVariant.images.map((i) => i.url), ...(product.images || [])]
+      : (product.images || [])
+  )
+  const [effectiveDescription, setEffectiveDescription]   = useState<string>(
+    (firstVariant?.description && firstVariant.description.trim()) ? firstVariant.description : (product.description || '')
+  )
+  const [activeVariant, setActiveVariant]                 = useState<AdvancedProductVariant | null>(firstVariant)
+  const [isAvailable, setIsAvailable]                     = useState<boolean>(
+    firstVariant ? (firstVariant.status === 'active' && firstVariant.stock_quantity > 0) : (product.stock > 0)
+  )
 
   const discount = effectiveComparePrice && effectiveComparePrice > effectivePrice
     ? Math.round(((effectiveComparePrice - effectivePrice) / effectiveComparePrice) * 100)
