@@ -30,13 +30,13 @@ export function CamPayButton({ orderIds, amount }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Button onClick={handlePay} loading={loading} size="lg" className="w-full font-bold bg-amber-400 text-slate-950 hover:bg-amber-500 py-4 shadow-md">
+      <Button onClick={handlePay} loading={loading} size="lg" className="w-full font-bold bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] py-4 shadow-md">
         <CreditCard className="h-4.5 w-4.5" />
-        Payer avec Mobile Money / CamPay
+        Payer maintenant
       </Button>
       {error && <p className="text-xs text-center text-rose-600 font-bold bg-rose-50 p-3 rounded-xl border border-rose-200">{error}</p>}
-      <p className="text-xs text-center text-slate-500">
-        Vous serez redirigé vers la passerelle sécurisée CamPay pour valider votre paiement (Orange Money & MTN MoMo).
+      <p className="text-xs text-center text-[var(--color-slate-400)]">
+        Vous serez redirigé vers la passerelle sécurisée pour finaliser votre paiement.
       </p>
     </div>
   )
