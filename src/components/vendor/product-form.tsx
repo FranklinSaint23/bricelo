@@ -223,7 +223,18 @@ export function ProductForm({
     router.refresh()
   }
 
-  const categoryOptions = categories.map((c) => ({ value: c.id, label: c.name }))
+  // Filtrage intelligent des catégories pour les produits digitaux
+  const DIGITAL_KEYWORDS = ['livre', 'book', 'logiciel', 'software', 'formation', 'cours', 'digital', 'numérique', 'ebook', 'app', 'médias', 'audio', 'pdf', 'service', 'virtuel', 'téléchargement', 'informatique']
+  const digitalCategories = categories.filter((c) => {
+    const nameLower = c.name.toLowerCase()
+    return DIGITAL_KEYWORDS.some((kw) => nameLower.includes(kw))
+  })
+
+  const availableCategories = (productType === 'digital' && digitalCategories.length > 0)
+    ? digitalCategories
+    : categories
+
+  const categoryOptions = availableCategories.map((c) => ({ value: c.id, label: c.name }))
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-6 max-w-3xl">
@@ -265,6 +276,12 @@ export function ProductForm({
                 setProductType(newType)
                 if (newType === 'variable') setHasVariants(true)
                 else setHasVariants(false)
+
+                if (newType === 'digital' && digitalCategories.length > 0) {
+                  if (!digitalCategories.some((c) => c.id === categoryId)) {
+                    setCategoryId(digitalCategories[0].id)
+                  }
+                }
               }}
               className="h-10 px-3 text-xs sm:text-sm border-2 border-amber-300 rounded-[var(--radius-md)] bg-white font-bold text-[var(--color-navy-900)] focus:outline-none focus:border-amber-500 cursor-pointer shadow-2xs"
             >
@@ -275,13 +292,20 @@ export function ProductForm({
           </div>
 
           {/* CATÉGORIE (Placée au-dessus de la Description) */}
-          <Select
-            label="Catégorie *"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            options={categoryOptions}
-            placeholder="— Choisir une catégorie —"
-          />
+          <div className="flex flex-col gap-1">
+            <Select
+              label={productType === 'digital' ? "Catégorie (Produits Digitaux) *" : "Catégorie *"}
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              options={categoryOptions}
+              placeholder="— Choisir une catégorie —"
+            />
+            {productType === 'digital' && (
+              <p className="text-[11px] text-[var(--color-slate-500)] italic">
+                Catégories adaptées aux livres, e-books, logiciels, formations et téléchargements.
+              </p>
+            )}
+          </div>
 
           {/* DESCRIPTION (Placée en dessous du Type et de la Catégorie) */}
           <Textarea
