@@ -371,17 +371,28 @@ export function ProductForm({
           )}
 
           {/* Date de fin de promotion (Présent pour TOUS les types y compris Produit Variable) */}
-          <div className="col-span-1 sm:col-span-2 flex flex-col gap-1">
+          <div className="col-span-1 sm:col-span-2 flex flex-col gap-1.5">
             <label className="text-xs font-bold text-[var(--color-navy-900)]">
-              Date de fin de promotion <span className="text-[var(--color-slate-400)] font-normal text-xs">(pour afficher le compte à rebours sur la fiche produit)</span>
+              Date de fin de promotion <span className="text-[var(--color-slate-400)] font-normal text-xs">(pour le compte à rebours sur la fiche produit)</span>
             </label>
-            <input
-              type="datetime-local"
-              value={promoEndsAt}
-              onChange={(e) => setPromoEndsAt(e.target.value)}
-              min={new Date().toISOString().slice(0, 16)}
-              className="h-10 px-3 text-xs sm:text-sm border border-[var(--color-slate-200)] rounded-[var(--radius-md)] bg-white focus:outline-none text-[var(--color-navy-900)] font-medium"
-            />
+            <div className="relative">
+              <input
+                type="datetime-local"
+                value={promoEndsAt}
+                onChange={(e) => setPromoEndsAt(e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                placeholder="JJ/MM/AAAA --:--"
+                className="w-full h-11 px-3.5 text-xs sm:text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-md)] bg-white focus:outline-none focus:border-amber-400 text-[var(--color-navy-900)] font-medium shadow-2xs cursor-pointer"
+              />
+              {!promoEndsAt && (
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-normal pointer-events-none sm:hidden">
+                  Ex : 31/12/2026 23:59 (Choisir date & heure)
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-slate-500 italic">
+              Exemple de format : JJ/MM/AAAA HH:MM (Permet d'activer le chrono de vente flash).
+            </p>
           </div>
         </CardBody>
       </Card>

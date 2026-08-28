@@ -27,21 +27,21 @@ export function VendorCtaBanner() {
           </div>
         </div>
 
-        {/* Boutons d'actions côte à côte */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto relative z-10 shrink-0">
+        {/* Boutons d'actions côte à côte avec animations d'attention */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full lg:w-auto relative z-10 shrink-0">
           <Link
             href="/devenir-vendeur"
-            className="h-12 px-6 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm shadow-md transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+            className="h-12 px-6 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm shadow-lg shadow-amber-400/30 transition-all hover:scale-105 flex items-center justify-center gap-2 animate-pulse hover:animate-none"
           >
-            <Store className="h-4 w-4" />
+            <Store className="h-4.5 w-4.5" />
             <span>Ouvrir une boutique</span>
           </Link>
 
           <Link
             href="/apprendre-a-vendre"
-            className="h-12 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-sm transition-all hover:scale-[1.02] flex items-center justify-center gap-2"
+            className="h-12 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white border-2 border-amber-400/50 font-extrabold text-sm transition-all hover:scale-105 flex items-center justify-center gap-2.5 shadow-md group relative overflow-hidden"
           >
-            <PlayCircle className="h-4 w-4 text-amber-400" />
+            <PlayCircle className="h-5 w-5 text-amber-400 group-hover:scale-110 transition-transform animate-bounce" />
             <span>Apprendre à vendre en ligne</span>
           </Link>
         </div>
