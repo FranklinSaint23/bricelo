@@ -46,7 +46,7 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
 
   return (
     <div className="flex flex-col md:flex-row h-screen overflow-hidden bg-[var(--color-slate-100)]">
-      {/* ── En-tête mobile (Visible uniquement sur mobile < 768px) ── */}
+      {/* ── Header Mobile (< 768px) ── */}
       <header className={`flex md:hidden items-center justify-between px-4 py-3 ${bgColor} text-white border-b border-white/10 shrink-0 sticky top-0 z-30`}>
         <div className="flex items-center gap-3">
           <button
@@ -57,7 +57,7 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
             <Menu className="h-6 w-6" />
           </button>
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/logo.jpg" alt="BRICÉLO.com" width={140} height={40} className="h-8.5 w-auto object-contain rounded-md" />
+            <Image src="/logo.jpg" alt="BRICÉLO.com" width={160} height={46} className="h-10 sm:h-12 w-auto object-contain rounded-lg shadow-2xs" />
             <span className="text-[11px] text-[var(--color-accent)] font-semibold px-2 py-0.5 rounded bg-white/10">
               {isAdmin ? 'Admin' : 'Vendeur'}
             </span>
@@ -74,7 +74,7 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
         {/* Logo + badge */}
         <div className="px-5 py-4 border-b border-white/10">
           <Link href="/" className="flex flex-col items-start gap-1.5">
-            <Image src="/logo.jpg" alt="BRICÉLO.com" width={160} height={46} className="h-10 w-auto object-contain rounded-md" />
+            <Image src="/logo.jpg" alt="BRICÉLO.com" width={180} height={52} className="h-12 sm:h-14 w-auto object-contain rounded-lg shadow-2xs" />
             <p className="text-[11px] text-white/70 font-semibold leading-none mt-1 flex items-center gap-1.5">
               {isAdmin ? (
                 <>
@@ -130,7 +130,7 @@ export function DashboardLayoutClient({ profile, variant, children }: Props) {
           <aside className={`relative w-4/5 max-w-xs ${bgColor} flex flex-col h-full shadow-2xl z-10 animate-slide-right`}>
             <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
               <Link href="/" className="flex flex-col items-start gap-1">
-                <Image src="/logo.jpg" alt="BRICÉLO.com" width={130} height={36} className="h-8.5 w-auto object-contain rounded-md" />
+                <Image src="/logo.jpg" alt="BRICÉLO.com" width={150} height={42} className="h-10 w-auto object-contain rounded-lg shadow-2xs" />
                 <p className="text-[10px] text-white/70 font-semibold leading-none flex items-center gap-1">
                   {isAdmin ? 'Administration' : 'Espace Vendeur'}
                 </p>

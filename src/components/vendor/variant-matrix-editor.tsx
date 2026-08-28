@@ -415,15 +415,44 @@ export function VariantMatrixEditor({
                       />
                     </td>
                     <td className="py-2.5 px-3">
-                      <select
-                        value={v.status}
-                        onChange={(e) => updateVariant(varIdx, 'status', e.target.value as VariantStatus)}
-                        className="h-8 text-xs w-28 bg-slate-950 text-white border border-slate-700 rounded px-1.5 font-semibold focus:outline-none focus:border-amber-400 cursor-pointer"
-                      >
-                        <option value="active">Actif</option>
-                        <option value="inactive">Inactif</option>
-                        <option value="out_of_stock">Rupture</option>
-                      </select>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => updateVariant(varIdx, 'status', 'active')}
+                          className={`h-7 px-2 text-[11px] font-bold rounded-md transition-all flex items-center gap-1 ${
+                            v.status === 'active'
+                              ? 'bg-emerald-500 text-slate-950 font-black shadow-xs'
+                              : 'bg-slate-950 text-slate-400 border border-slate-700 hover:bg-slate-800'
+                          }`}
+                          title="Marquer comme En Stock"
+                        >
+                          En stock
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateVariant(varIdx, 'status', 'out_of_stock')}
+                          className={`h-7 px-2 text-[11px] font-bold rounded-md transition-all flex items-center gap-1 ${
+                            v.status === 'out_of_stock'
+                              ? 'bg-rose-500 text-white font-black shadow-xs'
+                              : 'bg-slate-950 text-slate-400 border border-slate-700 hover:bg-slate-800'
+                          }`}
+                          title="Marquer comme En Rupture"
+                        >
+                          Rupture
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateVariant(varIdx, 'status', v.status === 'inactive' ? 'active' : 'inactive')}
+                          className={`h-7 px-2 text-[11px] font-bold rounded-md transition-all flex items-center gap-1 ${
+                            v.status === 'inactive'
+                              ? 'bg-amber-400 text-slate-950 font-black shadow-xs'
+                              : 'bg-slate-950 text-slate-400 border border-slate-700 hover:bg-slate-800'
+                          }`}
+                          title={v.status === 'inactive' ? 'Cette combinaison est masquée (Cliquez pour afficher)' : 'Masquer cette combinaison car elle n’existe pas'}
+                        >
+                          {v.status === 'inactive' ? 'Masqué' : 'Masquer'}
+                        </button>
+                      </div>
                     </td>
                     <td className="py-2.5 px-3 text-right">
                       <Button

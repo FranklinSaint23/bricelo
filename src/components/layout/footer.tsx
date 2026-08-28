@@ -227,15 +227,17 @@ export function Footer() {
             </details>
           ))}
 
-          <div className="bg-[var(--color-navy-950)] px-4 py-5">
+          <div className="bg-[var(--color-navy-950)] px-4 py-6 flex flex-col items-center text-center">
             <h4 className="text-sm font-bold text-[var(--color-accent)] mb-1 uppercase tracking-wide">{t.newsletter}</h4>
-            <p className="text-sm text-white/65 mb-2">{t.subscribeNewsletter}</p>
-            <FooterNewsletter />
-            <h4 className="text-sm font-bold text-[var(--color-accent)] mt-5 mb-3 uppercase tracking-wide">{t.followUs}</h4>
-            <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm text-white/65 mb-3">{t.subscribeNewsletter}</p>
+            <div className="w-full max-w-sm">
+              <FooterNewsletter />
+            </div>
+            <h4 className="text-sm font-bold text-[var(--color-accent)] mt-6 mb-3 uppercase tracking-wide">{t.followUs}</h4>
+            <div className="flex items-center justify-center gap-3.5 flex-wrap">
               {socials.map(s => (
                 <a key={s.label} href={s.href} aria-label={s.label} target="_blank" rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-[var(--color-accent)] hover:text-[var(--color-navy-900)] text-white flex items-center justify-center transition-colors">
+                  className="w-10 h-10 rounded-full bg-white/10 hover:bg-[var(--color-accent)] hover:text-[var(--color-navy-900)] text-white flex items-center justify-center transition-transform hover:scale-110 shadow-xs">
                   {s.svg}
                 </a>
               ))}

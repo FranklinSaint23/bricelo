@@ -213,48 +213,54 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
           </div>
         </div>
 
-        {/* Contact & Support client (Style Iziway) */}
-        <div className="flex items-center gap-2.5 px-3 sm:px-4 shrink-0 border-l border-white/15 h-full bg-white/[0.04]">
-          <div className="flex items-center gap-1.5">
+        {/* Réseaux Sociaux Facebook & YouTube */}
+        <div className="flex items-center gap-2 px-3 sm:px-4 shrink-0 border-l border-white/15 h-full bg-white/[0.04]">
+          <div className="flex items-center gap-2">
             <a
-              href="https://wa.me/237652704218"
+              href="https://www.facebook.com/profile.php?id=100063727190585&mibextid=rS40aB7S9Ucbxw6v"
               target="_blank"
               rel="noopener noreferrer"
-              title="WhatsApp Service Client (+237 6 52 70 42 18)"
-              className="h-6 w-6 rounded-full bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] flex items-center justify-center transition-transform hover:scale-110 shadow-xs"
+              title="Page Facebook Officielle BRICÉLO"
+              className="h-7 w-7 rounded-full bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] flex items-center justify-center transition-transform hover:scale-110 shadow-xs"
             >
-              <MessageCircle className="h-3.5 w-3.5 fill-current" />
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+              </svg>
             </a>
             <a
-              href="tel:+237652704218"
-              title="Appeler le Service Client (+237 6 52 70 42 18)"
-              className="h-6 w-6 rounded-full bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] flex items-center justify-center transition-transform hover:scale-110 shadow-xs"
+              href="https://youtube.com/@bricelo237?si=aDNFFwIP62zIFO1a"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Chaîne YouTube Officielle BRICÉLO"
+              className="h-7 w-7 rounded-full bg-[var(--color-accent)] hover:bg-amber-400 text-[var(--color-navy-950)] flex items-center justify-center transition-transform hover:scale-110 shadow-xs"
             >
-              <Phone className="h-3.5 w-3.5 fill-current" />
+              <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+                <path d="M23.495 6.205a3.007 3.007 0 00-2.088-2.088c-1.87-.501-9.396-.501-9.396-.501s-7.507-.01-9.396.501A3.007 3.007 0 00.527 6.205a31.247 31.247 0 00-.522 5.805 31.247 31.247 0 00.522 5.783 3.007 3.007 0 002.088 2.088c1.868.502 9.396.502 9.396.502s7.506 0 9.396-.502a3.007 3.007 0 002.088-2.088 31.247 31.247 0 00.5-5.783 31.247 31.247 0 00-.5-5.805zM9.609 15.601V8.408l6.264 3.602z" />
+              </svg>
             </a>
           </div>
           <div className="hidden sm:flex flex-col justify-center text-[10px] leading-tight">
-            <span className="text-white/60 font-medium">Service client</span>
-            <a href="tel:+237652704218" className="text-[var(--color-accent)] font-extrabold text-xs hover:underline tracking-tight">
-              6 52 70 42 18
-            </a>
+            <span className="text-white/60 font-medium">Rejoignez-nous</span>
+            <span className="text-[var(--color-accent)] font-extrabold text-xs tracking-tight">
+              Facebook & YouTube
+            </span>
           </div>
         </div>
       </div>
 
-      {/* ── 2. BARRE PRINCIPALE ── */}
-      <div className="bg-[var(--color-surface)] border-b border-[var(--color-slate-200)]">
+      {/* ── 2. BARRE PRINCIPALE (Toujours Blanche) ── */}
+      <div className="bg-white text-slate-900 border-b border-slate-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 lg:gap-5 py-2.5">
 
-          {/* Logo */}
+          {/* Logo Agrandie */}
           <Link href="/" className="shrink-0 flex items-center">
             <Image
               src="/logo.jpg"
               alt="BRICÉLO.com"
-              width={170}
-              height={48}
-              className="h-10 sm:h-12 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/30"
+              width={200}
+              height={56}
+              className="h-12 sm:h-14 md:h-16 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/30"
               priority
             />
           </Link>

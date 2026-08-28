@@ -124,10 +124,10 @@ export function ProductVariantSelector({
         return (
           <div key={opt.name} className="space-y-2">
             <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-slate-100 tracking-wide uppercase">
+              <span className="font-bold text-[var(--color-navy-900)] dark:text-slate-100 tracking-wide uppercase">
                 {opt.name} :
               </span>
-              <span className="font-extrabold text-amber-400">
+              <span className="font-extrabold text-[var(--color-accent)] dark:text-amber-400">
                 {currentSelected || 'Choisissez une option'}
               </span>
             </div>

@@ -157,8 +157,7 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           onClick={handleAdd}
           disabled={!!outOfStock}
           size="lg"
-          className="w-full"
-          variant={added ? 'secondary' : 'outline'}
+          className="w-full bg-[var(--color-navy-900)] text-white hover:bg-[var(--color-navy-950)] dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 font-extrabold shadow-sm transition-colors"
         >
           <ShoppingCart className="h-4 w-4" />
           {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
