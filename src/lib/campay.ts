@@ -34,6 +34,26 @@ export async function getCampayToken(): Promise<string> {
   }
 }
 
+function ensureHttpsUrl(url: string): string {
+  if (!url) return 'https://bricelo.cm/commande-confirmee'
+  let clean = url.trim()
+
+  // CamPay's Django API strictly validates HTTPS and rejects localhost / 127.0.0.1
+  if (clean.includes('localhost') || clean.includes('127.0.0.1')) {
+    return 'https://bricelo.cm/commande-confirmee'
+  }
+
+  if (clean.startsWith('http://')) {
+    clean = clean.replace('http://', 'https://')
+  }
+
+  if (!clean.startsWith('https://')) {
+    clean = `https://${clean}`
+  }
+
+  return clean
+}
+
 export async function createCampayPaymentLink(params: {
   amount: number
   description: string
@@ -43,16 +63,18 @@ export async function createCampayPaymentLink(params: {
 }): Promise<{ link: string; reference?: string }> {
   const token = await getCampayToken()
 
+  const validRedirectUrl = ensureHttpsUrl(params.redirectUrl)
+
   const payload: Record<string, any> = {
     amount: String(params.amount),
     currency: 'XAF',
     description: params.description,
     external_reference: params.externalReference,
-    redirect_url: params.redirectUrl,
+    redirect_url: validRedirectUrl,
   }
 
   if (params.failureRedirectUrl && params.failureRedirectUrl !== params.redirectUrl) {
-    payload.failure_redirect_url = params.failureRedirectUrl
+    payload.failure_redirect_url = ensureHttpsUrl(params.failureRedirectUrl)
   }
 
   const res = await fetch(`${BASE_URL}/get_payment_link/`, {
