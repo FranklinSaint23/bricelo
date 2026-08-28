@@ -8,6 +8,7 @@ import { WriteReviewForm } from '@/components/product/write-review-form'
 import { TrackProductView } from '@/components/product/track-product-view'
 import { ProductCard } from '@/components/product/product-card'
 import { RecentlyViewed } from '@/components/home/recently-viewed'
+import { VendorCtaBanner } from '@/components/common/vendor-cta-banner'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice, formatDate } from '@/lib/utils'
 import { Star } from 'lucide-react'
@@ -152,6 +153,9 @@ export default async function ProductPage({ params }: PageProps) {
 
     {/* Produits récemment consultés — hors du padding max-w */}
     <RecentlyViewed excludeId={product.id} />
+
+    {/* Bannière devenir vendeur & tutoriels */}
+    <VendorCtaBanner />
     </>
   )
 }

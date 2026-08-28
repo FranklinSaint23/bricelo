@@ -7,6 +7,8 @@ import { FeaturedBannerMobile } from './featured-banner'
 import { useLanguage } from '@/components/providers/language-provider'
 import type { Product } from '@/types'
 
+import { VendorCtaBanner } from '@/components/common/vendor-cta-banner'
+
 type P = Product & { promotion_label?: string | null; is_new?: boolean }
 
 interface Props {
@@ -97,17 +99,7 @@ export function HomeProducts({ featuredProducts, allProducts, promoProducts }: P
         )}
       </section>
 
-      <div className="rounded-xl bg-[var(--color-navy-900)] px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <p className="text-white font-bold">{t.sellerCta}</p>
-          <p className="text-white/50 text-sm mt-0.5">{t.sellerCtaSub}</p>
-        </div>
-        <Link href="/devenir-vendeur"
-          className="shrink-0 h-10 px-5 rounded-lg bg-[var(--color-accent)] text-[var(--color-navy-900)] font-bold text-sm hover:bg-[var(--color-gold-400)] transition-colors">
-          {t.openStore}
-        </Link>
-      </div>
-
+      <VendorCtaBanner />
     </div>
   )
 }

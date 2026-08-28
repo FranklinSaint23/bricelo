@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import {
   Search, ShoppingCart, Bell, User, Menu, X, ChevronDown,
   Phone, MessageCircle, Grid3X3, UserPlus,
-  Truck, CreditCard, Store, RefreshCw, CheckCircle2,
+  Truck, CreditCard, Store, RefreshCw, CheckCircle2, GraduationCap,
   Sun, Moon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -556,6 +556,21 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
                   <Grid3X3 className="h-3.5 w-3.5 text-white" />
                 </div>
                 <span className="flex-1 text-xs font-bold text-[var(--color-navy-900)]">{t.allCatalog}</span>
+              </Link>
+
+              {/* Bouton Apprendre à Vendre en Ligne (Mobile Drawer) */}
+              <Link
+                href="/apprendre-a-vendre"
+                onClick={() => setMobileOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 border-t border-amber-300 bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
+              >
+                <div className="h-8 w-8 rounded-lg bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 shadow-xs font-black">
+                  <GraduationCap className="h-4 w-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-black text-[var(--color-navy-900)] leading-tight">Apprendre à vendre en ligne</p>
+                  <p className="text-[10px] text-[var(--color-slate-500)] font-medium truncate">Tuto vidéo gratuit E-Commerce</p>
+                </div>
               </Link>
             </div>
           </div>
