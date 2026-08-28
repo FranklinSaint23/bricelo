@@ -43,12 +43,10 @@ export async function collectPayment(params: {
 }): Promise<{ reference: string; status?: string }> {
   const token = await getCampayToken()
 
-  // Nettoyer le numéro de téléphone : garder uniquement les chiffres
+  // Nettoyer le numéro de téléphone : garder uniquement 9 chiffres (comme njangimarket)
   let cleanPhone = params.phone.replace(/\D/g, '')
-
-  // Si le numéro commence par 6XX (format Cameroun sans indicatif), ajouter 237
-  if (cleanPhone.length === 9 && cleanPhone.startsWith('6')) {
-    cleanPhone = `237${cleanPhone}`
+  if (cleanPhone.startsWith('237') && cleanPhone.length === 12) {
+    cleanPhone = cleanPhone.slice(3)
   }
 
   const payload = {
