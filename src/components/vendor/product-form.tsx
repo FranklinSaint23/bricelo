@@ -244,7 +244,6 @@ export function ProductForm({
     }
 
     router.push('/vendeur/produits')
-    router.refresh()
   }
 
   // Filtrage intelligent des catégories pour les produits digitaux
