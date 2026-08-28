@@ -124,9 +124,9 @@ export default function LearnToSellPage() {
           <div className="shrink-0">
             <Link
               href="/devenir-vendeur"
-              className="h-12 px-6 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm shadow-xl transition-transform hover:scale-105 flex items-center justify-center gap-2"
+              className="h-12 px-6 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-400/20 transition-transform hover:scale-105 flex items-center justify-center gap-2 animate-pulse hover:animate-none"
             >
-              <Store className="h-4 w-4" />
+              <Store className="h-4.5 w-4.5" />
               <span>Ouvrir une boutique maintenant</span>
             </Link>
           </div>
