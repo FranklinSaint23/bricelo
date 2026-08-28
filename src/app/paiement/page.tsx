@@ -54,7 +54,7 @@ export default async function PaiementPage({ searchParams }: { searchParams: Pro
               <ShieldCheck className="h-7 w-7 text-[var(--color-accent)]" />
             </div>
             <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Paiement sécurisé</h1>
-            <p className="text-sm text-[var(--color-slate-500)] mt-0.5">Mobile Money (Orange / MTN) & Carte via CinetPay</p>
+            <p className="text-sm text-[var(--color-slate-500)] mt-0.5">Mobile Money (Orange / MTN) via CamPay</p>
           </div>
 
           {/* Récapitulatif détaillé de la commande */}

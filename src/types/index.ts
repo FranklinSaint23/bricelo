@@ -131,7 +131,7 @@ export interface Payment {
   amount: number
   currency: string
   status: PaymentStatus
-  provider: 'cinetpay'
+  provider: 'campay' | 'cinetpay'
   created_at: string
 }
 

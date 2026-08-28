@@ -6,7 +6,7 @@ import { CreditCard } from 'lucide-react'
 
 interface Props { orderIds: string[]; amount: number }
 
-export function CinetPayButton({ orderIds, amount }: Props) {
+export function CamPayButton({ orderIds, amount }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState<string | null>(null)
 
@@ -30,14 +30,17 @@ export function CinetPayButton({ orderIds, amount }: Props) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Button onClick={handlePay} loading={loading} size="lg" className="w-full">
-        <CreditCard className="h-4 w-4" />
-        Payer maintenant
+      <Button onClick={handlePay} loading={loading} size="lg" className="w-full font-bold bg-amber-400 text-slate-950 hover:bg-amber-500 py-4 shadow-md">
+        <CreditCard className="h-4.5 w-4.5" />
+        Payer avec Mobile Money / CamPay
       </Button>
-      {error && <p className="text-sm text-center text-[var(--color-danger)]">{error}</p>}
-      <p className="text-xs text-center text-[var(--color-slate-400)]">
-        Vous serez redirigé vers CinetPay pour finaliser le paiement en toute sécurité.
+      {error && <p className="text-xs text-center text-rose-600 font-bold bg-rose-50 p-3 rounded-xl border border-rose-200">{error}</p>}
+      <p className="text-xs text-center text-slate-500">
+        Vous serez redirigé vers la passerelle sécurisée CamPay pour valider votre paiement (Orange Money & MTN MoMo).
       </p>
     </div>
   )
 }
+
+// Alias pour compatibilité
+export const CinetPayButton = CamPayButton
