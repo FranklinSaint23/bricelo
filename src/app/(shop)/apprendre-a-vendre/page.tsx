@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   GraduationCap, Play, CheckCircle2, Store, PlusCircle,
@@ -8,6 +8,7 @@ import {
   Video, HelpCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { createClient } from '@/lib/supabase/client'
 
 interface VideoCourse {
   id: string
@@ -20,7 +21,7 @@ interface VideoCourse {
   steps: string[]
 }
 
-const COURSES: VideoCourse[] = [
+const DEFAULT_COURSES: VideoCourse[] = [
   {
     id: 's-inscrire-vendeur',
     title: "Comment s'inscrire comme Vendeur & ouvrir sa boutique",
@@ -107,13 +108,63 @@ const COURSES: VideoCourse[] = [
   }
 ]
 
+function getEmbedVideoUrl(url?: string) {
+  if (!url) return null
+  if (url.includes('youtube.com/watch') || url.includes('youtu.be/')) {
+    let videoId = ''
+    if (url.includes('youtube.com/watch')) {
+      const match = url.match(/v=([^&]+)/)
+      if (match) videoId = match[1]
+    } else if (url.includes('youtu.be/')) {
+      videoId = url.split('youtu.be/')[1]?.split('?')[0] || ''
+    }
+    if (videoId) return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`
+  }
+  if (url.includes('vimeo.com/')) {
+    const vimeoId = url.split('vimeo.com/')[1]?.split('?')[0]
+    if (vimeoId) return `https://player.vimeo.com/video/${vimeoId}?autoplay=1`
+  }
+  return url
+}
+
 export default function LearnToSellPage() {
+  const [courses, setCourses] = useState<VideoCourse[]>(DEFAULT_COURSES)
   const [activeTab, setActiveTab] = useState<'all' | 'seller' | 'product' | 'payment' | 'buyer' | 'growth'>('all')
   const [selectedCourse, setSelectedCourse] = useState<VideoCourse | null>(null)
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false)
+
+  useEffect(() => {
+    async function loadDynamicTutorials() {
+      const supabase = createClient()
+      const { data, error } = await supabase
+        .from('tutorials')
+        .select('*')
+        .eq('is_published', true)
+        .order('position', { ascending: true })
+
+      if (!error && data && data.length > 0) {
+        const mapped: VideoCourse[] = data.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          category: t.category,
+          duration: t.duration || '3 min',
+          thumbnail: t.thumbnail_url || 'https://images.unsplash.com/photo-1556742049-0a670fc8a5d7?w=800&q=80',
+          videoUrl: t.video_url,
+          description: t.description,
+          steps: Array.isArray(t.steps) ? t.steps : []
+        }))
+        setCourses(mapped)
+      }
+    }
+    loadDynamicTutorials()
+  }, [])
 
   const filteredCourses = activeTab === 'all'
-    ? COURSES
-    : COURSES.filter((c) => c.category === activeTab)
+    ? courses
+    : courses.filter((c) => c.category === activeTab)
+
+  const embedUrl = selectedCourse ? getEmbedVideoUrl(selectedCourse.videoUrl) : null
+  const isDirectVideo = selectedCourse?.videoUrl?.endsWith('.mp4') || selectedCourse?.videoUrl?.endsWith('.webm')
 
   return (
     <div className="min-h-screen bg-[var(--color-slate-50)] pb-20">
@@ -175,7 +226,10 @@ export default function LearnToSellPage() {
           {filteredCourses.map((course) => (
             <div
               key={course.id}
-              onClick={() => setSelectedCourse(course)}
+              onClick={() => {
+                setSelectedCourse(course)
+                setIsPlayingVideo(false)
+              }}
               className="bg-white rounded-2xl border border-[var(--color-slate-200)] overflow-hidden shadow-xs hover:shadow-lg transition-all hover:-translate-y-1 cursor-pointer group flex flex-col justify-between"
             >
               <div>
@@ -208,7 +262,7 @@ export default function LearnToSellPage() {
               </div>
 
               <div className="px-5 pb-4 pt-2 border-t border-[var(--color-slate-100)] flex items-center justify-between text-xs font-bold text-amber-600">
-                <span>Voir le cours étape par étape</span>
+                <span>Lancer la vidéo de formation</span>
                 <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
@@ -216,59 +270,89 @@ export default function LearnToSellPage() {
         </div>
       </div>
 
-      {/* ── 4. Modal de Cours Détaillé ── */}
+      {/* ── 4. Modal de Lecteur Vidéo Intégré ── */}
       {selectedCourse && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden animate-in fade-in zoom-in duration-150 border border-slate-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in fade-in zoom-in duration-150 border border-slate-200">
             {/* Header Modal */}
-            <div className="bg-[var(--color-navy-950)] text-white p-5 flex items-center justify-between">
+            <div className="bg-[var(--color-navy-950)] text-white p-4 sm:p-5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Video className="h-5 w-5 text-amber-400" />
-                <h3 className="text-base font-bold">Tutoriel Vidéo & Guide Pratique</h3>
+                <h3 className="text-sm sm:text-base font-bold text-white">Tutoriel Vidéo & Guide Pratique</h3>
               </div>
               <button
-                onClick={() => setSelectedCourse(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                onClick={() => {
+                  setSelectedCourse(null)
+                  setIsPlayingVideo(false)
+                }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Corps Modal */}
-            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
-              <h2 className="text-xl font-extrabold text-[var(--color-navy-900)]">
+            <div className="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+              <h2 className="text-lg sm:text-xl font-extrabold text-[var(--color-navy-900)]">
                 {selectedCourse.title}
               </h2>
-              <p className="text-sm text-[var(--color-slate-600)] leading-relaxed">
+
+              {/* LECTEUR VIDÉO INTÉGRÉ (DIRECT SUR LA PLATEFORME) */}
+              <div className="relative aspect-video rounded-xl bg-slate-950 overflow-hidden shadow-2xl border border-slate-800 flex items-center justify-center">
+                {isPlayingVideo ? (
+                  embedUrl && !isDirectVideo ? (
+                    <iframe
+                      src={embedUrl}
+                      title={selectedCourse.title}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : (
+                    <video
+                      controls
+                      autoPlay
+                      src={embedUrl || "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"}
+                      className="w-full h-full object-cover"
+                    />
+                  )
+                ) : (
+                  <>
+                    <img
+                      src={selectedCourse.thumbnail}
+                      alt={selectedCourse.title}
+                      className="w-full h-full object-cover opacity-70"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col items-center justify-center gap-3 p-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => setIsPlayingVideo(true)}
+                        className="h-16 w-16 sm:h-20 sm:w-20 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow-2xl hover:scale-110 transition-transform active:scale-95 group"
+                        title="Lancer la vidéo directement sur la plateforme"
+                      >
+                        <Play className="h-8 w-8 sm:h-10 sm:w-10 fill-current ml-1 group-hover:scale-110 transition-transform" />
+                      </button>
+                      <span className="text-xs sm:text-sm font-extrabold text-white bg-black/70 px-4 py-1.5 rounded-full border border-white/20">
+                        ▶ Cliquez pour Lancer la Vidéo sur BRICÉLO ({selectedCourse.duration})
+                      </span>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <p className="text-xs sm:text-sm text-[var(--color-slate-600)] leading-relaxed">
                 {selectedCourse.description}
               </p>
-
-              {/* Lecteur Vidéo / Simulation */}
-              <div className="relative aspect-video rounded-xl bg-slate-900 overflow-hidden shadow-inner flex items-center justify-center">
-                <img
-                  src={selectedCourse.thumbnail}
-                  alt={selectedCourse.title}
-                  className="w-full h-full object-cover opacity-60"
-                />
-                <div className="absolute flex flex-col items-center gap-3">
-                  <div className="h-16 w-16 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shadow-xl cursor-pointer hover:scale-110 transition-transform">
-                    <Play className="h-7 w-7 fill-current ml-1" />
-                  </div>
-                  <span className="text-xs font-bold text-white bg-black/60 px-3 py-1 rounded-full">
-                    Lecture vidéo ({selectedCourse.duration})
-                  </span>
-                </div>
-              </div>
 
               {/* Liste des Étapes Pratiques */}
               <div>
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">
-                  Guide Étape par Étape :
+                  Résumé des Étapes à Suivre :
                 </h4>
                 <div className="space-y-2.5">
                   {selectedCourse.steps.map((step, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
-                      <span className="h-6 w-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="h-6 w-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
                         {idx + 1}
                       </span>
                       <p className="text-xs font-semibold text-[var(--color-navy-900)] leading-snug">
@@ -282,10 +366,17 @@ export default function LearnToSellPage() {
 
             {/* Footer Modal */}
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-              <Button variant="outline" size="sm" onClick={() => setSelectedCourse(null)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedCourse(null)
+                  setIsPlayingVideo(false)
+                }}
+              >
                 Fermer
               </Button>
-              <Button asChild size="sm" className="bg-amber-400 text-slate-950 hover:bg-amber-500 font-extrabold">
+              <Button asChild size="sm" className="bg-amber-400 text-slate-950 hover:bg-amber-500 font-extrabold shadow-sm">
                 <Link href="/devenir-vendeur">
                   Ouvrir ma boutique maintenant
                 </Link>

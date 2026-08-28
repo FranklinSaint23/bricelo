@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Package, ShoppingBag, Store,
-  Users, CreditCard, Tag,
+  Users, CreditCard, Tag, GraduationCap,
 } from 'lucide-react'
 
 const vendorItems = [
@@ -23,6 +23,7 @@ const adminItems = [
   { href: '/admin/categories',   icon: Tag,             label: 'Catégories',    exact: false },
   { href: '/admin/commandes',    icon: ShoppingBag,     label: 'Commandes',     exact: false },
   { href: '/admin/paiements',    icon: CreditCard,      label: 'Paiements',     exact: false },
+  { href: '/admin/tutoriels',    icon: GraduationCap,   label: 'Académie & Tutos', exact: false },
 ]
 
 export function SidebarNav({ variant }: { variant: 'vendor' | 'admin' }) {
