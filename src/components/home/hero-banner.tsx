@@ -112,12 +112,35 @@ export function HeroBanner() {
     return () => { if (timerRef.current) clearInterval(timerRef.current) }
   }, [goNext])
 
+  const mobileScrollRef = useRef<HTMLDivElement>(null)
+
   // Défilement automatique vertical pour les bannières latérales sur Ordinateur
   useEffect(() => {
     const vTimer = setInterval(() => {
       setSideScrollIndex((prev) => (prev + 1) % sideBannerConfigs.length)
     }, 4000)
     return () => clearInterval(vTimer)
+  }, [])
+
+  // Défilement automatique horizontal pour les bannières latérales sur Mobile (toutes les 3s)
+  useEffect(() => {
+    const mTimer = setInterval(() => {
+      if (mobileScrollRef.current) {
+        const container = mobileScrollRef.current
+        const firstChild = container.firstElementChild as HTMLElement
+        const cardWidth = firstChild ? firstChild.offsetWidth : 280
+        const gap = 12
+        const scrollStep = cardWidth + gap
+
+        const maxScroll = container.scrollWidth - container.clientWidth
+        if (container.scrollLeft + scrollStep >= maxScroll - 15) {
+          container.scrollTo({ left: 0, behavior: 'smooth' })
+        } else {
+          container.scrollBy({ left: scrollStep, behavior: 'smooth' })
+        }
+      }
+    }, 3000)
+    return () => clearInterval(mTimer)
   }, [])
 
   function onTouchStart(e: React.TouchEvent) {
@@ -286,8 +309,8 @@ export function HeroBanner() {
             </div>
           </div>
 
-          {/* VERSION MOBILE (DEFILEMENT HORIZONTAL DE LA GAUCHE VERS LA DROITE) */}
-          <div className="lg:hidden flex flex-row overflow-x-auto snap-x snap-mandatory gap-3 scrollbar-none py-1">
+          {/* VERSION MOBILE (DEFILEMENT HORIZONTAL AUTOMATIQUE DE LA GAUCHE VERS LA DROITE TOUTES LES 3S) */}
+          <div ref={mobileScrollRef} className="lg:hidden flex flex-row overflow-x-auto snap-x snap-mandatory gap-3 scrollbar-none py-1">
             {sideBanners.map((b) => (
               <Link
                 key={b.id}

@@ -16,11 +16,11 @@ import {
 } from './actions'
 
 const CATEGORY_LABELS: Record<string, string> = {
-  seller: '🚀 S’inscrire & Boutique',
-  product: '📦 Produits & Stocks',
-  payment: '💳 Paiements & Retraits',
-  buyer: '🛒 Guide Acheteur',
-  growth: '🔥 Astuces de Ventes',
+  seller: 'S’inscrire & Boutique',
+  product: 'Produits & Stocks',
+  payment: 'Paiements & Retraits',
+  buyer: 'Guide Acheteur',
+  growth: 'Astuces de Ventes',
 }
 
 export default function AdminTutorialsPage() {
@@ -330,11 +330,11 @@ export default function AdminTutorialsPage() {
                     onChange={(e) => setCategory(e.target.value as any)}
                     className="w-full h-9 px-2 text-xs border border-slate-300 rounded-lg font-semibold bg-white"
                   >
-                    <option value="seller">🚀 S’inscrire & Boutique</option>
-                    <option value="product">📦 Produits & Stocks</option>
-                    <option value="payment">💳 Paiements & Retraits</option>
-                    <option value="buyer">🛒 Guide Acheteur</option>
-                    <option value="growth">🔥 Astuces de Ventes</option>
+                    <option value="seller">S’inscrire & Boutique</option>
+                    <option value="product">Produits & Stocks</option>
+                    <option value="payment">Paiements & Retraits</option>
+                    <option value="buyer">Guide Acheteur</option>
+                    <option value="growth">Astuces de Ventes</option>
                   </select>
                 </div>
                 <div>

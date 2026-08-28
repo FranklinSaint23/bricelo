@@ -138,11 +138,11 @@ export default function LearnToSellPage() {
         <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
           {[
             { id: 'all', label: 'Tous les tutoriels' },
-            { id: 'seller', label: '🚀 S’inscrire & Boutique' },
-            { id: 'product', label: '📦 Produits & Stocks' },
-            { id: 'payment', label: '💳 Paiements & Retraits' },
-            { id: 'buyer', label: '🛒 Guide Acheteur' },
-            { id: 'growth', label: '🔥 Astuces de Ventes' },
+            { id: 'seller', label: 'S’inscrire & Boutique' },
+            { id: 'product', label: 'Produits & Stocks' },
+            { id: 'payment', label: 'Paiements & Retraits' },
+            { id: 'buyer', label: 'Guide Acheteur' },
+            { id: 'growth', label: 'Astuces de Ventes' },
           ].map((tab) => (
             <button
               key={tab.id}
