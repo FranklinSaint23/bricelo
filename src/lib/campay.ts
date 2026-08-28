@@ -79,10 +79,6 @@ export async function createCampayPaymentLink(params: {
     redirect_url: validRedirectUrl,
   }
 
-  if (params.failureRedirectUrl && params.failureRedirectUrl !== params.redirectUrl) {
-    payload.failure_redirect_url = ensureHttpsUrl(params.failureRedirectUrl)
-  }
-
   const res = await fetch(`${BASE_URL}/get_payment_link/`, {
     method: 'POST',
     headers: {
