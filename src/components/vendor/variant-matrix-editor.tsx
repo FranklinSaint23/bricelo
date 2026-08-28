@@ -178,40 +178,27 @@ export function VariantMatrixEditor({
 
   return (
     <div className="space-y-6">
-      {/* ── 1. Sélecteur de Type de Produit (Presets du monde) ── */}
+      {/* ── 1. Sélecteur de Modèle de Variantes (Liste déroulante compacte) ── */}
       <Card className="border-slate-800 shadow-xs bg-slate-900 text-white">
-        <CardHeader className="bg-[var(--color-navy-950)] text-white py-3.5 px-4 rounded-t-xl flex flex-row items-center justify-between border-b border-slate-800">
+        <CardBody className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-400" />
-            <h3 className="text-sm font-bold tracking-wide">Type de Produit & Modèle Prédéfini</h3>
+            <Sparkles className="h-4 w-4 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-xs font-bold text-white">Modèle Prédéfini de Variantes</p>
+              <p className="text-[11px] text-slate-400">Pré-remplit les critères usuels (Tailles, Couleurs, RAM...)</p>
+            </div>
           </div>
-          <span className="text-[11px] text-white/60">Génération automatique des variantes</span>
-        </CardHeader>
-        <CardBody className="p-4 space-y-3">
-          <p className="text-xs text-slate-300">
-            Choisissez la catégorie du produit pour pré-remplir les critères de variantes usuels (*Smartphones, Mode, Meubles, Électroménager, Parfums...*) ou créez vos propres critères sur-mesure.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+          <select
+            value={selectedPresetId}
+            onChange={(e) => applyPreset(e.target.value)}
+            className="h-9 px-3 text-xs rounded-xl border border-slate-700 bg-slate-950 text-amber-400 font-bold focus:outline-none focus:border-amber-400 cursor-pointer w-full sm:w-80 shadow-xs"
+          >
             {WORLD_PRODUCT_PRESETS.map((preset) => (
-              <button
-                key={preset.id}
-                type="button"
-                onClick={() => applyPreset(preset.id)}
-                className={`text-left p-3 rounded-xl border text-xs transition-all ${
-                  selectedPresetId === preset.id
-                    ? 'border-amber-400 bg-amber-400 text-slate-950 font-extrabold shadow-md'
-                    : 'border-slate-800 bg-slate-950 hover:border-slate-600 text-slate-100'
-                }`}
-              >
-                <p className={`font-bold ${selectedPresetId === preset.id ? 'text-slate-950' : 'text-slate-100'}`}>
-                  {preset.categoryLabel}
-                </p>
-                <p className={`text-[10px] line-clamp-1 mt-0.5 ${selectedPresetId === preset.id ? 'text-slate-800 font-semibold' : 'text-slate-400'}`}>
-                  {preset.description}
-                </p>
-              </button>
+              <option key={preset.id} value={preset.id} className="bg-slate-900 text-slate-100">
+                {preset.categoryLabel} — {preset.description}
+              </option>
             ))}
-          </div>
+          </select>
         </CardBody>
       </Card>
 

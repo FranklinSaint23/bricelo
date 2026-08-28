@@ -81,6 +81,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
   ]
 
   const isGuest = !userId
+  const hasDigitalItem = items.some((item) => (item.product as any)?.product_type === 'digital')
 
   const [selectedAddress, setSelectedAddress] = useState<string>(
     isGuest ? 'new' : (addresses.find((a) => a.is_default)?.id ?? addresses[0]?.id ?? 'new'),
@@ -94,7 +95,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
     delivery_time: '9h - 10h',
   })
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(hasDigitalItem ? 'orange_money' : 'cash')
   const [loading, setLoading]             = useState(false)
   const [error, setError]                 = useState<string | null>(null)
 
@@ -368,51 +369,49 @@ export function CheckoutForm({ addresses, userId }: Props) {
                   </select>
                 </div>
               </div>
-
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-[var(--color-slate-600)] flex items-center gap-1">
-                  <Navigation className="h-3.5 w-3.5" /> {t.neighborhood}
-                </label>
-                <input
-                  type="text"
-                  value={newDelivery.quartier}
-                  onChange={(e) => set('quartier', e.target.value)}
-                  placeholder={t.neighborhoodPlaceholder}
-                  required
-                  className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] focus:outline-none focus:border-[var(--color-navy-900)] text-[var(--color-navy-900)] placeholder:text-[var(--color-slate-400)]"
-                />
-              </div>
             </div>
           )}
         </CardBody>
       </Card>
 
-      {/* CHOIX DU MODE DE PAIEMENT : SUR UNE SEULE LIGNE SUR MOBILE (grid-cols-3) */}
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-[var(--color-navy-900)] flex items-center gap-2">
             <CreditCard className="h-4 w-4 text-[var(--color-accent)]" /> {t.paymentMethod}
           </h2>
         </CardHeader>
-        <CardBody>
+        <CardBody className="space-y-3">
+          {hasDigitalItem && (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-start gap-2">
+              <span className="text-base">💻</span>
+              <span>
+                Votre panier contient un produit digital (téléchargement). Le paiement en espèces à la livraison est désactivé. Veuillez choisir un mode de paiement en ligne sécurisé (Orange Money ou MTN Mobile Money).
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {PAYMENT_OPTIONS.map((opt) => {
+              const isDisabled = hasDigitalItem && opt.id === 'cash'
               const isSelected = paymentMethod === opt.id
               return (
                 <label
                   key={opt.id}
-                  className={`flex flex-col items-center justify-between p-2.5 sm:p-3 rounded-xl border-2 cursor-pointer transition-all text-center relative ${
-                    isSelected
-                      ? `${opt.activeBg}`
-                      : 'border-[var(--color-slate-200)] bg-white hover:bg-[var(--color-slate-50)]'
+                  className={`flex flex-col items-center justify-between p-2.5 sm:p-3 rounded-xl border-2 transition-all text-center relative ${
+                    isDisabled
+                      ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200'
+                      : isSelected
+                      ? `${opt.activeBg} cursor-pointer`
+                      : 'border-[var(--color-slate-200)] bg-white hover:bg-[var(--color-slate-50)] cursor-pointer'
                   }`}
                 >
                   <input
                     type="radio"
                     name="payment"
                     value={opt.id}
+                    disabled={isDisabled}
                     checked={isSelected}
-                    onChange={() => setPaymentMethod(opt.id)}
+                    onChange={() => !isDisabled && setPaymentMethod(opt.id)}
                     className="sr-only"
                   />
 
@@ -436,7 +435,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
 
                   {/* Libellé court et lisible */}
                   <span className={`text-[11px] sm:text-xs font-extrabold leading-tight line-clamp-1 ${isSelected ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
-                    {opt.shortLabel}
+                    {isDisabled ? 'Non dispo' : opt.shortLabel}
                   </span>
                 </label>
               )

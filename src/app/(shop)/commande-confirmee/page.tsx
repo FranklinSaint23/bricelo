@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { CheckCircle2, Phone, Package, ArrowRight } from 'lucide-react'
+import { CheckCircle2, Phone, Package, ArrowRight, Download } from 'lucide-react'
 import { Suspense } from 'react'
 import { useLanguage } from '@/components/providers/language-provider'
 
@@ -34,7 +34,7 @@ function ConfirmationContent() {
         </p>
 
         {orderIds.length > 0 && (
-          <div className="bg-[var(--color-slate-100)] rounded-xl px-5 py-4 mb-8 text-sm">
+          <div className="bg-[var(--color-slate-100)] rounded-xl px-5 py-4 mb-6 text-sm">
             <p className="text-[var(--color-slate-500)] text-xs font-semibold uppercase tracking-wider mb-2">
               {orderIds.length > 1 ? t.orderRefs : t.orderRef}
             </p>
@@ -45,6 +45,14 @@ function ConfirmationContent() {
             ))}
           </div>
         )}
+
+        {/* Notice Produit Digital */}
+        <div className="bg-indigo-50 border border-indigo-200 rounded-xl px-5 py-4 mb-6 text-xs text-indigo-950 text-left font-medium space-y-1">
+          <p className="font-bold flex items-center gap-1.5 text-indigo-900 text-sm">
+            <Download className="h-4 w-4 text-amber-500" /> Vos Produits Digitaux & Téléchargements
+          </p>
+          <p>Si votre commande contient un livre E-Book, un logiciel ou une formation digitale, accédez directement aux liens de téléchargement dans votre espace <strong>"Mes Commandes"</strong>.</p>
+        </div>
 
         <div className="grid gap-3 mb-10">
           {steps.map(({ icon: Icon, title, desc }) => (
