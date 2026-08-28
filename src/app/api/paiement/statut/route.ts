@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     if (campayRef) {
       const campayData = await checkTransactionStatus(campayRef)
       const status = campayData.status
+      console.log('[CamPay transaction status check]:', campayRef, '->', status, campayData)
 
       if (status === 'SUCCESSFUL' && payment.status !== 'success') {
         const orderIds: string[] = (payment.metadata as any)?.order_ids ?? [payment.order_id]

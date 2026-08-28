@@ -49,8 +49,15 @@ export async function collectPayment(params: {
     cleanPhone = `237${cleanPhone}`
   }
 
+  // En mode DEMO, CamPay déclenche le Push USSD réel sur téléphone uniquement pour les montants <= 25 FCFA (sans débit réel)
+  let collectAmount = params.amount
+  if (CAMPAY_ENV === 'DEMO' && collectAmount > 25) {
+    console.log('[CamPay DEMO Mode]: Montant ajusté à 10 FCFA pour déclencher le Push USSD réel de démonstration.')
+    collectAmount = 10
+  }
+
   const payload = {
-    amount: String(Math.round(params.amount)),
+    amount: String(Math.round(collectAmount)),
     currency: 'XAF',
     from: cleanPhone,
     description: params.description,
@@ -68,6 +75,7 @@ export async function collectPayment(params: {
   })
 
   const data = await res.json()
+  console.log('[CamPay /collect/ response]:', res.status, data, 'Payload:', payload)
 
   if (!res.ok || !data.reference) {
     const msg = data.message || data.detail || data.from || (typeof data === 'object' ? JSON.stringify(data) : String(data))
