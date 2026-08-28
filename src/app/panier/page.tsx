@@ -91,7 +91,7 @@ export default function CartPage() {
                       <span>{formatPrice(shipping)}</span>
                     </div>
                     <p className="text-[11px] text-[var(--color-slate-400)] bg-[var(--color-slate-50)] p-2 rounded-md border border-[var(--color-slate-200)]">
-                      🚚 1 000 FCFA (Même ville) / 2 000 FCFA (Autre ville)
+                      🚚 1 000 FCFA SEULEMENT
                     </p>
                     <hr className="border-[var(--color-slate-200)]" />
                     <div className="flex justify-between font-bold text-base text-[var(--color-navy-900)]">

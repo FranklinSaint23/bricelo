@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Plus, CreditCard, Building2, Calendar, Clock, Navigation } from 'lucide-react'
+import { MapPin, Plus, CreditCard, Building2, Calendar, Clock, Navigation, User, Mail } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,7 @@ type PaymentMethod = 'cash' | 'orange_money' | 'mtn_momo'
 
 interface NewDelivery {
   full_name: string
+  email: string
   phone: string
   quartier: string
   city: string
@@ -88,6 +89,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
   )
   const [newDelivery, setNewDelivery] = useState<NewDelivery>({
     full_name: '',
+    email: '',
     phone: '',
     quartier: '',
     city: 'Douala',
@@ -96,19 +98,10 @@ export function CheckoutForm({ addresses, userId }: Props) {
   })
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(hasDigitalItem ? 'orange_money' : 'cash')
-  const [loading, setLoading]             = useState(false)
-  const [error, setError]                 = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const selectedCity = selectedAddress === 'new' || isGuest
-    ? newDelivery.city
-    : (addresses.find((a) => a.id === selectedAddress)?.city || 'Douala')
-
-  function getShippingForStore(_storeCity?: string | null) {
-    return 1000 // Frais de livraison fixe à 1 000 FCFA peu importe la ville
-  }
-
-  const shipping = 1000
-
+  const shipping = hasDigitalItem ? 0 : 1000
   const grandTotal = total() + shipping
 
   function set<K extends keyof NewDelivery>(field: K, value: string) {
@@ -119,9 +112,26 @@ export function CheckoutForm({ addresses, userId }: Props) {
     setError(null)
     if (items.length === 0) { setError(t.cartEmpty); return }
 
-    let shippingAddress: { full_name: string; phone: string; city: string; address_line: string }
+    let shippingAddress: { full_name: string; phone: string; email?: string; city: string; address_line: string }
 
-    if (selectedAddress === 'new' || isGuest) {
+    if (hasDigitalItem) {
+      if (!newDelivery.full_name.trim() || !newDelivery.phone.trim() || !newDelivery.email.trim()) {
+        setError(lang === 'fr' ? 'Veuillez remplir votre nom, numéro de téléphone et adresse email.' : 'Please fill in your name, phone and email address.')
+        return
+      }
+      if (!newDelivery.email.includes('@')) {
+        setError(lang === 'fr' ? 'Veuillez saisir une adresse email valide.' : 'Please enter a valid email address.')
+        return
+      }
+
+      shippingAddress = {
+        full_name: newDelivery.full_name.trim(),
+        phone: newDelivery.phone.trim(),
+        email: newDelivery.email.trim(),
+        city: 'Digital / Téléchargement',
+        address_line: 'Accès Produit Numérique (Téléchargement Direct)',
+      }
+    } else if (selectedAddress === 'new' || isGuest) {
       if (!newDelivery.full_name.trim() || !newDelivery.phone.trim() || !newDelivery.quartier.trim()) {
         setError(lang === 'fr' ? 'Veuillez remplir tous les champs obligatoires' : 'Please fill in all required fields')
         return
@@ -130,6 +140,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
       shippingAddress = {
         full_name: newDelivery.full_name.trim(),
         phone: newDelivery.phone.trim(),
+        email: newDelivery.email.trim() || undefined,
         city: newDelivery.city,
         address_line: `${newDelivery.quartier.trim()} (Créneau : ${newDelivery.delivery_day} ${newDelivery.delivery_time})`,
       }
@@ -139,6 +150,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
       shippingAddress = {
         full_name: addr.full_name,
         phone: addr.phone,
+        email: newDelivery.email.trim() || undefined,
         city: addr.city,
         address_line: addr.address_line,
       }
@@ -162,7 +174,6 @@ export function CheckoutForm({ addresses, userId }: Props) {
         const [storeId, storeItems] = storeEntries[index]
         const storeSub = storeItems.reduce((a, i) => a + (i.product.price + (i.variant?.price_adjustment ?? 0)) * i.quantity, 0)
         const storeShipping = index === 0 ? shipping : 0
-        const storeCity = (storeItems[0]?.product?.store as any)?.city || 'Douala'
 
         const { data: order, error: orderErr } = await supabase
           .from('orders')
@@ -193,7 +204,6 @@ export function CheckoutForm({ addresses, userId }: Props) {
           const sku = v?.sku || null
           const itemImage = v?.images?.[0]?.url || i.product.images?.[0] || null
 
-          // Extraire le snapshot des options pour conservation historique immuable
           const optionsMap: Record<string, string> = {}
           if (v?.option_values && Array.isArray(v.option_values)) {
             v.option_values.forEach((ov: any) => {
@@ -223,9 +233,9 @@ export function CheckoutForm({ addresses, userId }: Props) {
             },
           }
         })
-        await supabase.from('order_items').insert(orderItems)
+        const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
+        if (itemsErr) throw itemsErr
 
-        // Décrémenter de façon transactionnelle le stock de variante
         for (const item of storeItems) {
           if (item.variant?.id && !item.variant.id.includes('_')) {
             try {
@@ -247,10 +257,10 @@ export function CheckoutForm({ addresses, userId }: Props) {
           orderId: order.id,
           createdAt: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }),
           customerName: shippingAddress.full_name || newDelivery.full_name || 'Client',
-          customerEmail: null,
+          customerEmail: shippingAddress.email || newDelivery.email || null,
           customerPhone: shippingAddress.phone || newDelivery.phone || '',
           city: shippingAddress.city || newDelivery.city || 'Douala',
-          addressLine: (shippingAddress as any).address_line || `${newDelivery.quartier} (${newDelivery.delivery_day} ${newDelivery.delivery_time})`,
+          addressLine: (shippingAddress as any).address_line || `${newDelivery.quartier}`,
           storeName: storeData?.name ?? 'Boutique BRICELO',
           storePhone: storeData?.phone ?? null,
           totalAmount: storeSub + storeShipping,
@@ -295,81 +305,137 @@ export function CheckoutForm({ addresses, userId }: Props) {
       <Card>
         <CardHeader>
           <h2 className="font-semibold text-[var(--color-navy-900)] flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-[var(--color-accent)]" /> {t.deliveryInfo}
+            {hasDigitalItem ? (
+              <><User className="h-4 w-4 text-[var(--color-accent)]" /> Informations de l'acheteur (Accès Digital)</>
+            ) : (
+              <><MapPin className="h-4 w-4 text-[var(--color-accent)]" /> {t.deliveryInfo}</>
+            )}
           </h2>
         </CardHeader>
         <CardBody className="flex flex-col gap-3">
 
-          {!isGuest && addresses.map((addr) => (
-            <label key={addr.id}
-              className={`flex items-start gap-3 p-3 rounded-[var(--radius-lg)] border cursor-pointer transition-colors ${
-                selectedAddress === addr.id
-                  ? 'border-[var(--color-accent)] bg-amber-50'
-                  : 'border-[var(--color-slate-200)] hover:bg-[var(--color-slate-50)]'
-              }`}>
-              <input type="radio" name="address" value={addr.id} checked={selectedAddress === addr.id}
-                onChange={() => setSelectedAddress(addr.id)} className="mt-0.5" />
-              <div className="text-sm">
-                <p className="font-semibold text-[var(--color-navy-900)]">{addr.label} - {addr.full_name}</p>
-                <p className="text-[var(--color-slate-500)]">{addr.address_line}, {addr.city} • {addr.phone}</p>
-              </div>
-            </label>
-          ))}
-
-          {!isGuest && (
-            <label className={`flex items-center gap-3 p-3 rounded-[var(--radius-lg)] border cursor-pointer transition-colors ${
-              selectedAddress === 'new'
-                ? 'border-[var(--color-accent)] bg-amber-50'
-                : 'border-dashed border-[var(--color-slate-300)] hover:bg-[var(--color-slate-50)]'
-            }`}>
-              <input type="radio" name="address" value="new" checked={selectedAddress === 'new'}
-                onChange={() => setSelectedAddress('new')} />
-              <Plus className="h-4 w-4 text-[var(--color-slate-400)]" />
-              <span className="text-sm text-[var(--color-slate-600)]">{t.newAddress}</span>
-            </label>
-          )}
-
-          {(selectedAddress === 'new' || isGuest) && (
-            <div className="flex flex-col gap-3 mt-1">
-              <div className="grid sm:grid-cols-2 gap-3">
-                <Input label={t.fullName} value={newDelivery.full_name}
-                  onChange={(e) => set('full_name', e.target.value)} required />
-                <Input label={t.phone} value={newDelivery.phone}
-                  onChange={(e) => set('phone', e.target.value)} required placeholder="+237 6XX XXX XXX" />
-              </div>
-
-              <div className="grid sm:grid-cols-3 gap-3">
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-[var(--color-slate-600)] flex items-center gap-1">
-                    <Building2 className="h-3.5 w-3.5" /> {t.city}
-                  </label>
-                  <select value={newDelivery.city} onChange={(e) => set('city', e.target.value)}
-                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] focus:outline-none focus:border-[var(--color-navy-900)] bg-white text-[var(--color-navy-900)]">
-                    {CITIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-[var(--color-slate-600)] flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5" /> {t.deliveryDay}
-                  </label>
-                  <select value={newDelivery.delivery_day} onChange={(e) => set('delivery_day', e.target.value)}
-                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] focus:outline-none focus:border-[var(--color-navy-900)] bg-white text-[var(--color-navy-900)]">
-                    {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <label className="text-xs font-semibold text-[var(--color-slate-600)] flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5" /> {lang === 'fr' ? 'Heure' : 'Time'}
-                  </label>
-                  <select value={newDelivery.delivery_time} onChange={(e) => set('delivery_time', e.target.value)}
-                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] focus:outline-none focus:border-[var(--color-navy-900)] bg-white text-[var(--color-navy-900)]">
-                    {TIME_SLOTS.map(tSlot => <option key={tSlot} value={tSlot}>{tSlot}</option>)}
-                  </select>
-                </div>
-              </div>
+          {hasDigitalItem ? (
+            <div className="flex flex-col gap-3">
+              <Input
+                label="Nom & Prénom *"
+                value={newDelivery.full_name}
+                onChange={(e) => set('full_name', e.target.value)}
+                placeholder="Ex: Jean Paul"
+                required
+                className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+              />
+              <Input
+                label="Numéro de téléphone *"
+                value={newDelivery.phone}
+                onChange={(e) => set('phone', e.target.value)}
+                placeholder="Ex: 699000000"
+                required
+                className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+              />
+              <Input
+                label="Adresse Email *"
+                type="email"
+                value={newDelivery.email}
+                onChange={(e) => set('email', e.target.value)}
+                placeholder="ex: jean.paul@gmail.com"
+                required
+                className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+              />
             </div>
+          ) : (
+            <>
+              {!isGuest && addresses.map((addr) => (
+                <label key={addr.id}
+                  className={`flex items-start gap-3 p-3 rounded-[var(--radius-lg)] border cursor-pointer transition-colors ${
+                    selectedAddress === addr.id
+                      ? 'border-[var(--color-accent)] bg-amber-50'
+                      : 'border-[var(--color-slate-200)] hover:bg-[var(--color-slate-50)]'
+                  }`}>
+                  <input type="radio" name="address" value={addr.id} checked={selectedAddress === addr.id}
+                    onChange={() => setSelectedAddress(addr.id)} className="mt-0.5" />
+                  <div>
+                    <p className="text-sm font-semibold text-[var(--color-navy-900)]">{addr.full_name}</p>
+                    <p className="text-xs text-[var(--color-slate-500)]">{addr.phone}</p>
+                    <p className="text-xs text-[var(--color-slate-500)]">{addr.address_line}, {addr.city}</p>
+                  </div>
+                </label>
+              ))}
+
+              {(isGuest || selectedAddress === 'new') && (
+                <div className="flex flex-col gap-3">
+                  <Input
+                    label={t.fullName}
+                    value={newDelivery.full_name}
+                    onChange={(e) => set('full_name', e.target.value)}
+                    placeholder="Ex: Jean Paul"
+                    required
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+                  />
+                  <Input
+                    label={t.phone}
+                    value={newDelivery.phone}
+                    onChange={(e) => set('phone', e.target.value)}
+                    placeholder="Ex: 699000000"
+                    required
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+                  />
+                  <Input
+                    label="Adresse Email (Optionnelle)"
+                    type="email"
+                    value={newDelivery.email}
+                    onChange={(e) => set('email', e.target.value)}
+                    placeholder="ex: jean.paul@gmail.com"
+                    className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-[var(--color-navy-900)] mb-1">
+                        {t.city}
+                      </label>
+                      <select
+                        value={newDelivery.city}
+                        onChange={(e) => set('city', e.target.value)}
+                        className="w-full h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] bg-white text-[var(--color-navy-900)] focus:outline-none cursor-pointer"
+                      >
+                        {CITIES.map((c) => (
+                          <option key={c} value={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <Input
+                      label={t.neighborhood}
+                      value={newDelivery.quartier}
+                      onChange={(e) => set('quartier', e.target.value)}
+                      placeholder={t.neighborhoodPlaceholder}
+                      required
+                      className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)]"
+                    />
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-3 pt-1">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-[var(--color-slate-600)] flex items-center gap-1">
+                        <Calendar className="h-3.5 w-3.5" /> {t.deliveryDay}
+                      </label>
+                      <select value={newDelivery.delivery_day} onChange={(e) => set('delivery_day', e.target.value)}
+                        className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] bg-white text-[var(--color-navy-900)]">
+                        {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                      <label className="text-xs font-semibold text-[var(--color-slate-600)] flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5" /> {lang === 'fr' ? 'Heure' : 'Time'}
+                      </label>
+                      <select value={newDelivery.delivery_time} onChange={(e) => set('delivery_time', e.target.value)}
+                        className="h-10 px-3 text-sm border border-[var(--color-slate-300)] rounded-[var(--radius-lg)] bg-white text-[var(--color-navy-900)]">
+                        {TIME_SLOTS.map(tSlot => <option key={tSlot} value={tSlot}>{tSlot}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </CardBody>
       </Card>
@@ -384,7 +450,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
           {hasDigitalItem && (
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-start gap-2">
               <span>
-                Votre panier contient un produit digital (téléchargement). Le paiement en espèces à la livraison est désactivé. Veuillez choisir un mode de paiement en ligne sécurisé (Orange Money ou MTN Mobile Money).
+                Votre panier contient un produit digital. Le paiement en espèces est désactivé. Veuillez choisir un mode de paiement en ligne sécurisé (Orange Money ou MTN Mobile Money).
               </span>
             </div>
           )}
@@ -414,7 +480,6 @@ export function CheckoutForm({ addresses, userId }: Props) {
                     className="sr-only"
                   />
 
-                  {/* Radio check indicator (top right) */}
                   <div className="absolute top-2 right-2">
                     <div className={`h-3.5 w-3.5 rounded-full border flex items-center justify-center shrink-0 ${
                       isSelected ? `${opt.checkColor} text-white` : 'border-[var(--color-slate-300)] bg-white'
@@ -423,7 +488,6 @@ export function CheckoutForm({ addresses, userId }: Props) {
                     </div>
                   </div>
 
-                  {/* Image de logo avec container adaptatif clair/sombre */}
                   <div className={`h-11 w-full max-w-[85px] rounded-lg flex items-center justify-center overflow-hidden p-1.5 my-1.5 transition-transform ${opt.logoBg} ${isSelected ? 'scale-105 shadow-2xs' : 'opacity-90'}`}>
                     <img
                       src={opt.imageSrc}
@@ -432,7 +496,6 @@ export function CheckoutForm({ addresses, userId }: Props) {
                     />
                   </div>
 
-                  {/* Libellé court et lisible */}
                   <span className={`text-[11px] sm:text-xs font-extrabold leading-tight line-clamp-1 ${isSelected ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
                     {isDisabled ? 'Non dispo' : opt.shortLabel}
                   </span>
@@ -472,7 +535,9 @@ export function CheckoutForm({ addresses, userId }: Props) {
             </div>
             <div className="flex justify-between text-sm text-[var(--color-slate-500)]">
               <span>{t.shipping}</span>
-              <span className="font-semibold text-[var(--color-navy-900)]">{formatPrice(shipping)}</span>
+              <span className="font-semibold text-[var(--color-navy-900)]">
+                {hasDigitalItem ? 'Offert (0 FCFA)' : formatPrice(shipping)}
+              </span>
             </div>
             <div className="flex justify-between text-base font-bold text-[var(--color-navy-900)] pt-2 border-t border-[var(--color-slate-100)]">
               <span>{t.total}</span>
