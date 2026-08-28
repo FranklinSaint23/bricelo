@@ -1,5 +1,5 @@
 /**
- * Utilitaire d'intégration API CamPay (Paiement Mobile Money Orange & MTN au Cameroun)
+ * Module d'intégration CamPay via Collect USSD Push Direct (exactement comme njangimarket)
  */
 
 const CAMPAY_ENV = process.env.CAMPAY_ENV || process.env.CAMPAY_ENVIRONMENT || 'PROD'
@@ -10,7 +10,7 @@ export async function getCampayToken(): Promise<string> {
   const password = process.env.CAMPAY_PASSWORD || process.env.CAMPAY_APP_PASSWORD || process.env.CAMPAY_API_SECRET
 
   if (!username || !password || username === 'placeholder' || password === 'placeholder') {
-    throw new Error('Clés API CamPay non configurées dans le fichier .env.local (CAMPAY_USERNAME et CAMPAY_PASSWORD requis).')
+    throw new Error('Clés API CamPay non configurées. Veuillez renseigner CAMPAY_USERNAME et CAMPAY_PASSWORD dans votre fichier .env.local.')
   }
 
   try {
@@ -18,6 +18,7 @@ export async function getCampayToken(): Promise<string> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
+      cache: 'no-store',
     })
 
     const data = await res.json()
@@ -34,66 +35,67 @@ export async function getCampayToken(): Promise<string> {
   }
 }
 
-function ensureHttpsUrl(url: string): string {
-  const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://bricelo.com').replace(/\/$/, '')
-  const fallbackUrl = `${configuredSiteUrl}/commande-confirmee`
-
-  if (!url) return fallbackUrl
-  let clean = url.trim()
-
-  // CamPay's Django API strictly validates HTTPS and rejects localhost / 127.0.0.1
-  if (clean.includes('localhost') || clean.includes('127.0.0.1')) {
-    if (configuredSiteUrl.includes('localhost') || configuredSiteUrl.includes('127.0.0.1')) {
-      return 'https://bricelo.com/commande-confirmee'
-    }
-    return `${configuredSiteUrl}/commande-confirmee`
-  }
-
-  if (clean.startsWith('http://')) {
-    clean = clean.replace('http://', 'https://')
-  }
-
-  if (!clean.startsWith('https://')) {
-    clean = `https://${clean}`
-  }
-
-  return clean
-}
-
-export async function createCampayPaymentLink(params: {
+export async function collectPayment(params: {
   amount: number
+  phone: string
   description: string
   externalReference: string
-  redirectUrl: string
-  failureRedirectUrl?: string
-}): Promise<{ link: string; reference?: string }> {
+}): Promise<{ reference: string; status?: string }> {
   const token = await getCampayToken()
 
-  const validRedirectUrl = ensureHttpsUrl(params.redirectUrl)
+  // Nettoyer le numéro de téléphone : garder uniquement les chiffres
+  let cleanPhone = params.phone.replace(/\D/g, '')
 
-  const payload: Record<string, any> = {
-    amount: String(params.amount),
-    currency: 'XAF',
-    description: params.description,
-    external_reference: params.externalReference,
-    redirect_url: validRedirectUrl,
+  // Si le numéro commence par 6XX (format Cameroun sans indicatif), ajouter 237
+  if (cleanPhone.length === 9 && cleanPhone.startsWith('6')) {
+    cleanPhone = `237${cleanPhone}`
   }
 
-  const res = await fetch(`${BASE_URL}/get_payment_link/`, {
+  const payload = {
+    amount: String(Math.round(params.amount)),
+    currency: 'XAF',
+    from: cleanPhone,
+    description: params.description,
+    external_reference: params.externalReference,
+  }
+
+  const res = await fetch(`${BASE_URL}/collect/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${token}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(payload),
+    cache: 'no-store',
   })
 
   const data = await res.json()
-  if (!res.ok || !data.link) {
-    const errorDetails = data.detail || data.message || data.redirect_url || data.failure_redirect_url || (typeof data === 'object' ? JSON.stringify(data) : String(data))
-    console.error('[CamPay get_payment_link failure]:', errorDetails, 'Sent payload:', payload)
-    throw new Error(`Erreur CamPay (${res.status}) : ${errorDetails}`)
+
+  if (!res.ok || !data.reference) {
+    const msg = data.message || data.detail || data.from || (typeof data === 'object' ? JSON.stringify(data) : String(data))
+    console.error('[CamPay collect failure]:', msg, 'Payload sent:', payload)
+    throw new Error(`Échec du paiement : ${msg}`)
   }
 
-  return { link: data.link, reference: data.reference }
+  return { reference: data.reference, status: data.status }
+}
+
+export async function checkTransactionStatus(reference: string): Promise<{ status: string; code?: string }> {
+  const token = await getCampayToken()
+
+  const res = await fetch(`${BASE_URL}/transaction/${reference}/`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Token ${token}`,
+      'Content-Type': 'application/json',
+    },
+    cache: 'no-store',
+  })
+
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.detail || data.message || 'Impossible de vérifier le statut de la transaction CamPay.')
+  }
+
+  return { status: data.status, code: data.code }
 }

@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { v4 as uuidv4 } from 'uuid'
-import { createCampayPaymentLink } from '@/lib/campay'
+import { collectPayment } from '@/lib/campay'
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,13 +10,12 @@ export async function POST(request: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return NextResponse.json({ error: 'Non authentifié. Veuillez vous connecter.' }, { status: 401 })
 
-    const { orderIds, amount } = await request.json()
-    if (!orderIds?.length || !amount) {
-      return NextResponse.json({ error: 'Données de commande invalides.' }, { status: 400 })
+    const { orderIds, amount, phone } = await request.json()
+    if (!orderIds?.length || !amount || !phone) {
+      return NextResponse.json({ error: 'Données de commande ou numéro de téléphone manquants.' }, { status: 400 })
     }
 
     const transactionRef = `BRICELO-${Date.now()}-${uuidv4().slice(0, 8).toUpperCase()}`
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
     const adminClient = getAdminClient()
 
     // 1. Enregistrer une ligne de paiement en attente dans la table 'payments' pour chaque commande
@@ -37,26 +36,36 @@ export async function POST(request: NextRequest) {
           parent_transaction_ref: transactionRef,
           order_ids: orderIds,
           store_order_index: i,
+          phone,
         },
       })
     }
 
-    const cleanSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
-
-    // 2. Initialiser le lien de paiement avec l'API officielle CamPay
-    const campayRes = await createCampayPaymentLink({
+    // 2. Lancer la demande de paiement USSD Push Direct via CamPay (comme njangimarket)
+    const campayRes = await collectPayment({
       amount,
-      description: `Commande BRICELO #${transactionRef.slice(-8)}`,
+      phone,
+      description: `BRICELO - Commande #${transactionRef.slice(-8)}`,
       externalReference: transactionRef,
-      redirectUrl: `${cleanSiteUrl}/commande-confirmee`,
     })
 
-    if (campayRes?.link) {
-      return NextResponse.json({ payment_url: campayRes.link })
+    if (campayRes?.reference) {
+      // Enregistrer la référence CamPay dans les métadonnées de paiement
+      await adminClient
+        .from('payments')
+        .update({ metadata: { parent_transaction_ref: transactionRef, order_ids: orderIds, campay_reference: campayRes.reference, phone } })
+        .eq('transaction_ref', transactionRef)
+
+      return NextResponse.json({
+        success: true,
+        reference: campayRes.reference,
+        transactionRef,
+        message: 'Demande de paiement envoyée. Veuillez saisir votre code PIN sur votre téléphone.',
+      })
     }
 
     return NextResponse.json(
-      { error: 'Erreur lors de l’initialisation du paiement CamPay.' },
+      { error: 'Erreur lors de la demande de paiement CamPay.' },
       { status: 400 }
     )
   } catch (err: any) {
