@@ -291,7 +291,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
       if (paymentMethod === 'cash') {
         router.push(`/commande-confirmee?orders=${orderIds.join(',')}`)
       } else {
-        router.push(`/paiement?orders=${orderIds.join(',')}`)
+        router.push(`/paiement?orders=${orderIds.join(',')}&method=${paymentMethod}`)
       }
     } catch (err: any) {
       setError(err.message ?? t.error)

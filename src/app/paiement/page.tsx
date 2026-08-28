@@ -6,9 +6,10 @@ import { CinetPayButton } from '@/components/checkout/cinetpay-button'
 import { formatPrice } from '@/lib/utils'
 import { ShieldCheck, Store, MapPin, ShoppingBag } from 'lucide-react'
 
-export default async function PaiementPage({ searchParams }: { searchParams: Promise<{ orders?: string }> }) {
+export default async function PaiementPage({ searchParams }: { searchParams: Promise<{ orders?: string; method?: string }> }) {
   const params = await searchParams
   const orderIds = params.orders?.split(',').filter(Boolean) ?? []
+  const paymentMethod = params.method || 'orange_money'
   if (!orderIds.length) redirect('/panier')
 
   const adminClient = getAdminClient()
@@ -144,7 +145,7 @@ export default async function PaiementPage({ searchParams }: { searchParams: Pro
             </div>
           </div>
 
-          <CinetPayButton orderIds={orderIds} amount={grandTotal} />
+          <CinetPayButton orderIds={orderIds} amount={grandTotal} paymentMethod={paymentMethod} />
         </div>
       </main>
     </>
