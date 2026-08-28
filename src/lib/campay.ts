@@ -35,12 +35,18 @@ export async function getCampayToken(): Promise<string> {
 }
 
 function ensureHttpsUrl(url: string): string {
-  if (!url) return 'https://bricelo.cm/commande-confirmee'
+  const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'https://bricelo.com').replace(/\/$/, '')
+  const fallbackUrl = `${configuredSiteUrl}/commande-confirmee`
+
+  if (!url) return fallbackUrl
   let clean = url.trim()
 
   // CamPay's Django API strictly validates HTTPS and rejects localhost / 127.0.0.1
   if (clean.includes('localhost') || clean.includes('127.0.0.1')) {
-    return 'https://bricelo.cm/commande-confirmee'
+    if (configuredSiteUrl.includes('localhost') || configuredSiteUrl.includes('127.0.0.1')) {
+      return 'https://bricelo.com/commande-confirmee'
+    }
+    return `${configuredSiteUrl}/commande-confirmee`
   }
 
   if (clean.startsWith('http://')) {
