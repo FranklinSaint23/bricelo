@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import {
   GraduationCap, Plus, Pencil, Trash2, Eye, EyeOff, Video,
-  PlayCircle, CheckCircle2, Sparkles, AlertCircle, X, Save
+  PlayCircle, CheckCircle2, Sparkles, AlertCircle, X, Save, Upload
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
 import { Card, CardBody, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/lib/supabase/client'
 import {
   getAdminTutorials, saveTutorial, toggleTutorialStatus,
   deleteTutorial, TutorialItem
@@ -40,6 +41,36 @@ export default function AdminTutorialsPage() {
   const [videoUrl, setVideoUrl] = useState('')
   const [description, setDescription] = useState('')
   const [steps, setSteps] = useState<string[]>([''])
+  const [uploadingImg, setUploadingImg] = useState(false)
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingImg(true)
+    const supabase = createClient()
+    try {
+      const ext = file.name.split('.').pop()
+      const path = `tuto-${Date.now()}-${Math.random().toString(36).substring(2)}.${ext}`
+      let bucketName = 'product-images'
+
+      let { error: uploadErr } = await supabase.storage.from(bucketName).upload(path, file)
+      if (uploadErr && uploadErr.message?.toLowerCase().includes('bucket not found')) {
+        bucketName = 'products'
+        const res = await supabase.storage.from(bucketName).upload(path, file)
+        uploadErr = res.error
+      }
+
+      if (uploadErr) throw uploadErr
+
+      const { data: { publicUrl } } = supabase.storage.from(bucketName).getPublicUrl(path)
+      setThumbnailUrl(publicUrl)
+    } catch (err: any) {
+      alert(err.message || 'Erreur lors du téléversement de l’image')
+    } finally {
+      setUploadingImg(false)
+    }
+  }
 
   async function loadData() {
     setLoading(true)
@@ -318,13 +349,39 @@ export default function AdminTutorialsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">URL Image Miniature (Thumbnail)</label>
-                <Input
-                  value={thumbnailUrl}
-                  onChange={(e) => setThumbnailUrl(e.target.value)}
-                  placeholder="https://..."
-                  className="h-9 text-xs font-mono"
-                />
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Image Miniature (Thumbnail)
+                </label>
+                <div className="flex items-center gap-3">
+                  {thumbnailUrl && (
+                    <div className="relative h-16 w-28 rounded-lg overflow-hidden border border-slate-300 bg-slate-900 shrink-0 group shadow-2xs">
+                      <img src={thumbnailUrl} alt="Vignette" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setThumbnailUrl('')}
+                        className="absolute inset-0 bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Retirer cette image"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    </div>
+                  )}
+
+                  <label className="flex-1 cursor-pointer">
+                    <div className="flex items-center justify-center gap-2 h-10 px-4 rounded-xl border border-dashed border-slate-300 hover:border-amber-400 bg-slate-50 hover:bg-amber-500/5 text-xs font-bold text-slate-700 transition-all">
+                      <Upload className="h-4 w-4 text-amber-500" />
+                      <span>{uploadingImg ? 'Téléversement en cours...' : thumbnailUrl ? 'Changer la miniature' : 'Téléverser une image miniature'}</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploadingImg}
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1 italic">Format recommandé: PNG, JPG ou WebP (max 5 Mo)</p>
               </div>
 
               <div>
