@@ -42,14 +42,13 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000').replace(/\/$/, '')
-    const ordersParam = orderIds.join('-')
 
     // 2. Initialiser le lien de paiement avec l'API officielle CamPay
     const campayRes = await createCampayPaymentLink({
       amount,
       description: `Commande BRICELO #${transactionRef.slice(-8)}`,
       externalReference: transactionRef,
-      redirectUrl: `${cleanSiteUrl}/commande-confirmee?orders=${ordersParam}`,
+      redirectUrl: `${cleanSiteUrl}/commande-confirmee`,
     })
 
     if (campayRes?.link) {

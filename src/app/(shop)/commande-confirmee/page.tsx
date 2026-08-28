@@ -10,7 +10,11 @@ function ConfirmationContent() {
   const searchParams = useSearchParams()
   const { t } = useLanguage()
   const rawOrders = searchParams.get('orders') ?? ''
-  const orderIds = rawOrders ? rawOrders.split(/[,-]/).filter(Boolean) : []
+  const extRef = searchParams.get('external_reference') ?? searchParams.get('reference') ?? ''
+  let orderIds = rawOrders ? rawOrders.split(/[,-]/).filter(Boolean) : []
+  if (orderIds.length === 0 && extRef) {
+    orderIds = [extRef]
+  }
 
   const steps = [
     { icon: Phone,   title: t.phoneConfirm,  desc: t.phoneConfirmDesc },
