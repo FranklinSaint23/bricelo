@@ -296,16 +296,16 @@ export default function LearnToSellPage() {
 
               {/* Liste des Étapes Pratiques */}
               <div>
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-600 dark:text-amber-400 mb-3">
+                <h4 className="text-xs font-black uppercase tracking-wider text-amber-500 dark:text-amber-400 mb-3">
                   Résumé des Étapes à Suivre :
                 </h4>
                 <div className="space-y-2.5">
                   {selectedCourse.steps.map((step, idx) => (
-                    <div key={idx} className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-xs">
+                    <div key={idx} className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-2xs">
                       <span className="h-6 w-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-md">
                         {idx + 1}
                       </span>
-                      <p className="text-xs font-bold text-[var(--color-navy-900)] dark:text-slate-100 leading-relaxed">
+                      <p className="text-xs font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
                         {step}
                       </p>
                     </div>
@@ -315,11 +315,11 @@ export default function LearnToSellPage() {
             </div>
 
             {/* Footer Modal */}
-            <div className="p-4 bg-slate-50 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <div className="p-4 bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
               <Button
                 variant="outline"
                 size="sm"
-                className="dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700 font-bold"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-900 border-slate-300 dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700 font-extrabold px-4 shadow-2xs"
                 onClick={() => {
                   setSelectedCourse(null)
                   setIsPlayingVideo(false)
@@ -327,7 +327,7 @@ export default function LearnToSellPage() {
               >
                 Fermer
               </Button>
-              <Button asChild size="sm" className="bg-amber-400 text-slate-950 hover:bg-amber-500 font-extrabold shadow-sm">
+              <Button asChild size="sm" className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold shadow-sm btn-animate-attention">
                 <Link href="/devenir-vendeur">
                   Ouvrir ma boutique maintenant
                 </Link>

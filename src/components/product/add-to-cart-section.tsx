@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { ShoppingCart, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/store/cart-store'
 import { useLanguage } from '@/components/providers/language-provider'
+import { cn } from '@/lib/utils'
 import type { Product, ProductVariant } from '@/types'
 
 interface Props {
@@ -19,10 +20,30 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
   const [qty, setQty]                 = useState(1)
   const [selectedMap, setSelectedMap] = useState<Record<string, ProductVariant>>({})
   const [added, setAdded]             = useState(false)
+  const [showStickyBar, setShowStickyBar] = useState(false)
+  const primaryBtnRef = useRef<HTMLDivElement | null>(null)
+
   const router = useRouter()
   const addItem  = useCartStore((s) => s.addItem)
   const clearCart = useCartStore((s) => s.clearCart)
   const { t } = useLanguage()
+
+  // Intersection Observer pour faire apparaître le bouton collant dès que le bouton principal défile hors écran
+  useEffect(() => {
+    const target = primaryBtnRef.current
+    if (!target) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Si le bouton principal N'EST PLUS visible à l'écran, afficher la barre collante
+        setShowStickyBar(!entry.isIntersecting)
+      },
+      { threshold: 0.1 }
+    )
+
+    observer.observe(target)
+    return () => observer.disconnect()
+  }, [])
 
   const variants  = product.variants ?? []
   const groupedVariants = variants.reduce<Record<string, ProductVariant[]>>((acc, v) => {
@@ -142,7 +163,7 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
       </div>
 
       {/* Boutons CTA */}
-      <div className="flex flex-col gap-2.5">
+      <div ref={primaryBtnRef} className="flex flex-col gap-2.5">
         <Button
           onClick={handleBuyNow}
           disabled={!!outOfStock}
@@ -162,6 +183,60 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           <ShoppingCart className="h-4 w-4" />
           {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
         </Button>
+      </div>
+
+      {/* ── BARRE FLOTTANTE COLLANTE DE BAS DE PAGE (Sticky Bottom Bar) ──
+          N'apparaît QUE lorsque le client défile vers le bas et que le bouton principal disparaît de l'écran.
+          Disparaît automatiquement dès qu'il remonte au niveau du bouton principal ! ── */}
+      <div
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl p-3 sm:px-6 transition-all duration-300 transform",
+          showStickyBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
+        )}
+      >
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+          {/* Info Produit Mini */}
+          <div className="flex items-center gap-3 min-w-0">
+            {product.images?.[0] && (
+              <img
+                src={product.images[0]}
+                alt={product.name}
+                className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+              />
+            )}
+            <div className="min-w-0 hidden xs:block">
+              <p className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-xs sm:max-w-md">
+                {product.name}
+              </p>
+              <p className="text-xs font-extrabold text-[var(--color-accent)]">
+                {unitPrice.toLocaleString('fr-FR')} FCFA
+              </p>
+            </div>
+          </div>
+
+          {/* Boutons d'action collants */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto xs:ml-0">
+            <Button
+              onClick={handleAdd}
+              disabled={!!outOfStock}
+              size="sm"
+              className="hidden sm:flex bg-slate-100 hover:bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 font-bold"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              <span>{added ? t.added : t.addToCart}</span>
+            </Button>
+
+            <Button
+              onClick={handleBuyNow}
+              disabled={!!outOfStock}
+              size="md"
+              className="bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] font-black text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md btn-animate-attention flex items-center gap-2"
+            >
+              <ShoppingCart className="h-4 w-4 fill-current" />
+              <span>{t.buyNow}</span>
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )
