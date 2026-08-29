@@ -121,12 +121,12 @@ export function Footer() {
           <div className="grid grid-cols-4 gap-4 py-5 border-b border-black/10">
             {features.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-3">
-                <div className="shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                  <Icon className="h-5 w-5 text-[var(--color-navy-900)]" />
+                <div className="shrink-0 w-10 h-10 rounded-full bg-black/10 flex items-center justify-center">
+                  <Icon className="h-5 w-5 !text-slate-950" />
                 </div>
                 <div>
-                  <p className="text-[var(--color-navy-900)] font-bold text-sm leading-tight">{title}</p>
-                  <p className="text-[var(--color-navy-900)]/70 text-xs mt-0.5">{desc}</p>
+                  <p className="!text-slate-950 font-black text-sm leading-tight">{title}</p>
+                  <p className="!text-slate-900 font-semibold text-xs mt-0.5">{desc}</p>
                 </div>
               </div>
             ))}
@@ -137,7 +137,7 @@ export function Footer() {
                 <Link
                   key={l.href}
                   href={l.href}
-                  className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-navy-900)] border border-[var(--color-navy-900)]/40 hover:border-[var(--color-navy-900)] hover:bg-black/5 px-4 py-1.5 rounded transition-colors"
+                  className="flex items-center gap-1.5 text-sm font-bold !text-slate-950 border border-slate-950/40 hover:border-slate-950 hover:bg-black/5 px-4 py-1.5 rounded transition-colors"
                 >
                   <span className="text-xs opacity-60">↳</span> {l.label}
                 </Link>
@@ -155,12 +155,12 @@ export function Footer() {
           <div className="grid grid-cols-2 gap-3 mb-3">
             {features.map(({ icon: Icon, title, desc }) => (
               <div key={title} className="flex items-start gap-2">
-                <div className="shrink-0 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mt-0.5">
-                  <Icon className="h-4 w-4 text-[var(--color-navy-900)]" />
+                <div className="shrink-0 w-8 h-8 rounded-full bg-black/10 flex items-center justify-center mt-0.5">
+                  <Icon className="h-4 w-4 !text-slate-950" />
                 </div>
                 <div>
-                  <p className="text-[var(--color-navy-900)] font-bold text-xs leading-tight">{title}</p>
-                  <p className="text-[var(--color-navy-900)]/65 text-[11px]">{desc}</p>
+                  <p className="!text-slate-950 font-black text-xs leading-tight">{title}</p>
+                  <p className="!text-slate-900 font-semibold text-[11px] leading-tight mt-0.5">{desc}</p>
                 </div>
               </div>
             ))}

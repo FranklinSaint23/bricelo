@@ -34,22 +34,7 @@ export function VariantMatrixEditor({
   const [selectedPresetId, setSelectedPresetId] = useState<string>('custom_generic')
 
   // Options et leurs valeurs
-  const [options, setOptions] = useState<ProductOption[]>(
-    initialOptions.length > 0
-      ? initialOptions
-      : [
-          {
-            name: 'Couleur',
-            display_type: 'color',
-            position: 0,
-            required: true,
-            values: [
-              { value: 'Noir', label: 'Noir', position: 0, is_active: true, metadata: { hex: '#000000' } },
-              { value: 'Bleu', label: 'Bleu', position: 1, is_active: true, metadata: { hex: '#0000ff' } },
-            ],
-          },
-        ]
-  )
+  const [options, setOptions] = useState<ProductOption[]>(initialOptions)
 
   // Variantes SKU générées
   const [variants, setVariants] = useState<AdvancedProductVariant[]>(initialVariants)
@@ -379,8 +364,9 @@ export function VariantMatrixEditor({
                     <td className="py-2.5 px-3">
                       <Input
                         type="number"
-                        value={v.price || 0}
-                        onChange={(e) => updateVariant(varIdx, 'price', parseFloat(e.target.value) || 0)}
+                        value={v.price || ''}
+                        onChange={(e) => updateVariant(varIdx, 'price', e.target.value ? parseFloat(e.target.value) : 0)}
+                        placeholder="P. promo"
                         className="h-8 text-xs w-28 font-bold bg-slate-950 text-amber-400 border-slate-700"
                       />
                     </td>
@@ -389,15 +375,16 @@ export function VariantMatrixEditor({
                         type="number"
                         value={v.compare_at_price || ''}
                         onChange={(e) => updateVariant(varIdx, 'compare_at_price', e.target.value ? parseFloat(e.target.value) : null)}
-                        placeholder="Optionnel"
+                        placeholder="P. normal"
                         className="h-8 text-xs w-24 bg-slate-950 text-slate-300 border-slate-700"
                       />
                     </td>
                     <td className="py-2.5 px-3">
                       <Input
                         type="number"
-                        value={v.stock_quantity || 0}
-                        onChange={(e) => updateVariant(varIdx, 'stock_quantity', parseInt(e.target.value, 10) || 0)}
+                        value={v.stock_quantity ?? 0}
+                        onChange={(e) => updateVariant(varIdx, 'stock_quantity', e.target.value !== '' ? parseInt(e.target.value, 10) : 0)}
+                        placeholder="0"
                         className="h-8 text-xs w-20 font-bold bg-slate-950 text-emerald-400 border-slate-700"
                       />
                     </td>

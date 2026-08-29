@@ -51,6 +51,22 @@ interface Props {
   mode: 'create' | 'edit'
 }
 
+function formatDatetimeLocal(isoStr?: string | null): string {
+  if (!isoStr) return ''
+  try {
+    const d = new Date(isoStr)
+    if (isNaN(d.getTime())) return ''
+    const year = d.getFullYear()
+    const month = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    const hours = String(d.getHours()).padStart(2, '0')
+    const minutes = String(d.getMinutes()).padStart(2, '0')
+    return `${year}-${month}-${day}T${hours}:${minutes}`
+  } catch (e) {
+    return ''
+  }
+}
+
 export function ProductForm({
   storeId,
   categories,
@@ -71,26 +87,28 @@ export function ProductForm({
   const initialType: 'simple' | 'variable' | 'digital' = (initialData as any)?.product_type ?? (initialOptions.length > 0 || initialAdvancedVariants.length > 0 ? 'variable' : 'simple')
   const [productType, setProductType]         = useState<'simple' | 'variable' | 'digital'>(initialType)
 
+  const isEdit = mode === 'edit'
+
   const firstVarPrice = initialAdvancedVariants.find((v) => Number(v.price) > 0)?.price
-  const defaultPrice = (initialData?.price && Number(initialData.price) > 0)
-    ? initialData.price
-    : (firstVarPrice ? Number(firstVarPrice) : '')
+  const defaultPrice = isEdit
+    ? ((initialData?.price && Number(initialData.price) > 0) ? initialData.price : (firstVarPrice ? Number(firstVarPrice) : ''))
+    : ''
 
   const totalVarStock = initialAdvancedVariants.reduce((sum, v) => sum + Number((v as any).stock_quantity ?? (v as any).stock ?? 0), 0)
-  const defaultStock = (initialData?.stock && Number(initialData.stock) > 0)
-    ? initialData.stock
-    : (totalVarStock > 0 ? totalVarStock : '10')
+  const defaultStock = isEdit
+    ? ((initialData?.stock !== undefined && initialData?.stock !== null) ? initialData.stock : (totalVarStock > 0 ? totalVarStock : 0))
+    : 0
 
   const [name, setName]                       = useState(initialData?.name ?? '')
   const [slug, setSlug]                       = useState(initialData?.slug ?? '')
   const [description, setDescription]         = useState(initialData?.description ?? '')
-  const [price, setPrice]                     = useState(String(defaultPrice))
-  const [comparePrice, setComparePrice]       = useState(String(initialData?.compare_at_price ?? ''))
-  const [stock, setStock]                     = useState(String(defaultStock))
+  const [price, setPrice]                     = useState(isEdit ? String(defaultPrice) : '')
+  const [comparePrice, setComparePrice]       = useState(isEdit ? String(initialData?.compare_at_price ?? '') : '')
+  const [stock, setStock]                     = useState(isEdit ? String(defaultStock) : '0')
   const [categoryId, setCategoryId]           = useState(initialData?.category_id ?? '')
   const [images, setImages]                   = useState<string[]>(initialData?.images ?? [])
   const [digitalFileUrl, setDigitalFileUrl]   = useState((initialData as any)?.digital_file_url ?? '')
-  const [promoEndsAt, setPromoEndsAt]         = useState((initialData as any)?.promo_ends_at ? (initialData as any).promo_ends_at.slice(0, 16) : '')
+  const [promoEndsAt, setPromoEndsAt]         = useState(formatDatetimeLocal((initialData as any)?.promo_ends_at))
   const [isActive, setIsActive]               = useState(initialData?.is_active ?? true)
   const [isFeatured, setIsFeatured]           = useState(initialData?.is_featured ?? false)
   const [isNew, setIsNew]                     = useState((initialData as any)?.is_new ?? false)
@@ -376,7 +394,7 @@ export function ProductForm({
                 min="0"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="50000"
+                placeholder="P. promo"
                 required
               />
               <Input
@@ -385,7 +403,7 @@ export function ProductForm({
                 min="0"
                 value={comparePrice}
                 onChange={(e) => setComparePrice(e.target.value)}
-                placeholder="65000"
+                placeholder="P. normal"
                 helper="Prix d'origine avant réduction"
               />
             </>
@@ -399,7 +417,7 @@ export function ProductForm({
               min="0"
               value={stock}
               onChange={(e) => setStock(e.target.value)}
-              placeholder="10"
+              placeholder="0"
             />
           )}
 
@@ -540,7 +558,7 @@ export function ProductForm({
             <VariantMatrixEditor
               productName={name}
               basePrice={Number(price) || 0}
-              baseStock={Number(stock) || 10}
+              baseStock={Number(stock) || 0}
               initialOptions={options}
               initialVariants={advancedVariants}
               onChangeOptions={(newOpts) => setOptions(newOpts)}

@@ -108,16 +108,16 @@ export function generateVariantMatrix(
         ...existing,
         combination_key: key,
         option_values: combo,
-        price: vPrice > 0 ? vPrice : (basePrice > 0 ? basePrice : 1000),
-        stock_quantity: vStock >= 0 ? vStock : (baseStock > 0 ? baseStock : 10),
+        price: vPrice > 0 ? vPrice : (basePrice > 0 ? basePrice : 0),
+        stock_quantity: vStock >= 0 ? vStock : (baseStock > 0 ? baseStock : 0),
       }
     }
 
     return {
       sku: generateSKU(productName, combo),
-      price: basePrice > 0 ? basePrice : 1000,
+      price: basePrice > 0 ? basePrice : 0,
       compare_at_price: null,
-      stock_quantity: baseStock > 0 ? baseStock : 10,
+      stock_quantity: baseStock > 0 ? baseStock : 0,
       weight: null,
       description: '',
       status: 'active',
