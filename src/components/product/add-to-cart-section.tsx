@@ -6,6 +6,7 @@ import { ShoppingCart, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/store/cart-store'
 import { useLanguage } from '@/components/providers/language-provider'
+import { useTheme } from '@/components/providers/theme-provider'
 import { cn } from '@/lib/utils'
 import type { Product, ProductVariant } from '@/types'
 
@@ -27,6 +28,8 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
   const addItem  = useCartStore((s) => s.addItem)
   const clearCart = useCartStore((s) => s.clearCart)
   const { t } = useLanguage()
+  const { theme } = useTheme()
+  const isDark = theme === 'dark'
 
   // Intersection Observer pour faire apparaître le bouton collant dès que le bouton principal défile hors écran
   useEffect(() => {
@@ -190,34 +193,35 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           Disparaît automatiquement dès qu'il remonte au niveau du bouton principal ! ── */}
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 p-3 sm:px-6 transition-all duration-300 transform shadow-2xl backdrop-blur-md border-t",
-          "bg-white/95 text-slate-900 border-slate-200/80",
-          "dark:bg-slate-950/95 dark:text-slate-100 dark:border-slate-800",
+          "fixed bottom-0 left-0 right-0 z-50 p-2.5 sm:p-3 sm:px-6 transition-all duration-300 transform shadow-2xl backdrop-blur-md border-t",
+          isDark
+            ? "bg-[#091122]/95 text-slate-100 border-slate-800"
+            : "bg-white/95 text-slate-900 border-slate-200/80",
           showStickyBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
         )}
       >
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
-          {/* Info Produit Mini */}
-          <div className="flex items-center gap-3 min-w-0">
+        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2.5 sm:gap-3">
+          {/* Info Produit Mini (Image + Titre + Prix visibles y compris sur MOBILE) */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             {product.images?.[0] && (
               <img
                 src={product.images[0]}
                 alt={product.name}
-                className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs bg-slate-100 dark:bg-slate-800"
+                className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg border border-slate-200/50 shrink-0 shadow-2xs bg-slate-100 dark:bg-slate-800"
               />
             )}
-            <div className="min-w-0 hidden xs:block">
-              <p className="text-xs font-black text-slate-900 dark:text-slate-100 truncate max-w-xs sm:max-w-md">
+            <div className="min-w-0 flex flex-col justify-center">
+              <p className={cn("text-[11px] sm:text-xs font-bold truncate max-w-[120px] xs:max-w-[170px] sm:max-w-md leading-tight", isDark ? "text-slate-100" : "text-slate-900")}>
                 {product.name}
               </p>
-              <p className="text-xs font-black text-amber-500 dark:text-amber-400">
+              <p className="text-xs font-black text-amber-500 dark:text-amber-400 leading-tight mt-0.5">
                 {unitPrice.toLocaleString('fr-FR')} FCFA
               </p>
             </div>
           </div>
 
-          {/* Boutons d'action collants */}
-          <div className="flex items-center gap-2 shrink-0 ml-auto xs:ml-0">
+          {/* Boutons d'action collants (Bouton Commander maintenant sans toucher sa taille ni sa position) */}
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
             <button
               type="button"
               onClick={handleAdd}
