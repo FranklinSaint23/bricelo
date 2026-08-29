@@ -1,12 +1,12 @@
 /**
- * Module d'intégration CamPay via Collect USSD Push Direct (exactement comme njangimarket)
+ * Module d'intégration CamPay Production via Collect USSD Push Direct
  */
 
 function getCampayBaseUrl(): string {
-  const env = (process.env.CAMPAY_ENV || process.env.CAMPAY_ENVIRONMENT || 'DEMO').trim().toUpperCase()
-  return env === 'PROD' || env === 'PRODUCTION'
-    ? 'https://www.campay.net/api'
-    : 'https://demo.campay.net/api'
+  const env = (process.env.CAMPAY_ENV || process.env.CAMPAY_ENVIRONMENT || 'PROD').trim().toUpperCase()
+  return env === 'DEMO'
+    ? 'https://demo.campay.net/api'
+    : 'https://www.campay.net/api'
 }
 
 export async function getCampayToken(): Promise<string> {
@@ -17,8 +17,6 @@ export async function getCampayToken(): Promise<string> {
   if (!username || !password || username === 'placeholder' || password === 'placeholder') {
     throw new Error('Clés API CamPay non configurées. Veuillez renseigner CAMPAY_USERNAME et CAMPAY_PASSWORD dans votre fichier .env.local.')
   }
-
-  console.log(`[CamPay Auth] Calling ${baseUrl}/token/ with Username starting: ${username.slice(0, 8)}...`)
 
   try {
     const res = await fetch(`${baseUrl}/token/`, {
@@ -50,24 +48,16 @@ export async function collectPayment(params: {
 }): Promise<{ reference: string; status?: string }> {
   const token = await getCampayToken()
 
-  // Nettoyer le numéro et ajouter l'indicatif 237 requis par l'API CamPay (ex: 237651465231)
+  // Formatage international requis par CamPay : 237 + 9 chiffres (ex: 2376XXXXXXXX)
   let cleanPhone = params.phone.replace(/\D/g, '')
   if (cleanPhone.length === 9 && cleanPhone.startsWith('6')) {
     cleanPhone = `237${cleanPhone}`
   }
 
   const baseUrl = getCampayBaseUrl()
-  const isDemo = baseUrl.includes('demo.campay.net')
-
-  // En mode DEMO, CamPay déclenche le Push USSD réel sur téléphone uniquement pour les montants <= 25 FCFA (sans débit réel)
-  let collectAmount = params.amount
-  if (isDemo && collectAmount > 25) {
-    console.log('[CamPay DEMO Mode]: Montant ajusté à 10 FCFA pour déclencher le Push USSD réel de démonstration.')
-    collectAmount = 10
-  }
 
   const payload = {
-    amount: String(Math.round(collectAmount)),
+    amount: String(Math.round(params.amount)),
     currency: 'XAF',
     from: cleanPhone,
     description: params.description,
@@ -85,7 +75,6 @@ export async function collectPayment(params: {
   })
 
   const data = await res.json()
-  console.log('[CamPay /collect/ response]:', res.status, data, 'Payload:', payload)
 
   if (!res.ok || !data.reference) {
     const msg = data.message || data.detail || data.from || (typeof data === 'object' ? JSON.stringify(data) : String(data))
