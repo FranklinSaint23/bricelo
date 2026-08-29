@@ -178,10 +178,10 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           type="button"
           onClick={handleAdd}
           disabled={!!outOfStock}
-          className="w-full h-12 px-6 text-base rounded-[var(--radius-lg)] font-black transition-all flex items-center justify-center gap-2 border shadow-sm bg-white text-slate-900 border-slate-300 hover:bg-slate-50 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 dark:border-none cursor-pointer"
+          className="w-full h-12 px-6 text-base rounded-[var(--radius-lg)] font-black transition-all flex items-center justify-center gap-2 border shadow-md !bg-white !text-slate-950 border-slate-300 hover:!bg-slate-100 cursor-pointer"
         >
-          <ShoppingCart className="h-4.5 w-4.5 fill-current" />
-          <span>{added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}</span>
+          <ShoppingCart className="h-4.5 w-4.5 fill-current !text-slate-950" />
+          <span className="!text-slate-950 font-black">{added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}</span>
         </button>
       </div>
 
@@ -190,7 +190,9 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           Disparaît automatiquement dès qu'il remonte au niveau du bouton principal ! ── */}
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 shadow-2xl p-3 sm:px-6 transition-all duration-300 transform",
+          "fixed bottom-0 left-0 right-0 z-50 p-3 sm:px-6 transition-all duration-300 transform shadow-2xl backdrop-blur-md border-t",
+          "bg-white/95 text-slate-900 border-slate-200/80",
+          "dark:bg-slate-950/95 dark:text-slate-100 dark:border-slate-800",
           showStickyBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
         )}
       >
@@ -220,10 +222,10 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
               type="button"
               onClick={handleAdd}
               disabled={!!outOfStock}
-              className="hidden sm:flex h-10 px-4 text-xs sm:text-sm rounded-xl font-extrabold transition-all items-center gap-2 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 cursor-pointer"
+              className="hidden sm:flex h-10 px-4 text-xs sm:text-sm rounded-xl font-black transition-all items-center gap-2 !bg-white !text-slate-950 border border-slate-200 shadow-xs hover:!bg-slate-100 cursor-pointer"
             >
-              <ShoppingCart className="h-4 w-4 fill-current" />
-              <span>{added ? t.added : t.addToCart}</span>
+              <ShoppingCart className="h-4 w-4 fill-current !text-slate-950" />
+              <span className="!text-slate-950">{added ? t.added : t.addToCart}</span>
             </button>
 
             <Button
