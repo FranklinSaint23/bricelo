@@ -24,7 +24,7 @@ export default async function StorePage({ params }: Props) {
 
   const { data: products } = await supabase
     .from('products')
-    .select('*, store:stores(name, slug)')
+    .select('*, store:stores(name, slug), variants:product_variants(id, price, compare_at_price, stock_quantity, direct_price, price_adjustment)')
     .eq('store_id', store.id)
     .eq('is_active', true)
     .order('created_at', { ascending: false })

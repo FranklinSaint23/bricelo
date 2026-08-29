@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { decrementStockForOrder } from '@/lib/stock'
+import { sendConfirmationForOrders } from '@/lib/notifications'
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
     // 1. Vérification idempotente
     const { data: existingPayment } = await supabase
       .from('payments')
-      .select('id, status, order_id, metadata')
+      .select('id, status, order_id, metadata, payment_method')
       .or(`transaction_ref.eq.${transactionRef},metadata->>parent_transaction_ref.eq.${transactionRef}`)
       .maybeSingle()
 
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       .update({ status: newStatus, metadata: { ...((existingPayment.metadata as any) ?? {}), webhook_body: body } })
       .or(`transaction_ref.eq.${transactionRef},metadata->>parent_transaction_ref.eq.${transactionRef}`)
 
-    // 3. Mise à jour des commandes associées et décrémentation des stocks
+    // 3. Mise à jour des commandes associées, décrémentation des stocks et notifications
     const orderIds: string[] = (existingPayment.metadata as any)?.order_ids ?? [existingPayment.order_id]
     if (isSuccess && orderIds.length > 0) {
       await supabase
@@ -50,6 +51,9 @@ export async function POST(request: NextRequest) {
       for (const oid of orderIds) {
         await decrementStockForOrder(oid)
       }
+
+      const payMethod = (existingPayment as any).payment_method || (existingPayment.metadata as any)?.payment_method || 'orange_money'
+      await sendConfirmationForOrders(supabase, orderIds, payMethod)
     }
 
     return NextResponse.json({ message: 'OK' })

@@ -71,12 +71,22 @@ export function ProductForm({
   const initialType: 'simple' | 'variable' | 'digital' = (initialData as any)?.product_type ?? (initialOptions.length > 0 || initialAdvancedVariants.length > 0 ? 'variable' : 'simple')
   const [productType, setProductType]         = useState<'simple' | 'variable' | 'digital'>(initialType)
 
+  const firstVarPrice = initialAdvancedVariants.find((v) => Number(v.price) > 0)?.price
+  const defaultPrice = (initialData?.price && Number(initialData.price) > 0)
+    ? initialData.price
+    : (firstVarPrice ? Number(firstVarPrice) : '')
+
+  const totalVarStock = initialAdvancedVariants.reduce((sum, v) => sum + Number((v as any).stock_quantity ?? (v as any).stock ?? 0), 0)
+  const defaultStock = (initialData?.stock && Number(initialData.stock) > 0)
+    ? initialData.stock
+    : (totalVarStock > 0 ? totalVarStock : '10')
+
   const [name, setName]                       = useState(initialData?.name ?? '')
   const [slug, setSlug]                       = useState(initialData?.slug ?? '')
   const [description, setDescription]         = useState(initialData?.description ?? '')
-  const [price, setPrice]                     = useState(String(initialData?.price ?? ''))
+  const [price, setPrice]                     = useState(String(defaultPrice))
   const [comparePrice, setComparePrice]       = useState(String(initialData?.compare_at_price ?? ''))
-  const [stock, setStock]                     = useState(String(initialData?.stock ?? '10'))
+  const [stock, setStock]                     = useState(String(defaultStock))
   const [categoryId, setCategoryId]           = useState(initialData?.category_id ?? '')
   const [images, setImages]                   = useState<string[]>(initialData?.images ?? [])
   const [digitalFileUrl, setDigitalFileUrl]   = useState((initialData as any)?.digital_file_url ?? '')
@@ -540,37 +550,39 @@ export function ProductForm({
         </Card>
       )}
 
-      {/* Photos du produit (Garder la photo du produit même pour Produit Digital) */}
-      <Card>
-        <CardHeader><p className="font-semibold text-[var(--color-navy-900)]">Photos & Visuel de Couverture</p></CardHeader>
-        <CardBody className="flex flex-col gap-4">
-          <div className="flex flex-wrap gap-3">
-            {images.map((url) => (
-              <div key={url} className="relative h-24 w-24 rounded-[var(--radius-md)] overflow-hidden border border-[var(--color-slate-200)] group">
-                <Image src={url} alt="photo produit" fill className="object-cover" sizes="96px" />
-                <button
-                  type="button"
-                  onClick={() => removeImage(url)}
-                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))}
+      {/* Photos du produit (Affiché uniquement pour Produit Simple et Digital. Masqué si Produit à Variantes car chaque variante possède ses propres visuels) */}
+      {productType !== 'variable' && (
+        <Card>
+          <CardHeader><p className="font-semibold text-[var(--color-navy-900)]">Photos & Visuel de Couverture</p></CardHeader>
+          <CardBody className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-3">
+              {images.map((url) => (
+                <div key={url} className="relative h-24 w-24 rounded-[var(--radius-md)] overflow-hidden border border-[var(--color-slate-200)] group">
+                  <Image src={url} alt="photo produit" fill className="object-cover" sizes="96px" />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(url)}
+                    className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
 
-            <label className="flex flex-col items-center justify-center h-24 w-24 rounded-[var(--radius-md)] border-2 border-dashed border-[var(--color-slate-200)] hover:border-[var(--color-accent)] cursor-pointer bg-[var(--color-slate-50)] hover:bg-white transition-colors">
-              <Upload className="h-5 w-5 text-[var(--color-slate-400)] mb-1" />
-              <span className="text-[10px] font-medium text-[var(--color-slate-500)] text-center px-1">
-                {uploadingImg ? 'Upload…' : '+ Photo'}
-              </span>
-              <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
-            </label>
-          </div>
-          <p className="text-xs text-[var(--color-slate-400)]">
-            Téléversez une ou plusieurs photos de qualité. La première image servira de photo de couverture dans le catalogue.
-          </p>
-        </CardBody>
-      </Card>
+              <label className="flex flex-col items-center justify-center h-24 w-24 rounded-[var(--radius-md)] border-2 border-dashed border-[var(--color-slate-200)] hover:border-[var(--color-accent)] cursor-pointer bg-[var(--color-slate-50)] hover:bg-white transition-colors">
+                <Upload className="h-5 w-5 text-[var(--color-slate-400)] mb-1" />
+                <span className="text-[10px] font-medium text-[var(--color-slate-500)] text-center px-1">
+                  {uploadingImg ? 'Upload…' : '+ Photo'}
+                </span>
+                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
+              </label>
+            </div>
+            <p className="text-xs text-[var(--color-slate-400)]">
+              Téléversez une ou plusieurs photos de qualité. La première image servira de photo de couverture dans le catalogue.
+            </p>
+          </CardBody>
+        </Card>
+      )}
 
       {/* Visibilité & Badges */}
       <Card>

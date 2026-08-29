@@ -24,7 +24,7 @@ export default async function EditProductPage({ params }: Props) {
 
   const { data: product } = await supabase
     .from('products')
-    .select('id, name, slug, description, price, compare_at_price, stock, category_id, images, is_active, is_featured')
+    .select('*')
     .eq('id', id)
     .eq('store_id', store.id)
     .single()
@@ -57,12 +57,52 @@ export default async function EditProductPage({ params }: Props) {
     `)
     .eq('product_id', id)
 
-  const formattedVariants = (variantsData ?? []).map((v: any) => ({
-    ...v,
-    stock_quantity: v.stock_quantity ?? v.stock ?? 0,
-    price: v.price ?? v.direct_price ?? product.price,
-    option_values: v.variant_values?.map((vv: any) => vv.option_value).filter(Boolean) ?? [],
+  const formattedOptions = (optionsData ?? []).map((opt: any) => ({
+    id: opt.id,
+    name: opt.name,
+    display_type: opt.display_type || 'button',
+    position: opt.position,
+    required: opt.required ?? true,
+    values: (opt.values ?? []).map((val: any) => ({
+      id: val.id,
+      value: val.value,
+      label: val.label || val.value,
+      position: val.position,
+      is_active: val.is_active ?? true,
+      metadata: val.metadata || null,
+    })),
   }))
+
+  const formattedVariants = (variantsData ?? []).map((v: any) => {
+    const optionValues = (v.variant_values ?? []).map((vv: any) => {
+      const ov = vv.option_value
+      if (!ov) return null
+      const parentOpt = (optionsData ?? []).find((o: any) => o.id === ov.product_option_id)
+      return {
+        id: ov.id,
+        option_name: parentOpt?.name || 'Option',
+        value: ov.value,
+        label: ov.label || ov.value,
+        metadata: ov.metadata || null,
+      }
+    }).filter(Boolean)
+
+    const combinationKey = v.combination_key || (v.value && v.value !== 'defaut' ? v.value : optionValues.map((ov: any) => ov.value.toLowerCase().trim()).sort().join('|'))
+
+    return {
+      ...v,
+      id: v.id,
+      combination_key: combinationKey,
+      stock_quantity: v.stock_quantity ?? v.stock ?? 0,
+      price: (v.price && Number(v.price) > 0) ? Number(v.price) : (v.direct_price && Number(v.direct_price) > 0) ? Number(v.direct_price) : product.price,
+      compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+      sku: v.sku || '',
+      description: v.description || '',
+      status: v.status || 'active',
+      option_values: optionValues,
+      images: v.images || [],
+    }
+  })
 
   const { data: categories } = await supabase
     .from('categories')
@@ -86,7 +126,7 @@ export default async function EditProductPage({ params }: Props) {
         storeId={store.id}
         categories={categories ?? []}
         initialData={product}
-        initialOptions={(optionsData as any) ?? []}
+        initialOptions={(formattedOptions as any) ?? []}
         initialAdvancedVariants={formattedVariants as any}
         mode="edit"
       />

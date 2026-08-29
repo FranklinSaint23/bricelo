@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { checkTransactionStatus } from '@/lib/campay'
 import { decrementStockForOrder } from '@/lib/stock'
+import { sendConfirmationForOrders } from '@/lib/notifications'
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(request: NextRequest) {
     const supabase = getAdminClient()
 
     // 1. Récupérer le paiement dans la DB
-    let query = supabase.from('payments').select('id, status, order_id, metadata, transaction_ref')
+    let query = supabase.from('payments').select('id, status, order_id, metadata, transaction_ref, payment_method')
     if (reference) {
       query = query.eq('metadata->>campay_reference', reference)
     } else if (transactionRef) {
@@ -57,6 +58,9 @@ export async function GET(request: NextRequest) {
         for (const oid of orderIds) {
           await decrementStockForOrder(oid)
         }
+
+        const payMethod = payment.payment_method || (payment.metadata as any)?.payment_method || 'orange_money'
+        await sendConfirmationForOrders(supabase, orderIds, payMethod)
 
         return NextResponse.json({ status: 'SUCCESSFUL', orderIds })
       }

@@ -18,8 +18,54 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const [wished, setWished] = useState(false)
   const { t } = useLanguage()
 
-  const discount = product.compare_at_price && product.compare_at_price > product.price
-    ? Math.round(((product.compare_at_price - product.price) / product.compare_at_price) * 100)
+  const variants = (product as any).variants ?? []
+  const hasVariants = variants.length > 0
+
+  let effectivePrice = product.price ?? 0
+  let effectiveCompareAt = product.compare_at_price
+  let totalStock = product.stock ?? 0
+
+  let firstVariant: any = null
+  let firstVarImage: string | null = null
+
+  if (hasVariants) {
+    totalStock = variants.reduce((acc: number, v: any) => acc + Number(v.stock_quantity ?? v.stock ?? 0), 0)
+    firstVariant = variants.find((v: any) => Number(v.stock_quantity ?? v.stock ?? 0) > 0) || variants[0]
+
+    if (firstVariant) {
+      const vPrice = firstVariant.price ?? firstVariant.direct_price
+      if (vPrice && Number(vPrice) > 0) {
+        effectivePrice = Number(vPrice)
+      } else if (firstVariant.price_adjustment) {
+        effectivePrice = (product.price ?? 0) + Number(firstVariant.price_adjustment)
+      }
+      if (firstVariant.compare_at_price && Number(firstVariant.compare_at_price) > 0) {
+        effectiveCompareAt = Number(firstVariant.compare_at_price)
+      }
+
+      // Extraction de l'image de la 1ère variante s'il en existe une
+      if (Array.isArray(firstVariant.images) && firstVariant.images.length > 0) {
+        const img0 = firstVariant.images[0]
+        firstVarImage = typeof img0 === 'string' ? img0 : (img0?.url || img0?.image_url || null)
+      } else if (typeof firstVariant.url === 'string') {
+        firstVarImage = firstVariant.url
+      } else if (typeof firstVariant.image_url === 'string') {
+        firstVarImage = firstVariant.image_url
+      }
+    }
+
+    if (!effectivePrice || effectivePrice === 0) {
+      const pricedVariant = variants.find((v: any) => Number(v.price ?? v.direct_price) > 0)
+      if (pricedVariant) {
+        effectivePrice = Number(pricedVariant.price ?? pricedVariant.direct_price)
+      }
+    }
+  }
+
+  const displayImage = firstVarImage || product.images?.[0] || null
+
+  const discount = effectiveCompareAt && effectiveCompareAt > effectivePrice
+    ? Math.round(((effectiveCompareAt - effectivePrice) / effectiveCompareAt) * 100)
     : 0
 
   return (
@@ -30,9 +76,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
     )}>
       {/* Image */}
       <Link href={`/produit/${product.slug}`} className="block relative overflow-hidden bg-[var(--color-slate-50)]" style={{ aspectRatio: '1/1' }}>
-        {product.images?.[0] ? (
+        {displayImage ? (
           <Image
-            src={product.images[0]}
+            src={displayImage}
             alt={product.name}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
@@ -44,7 +90,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </div>
         )}
 
-        {product.stock === 0 && (
+        {totalStock === 0 && (
           <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
             <span className="bg-[var(--color-slate-700)] text-white text-[11px] font-semibold px-3 py-1 rounded-full">
               {t.outOfStock}
@@ -87,7 +133,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
         </button>
 
         {/* Hover bar */}
-        {product.stock > 0 && (
+        {totalStock > 0 && (
           <div className="absolute bottom-0 inset-x-0 bg-[var(--color-navy-900)]/90 text-white text-xs font-semibold py-2 flex items-center justify-center gap-1.5 translate-y-full group-hover:translate-y-0 transition-transform duration-200 pointer-events-none">
             <ShoppingCart className="h-3 w-3" /> {t.viewProduct}
           </div>
@@ -127,21 +173,21 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
         <div className="flex items-baseline gap-1.5 mt-2">
           <span className="text-sm font-bold text-[var(--color-navy-900)]">
-            {formatPrice(product.price)}
+            {formatPrice(effectivePrice)}
           </span>
-          {product.compare_at_price && product.compare_at_price > product.price && (
+          {effectiveCompareAt && effectiveCompareAt > effectivePrice && (
             <span className="text-sm font-bold text-[var(--color-slate-400)] line-through">
-              {formatPrice(product.compare_at_price)}
+              {formatPrice(effectiveCompareAt)}
             </span>
           )}
         </div>
 
-        {((product.compare_at_price && product.compare_at_price > product.price) || (product as any).promo_ends_at || (product as any).promotion_label) && (
+        {((effectiveCompareAt && effectiveCompareAt > effectivePrice) || (product as any).promo_ends_at || (product as any).promotion_label) && (
           <PromoTimer className="mt-1.5" endsAt={(product as any).promo_ends_at} />
         )}
 
-        {product.stock > 0 && product.stock <= 5 && (
-          <p className="text-[10px] text-[var(--color-danger)] mt-1">{t.lowStock(product.stock)}</p>
+        {totalStock > 0 && totalStock <= 5 && (
+          <p className="text-[10px] text-[var(--color-danger)] mt-1">{t.lowStock(totalStock)}</p>
         )}
       </div>
     </div>

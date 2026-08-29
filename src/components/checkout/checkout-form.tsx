@@ -236,55 +236,59 @@ export function CheckoutForm({ addresses, userId }: Props) {
         const { error: itemsErr } = await supabase.from('order_items').insert(orderItems)
         if (itemsErr) throw itemsErr
 
-        for (const item of storeItems) {
-          if (item.variant?.id && !item.variant.id.includes('_')) {
-            try {
-              await supabase.rpc('decrement_variant_stock', {
-                p_variant_id: item.variant.id,
-                p_quantity: item.quantity,
-              })
-            } catch (rpcErr) {
-              console.warn('RPC decrement_variant_stock fallback:', rpcErr)
-            }
-          }
-        }
-
         orderIds.push(order.id)
 
-        const storeData = storeItems[0]?.product?.store as any
-
-        sendOrderNotificationEmail({
-          orderId: order.id,
-          createdAt: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }),
-          customerName: shippingAddress.full_name || newDelivery.full_name || 'Client',
-          customerEmail: shippingAddress.email || newDelivery.email || null,
-          customerPhone: shippingAddress.phone || newDelivery.phone || '',
-          city: shippingAddress.city || newDelivery.city || 'Douala',
-          addressLine: (shippingAddress as any).address_line || `${newDelivery.quartier}`,
-          storeName: storeData?.name ?? 'Boutique BRICELO',
-          storePhone: storeData?.phone ?? null,
-          totalAmount: storeSub + storeShipping,
-          subtotal: storeSub,
-          shippingCost: storeShipping,
-          paymentMethod: paymentMethod,
-          itemsCount: storeItems.length,
-          items: storeItems.map(i => {
-            const v = i.variant as any
-            const uPrice = (v?.price && v.price > 0)
-              ? v.price
-              : (v?.direct_price && v.direct_price > 0)
-              ? v.direct_price
-              : i.product.price + (v?.price_adjustment ?? 0)
-
-            return {
-              name: i.product.name,
-              variantName: v?.name || v?.value || null,
-              quantity: i.quantity,
-              unitPrice: uPrice,
-              totalPrice: uPrice * i.quantity,
+        // Ne décrémenter le stock et n'envoyer l'e-mail de confirmation QUE si le paiement est en espèces à la livraison.
+        // Pour les paiements Mobile Money (Orange/MTN), la décrémentation du stock et l'envoi de l'e-mail ont lieu UNIQUEMENT après validation réelle du paiement USSD.
+        if (paymentMethod === 'cash') {
+          for (const item of storeItems) {
+            if (item.variant?.id && !item.variant.id.includes('_')) {
+              try {
+                await supabase.rpc('decrement_variant_stock', {
+                  p_variant_id: item.variant.id,
+                  p_quantity: item.quantity,
+                })
+              } catch (rpcErr) {
+                console.warn('RPC decrement_variant_stock fallback:', rpcErr)
+              }
             }
-          }),
-        })
+          }
+
+          const storeData = storeItems[0]?.product?.store as any
+
+          sendOrderNotificationEmail({
+            orderId: order.id,
+            createdAt: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }),
+            customerName: shippingAddress.full_name || newDelivery.full_name || 'Client',
+            customerEmail: shippingAddress.email || newDelivery.email || null,
+            customerPhone: shippingAddress.phone || newDelivery.phone || '',
+            city: shippingAddress.city || newDelivery.city || 'Douala',
+            addressLine: (shippingAddress as any).address_line || `${newDelivery.quartier}`,
+            storeName: storeData?.name ?? 'Boutique BRICELO',
+            storePhone: storeData?.phone ?? null,
+            totalAmount: storeSub + storeShipping,
+            subtotal: storeSub,
+            shippingCost: storeShipping,
+            paymentMethod: paymentMethod,
+            itemsCount: storeItems.length,
+            items: storeItems.map(i => {
+              const v = i.variant as any
+              const uPrice = (v?.price && v.price > 0)
+                ? v.price
+                : (v?.direct_price && v.direct_price > 0)
+                ? v.direct_price
+                : i.product.price + (v?.price_adjustment ?? 0)
+
+              return {
+                name: i.product.name,
+                variantName: v?.name || v?.value || null,
+                quantity: i.quantity,
+                unitPrice: uPrice,
+                totalPrice: uPrice * i.quantity,
+              }
+            }),
+          })
+        }
       }
 
       clearCart()

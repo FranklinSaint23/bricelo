@@ -20,7 +20,7 @@ export default async function SearchPage({ searchParams }: Props) {
 
   let dbQuery = supabase
     .from('products')
-    .select('*, store:stores(name, slug)', { count: 'exact' })
+    .select('*, store:stores(name, slug), variants:product_variants(id, price, compare_at_price, stock_quantity, direct_price, price_adjustment)', { count: 'exact' })
     .eq('is_active', true)
 
   if (query) {

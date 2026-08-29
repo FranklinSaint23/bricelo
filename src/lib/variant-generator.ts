@@ -63,7 +63,15 @@ export function generateVariantMatrix(
   // Carte des clés existantes pour préserver prix et stock modifiés par le vendeur
   const existingMap = new Map<string, AdvancedProductVariant>()
   existingVariants.forEach((v) => {
-    if (v.combination_key) existingMap.set(v.combination_key, v)
+    if (v.combination_key) {
+      existingMap.set(v.combination_key.toLowerCase().trim(), v)
+      const normKey = v.combination_key.split(/[\s|/:-]+/).map((s: string) => slugify(s)).sort().join('|')
+      existingMap.set(normKey, v)
+    }
+    if (v.option_values && v.option_values.length > 0) {
+      const optKey = generateCombinationKey(v.option_values as any)
+      existingMap.set(optKey, v)
+    }
   })
 
   // Fonction récursive de produit cartésien
@@ -87,13 +95,21 @@ export function generateVariantMatrix(
 
   const variants: AdvancedProductVariant[] = combinations.map((combo) => {
     const key = generateCombinationKey(combo)
-    const existing = existingMap.get(key)
+    const normKey = combo.map((c) => slugify(c.value)).sort().join('|')
+    const existing = existingMap.get(key) || existingMap.get(normKey) || existingVariants.find((ev) => {
+      const evVals = (ev.option_values ?? []).map((o: any) => slugify(o.value)).sort().join('|')
+      return evVals === normKey
+    })
 
     if (existing) {
+      const vPrice = Number(existing.price) || Number((existing as any).direct_price) || 0
+      const vStock = Number(existing.stock_quantity ?? (existing as any).stock ?? 0)
       return {
         ...existing,
         combination_key: key,
         option_values: combo,
+        price: vPrice > 0 ? vPrice : (basePrice > 0 ? basePrice : 1000),
+        stock_quantity: vStock >= 0 ? vStock : (baseStock > 0 ? baseStock : 10),
       }
     }
 

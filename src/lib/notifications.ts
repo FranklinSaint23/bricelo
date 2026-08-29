@@ -386,3 +386,55 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
     console.error('[sendOrderNotificationEmail] Erreur:', err)
   }
 }
+
+/**
+ * Charge les détails complets des commandes spécifiées et déclenche l'envoi des e-mails/SMS de confirmation
+ * après validation réussie d'un paiement en ligne (Orange / MTN Mobile Money).
+ */
+export async function sendConfirmationForOrders(supabase: any, orderIds: string[], paymentMethod: string) {
+  for (const oid of orderIds) {
+    try {
+      const { data: order } = await supabase
+        .from('orders')
+        .select('id, total, subtotal, shipping_cost, shipping_address, store_id')
+        .eq('id', oid)
+        .maybeSingle()
+
+      if (!order) continue
+
+      const [{ data: storeData }, { data: itemsData }] = await Promise.all([
+        supabase.from('stores').select('name, phone').eq('id', order.store_id).maybeSingle(),
+        supabase.from('order_items').select('quantity, unit_price, total_price, snapshot').eq('order_id', order.id),
+      ])
+
+      const shippingAddress = (order.shipping_address as any) ?? {}
+      const items = (itemsData ?? []).map((i: any) => ({
+        name: i.snapshot?.name || 'Article BRICELO',
+        variantName: i.snapshot?.variant_name || null,
+        quantity: i.quantity,
+        unitPrice: i.unit_price,
+        totalPrice: i.total_price,
+      }))
+
+      await sendOrderNotificationEmail({
+        orderId: order.id,
+        createdAt: new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' }),
+        customerName: shippingAddress.full_name || 'Client',
+        customerEmail: shippingAddress.email || null,
+        customerPhone: shippingAddress.phone || '',
+        city: shippingAddress.city || 'Douala',
+        addressLine: shippingAddress.address_line || `${shippingAddress.city || ''}`,
+        storeName: storeData?.name ?? 'Boutique BRICELO',
+        storePhone: storeData?.phone ?? null,
+        totalAmount: order.total,
+        subtotal: order.subtotal,
+        shippingCost: order.shipping_cost,
+        paymentMethod: paymentMethod,
+        itemsCount: items.length,
+        items,
+      })
+    } catch (e) {
+      console.error('[sendConfirmationForOrders] Erreur:', e)
+    }
+  }
+}
