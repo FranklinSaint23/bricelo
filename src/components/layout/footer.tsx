@@ -208,11 +208,14 @@ export function Footer() {
 
         {/* Mobile: logo + accordions */}
         <div className="md:hidden">
-          <div className="px-4 pt-5 pb-4 border-b border-white/10 flex items-center gap-2">
-            <span className="text-white font-extrabold text-lg tracking-tight">
-              BRICE<span className="text-[var(--color-accent)]">LO</span>
-              <span className="text-white/40 font-light text-sm">.com</span>
-            </span>
+          <div className="px-4 pt-5 pb-4 border-b border-white/10 flex items-center gap-3">
+            <Image
+              src="/logo.jpg"
+              alt="BRICÉLO.com"
+              width={200}
+              height={60}
+              className="h-12 w-auto object-contain rounded-lg shadow-2xs bg-white p-0.5"
+            />
           </div>
 
           {sections.map(section => (

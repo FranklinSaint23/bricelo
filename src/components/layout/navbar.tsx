@@ -253,14 +253,14 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 lg:gap-5 py-2.5">
 
-          {/* Logo Agrandie */}
-          <Link href="/" className="shrink-0 flex items-center">
+          {/* Logo Géant Agrandie */}
+          <Link href="/" className="shrink-0 flex items-center py-1 transition-transform hover:scale-102">
             <Image
               src="/logo.jpg"
               alt="BRICÉLO.com"
-              width={200}
-              height={56}
-              className="h-12 sm:h-14 md:h-16 w-auto object-contain rounded-lg overflow-hidden shadow-2xs border border-slate-200/30"
+              width={320}
+              height={96}
+              className="h-16 sm:h-20 md:h-24 lg:h-28 w-auto object-contain rounded-xl overflow-hidden shadow-xs border border-slate-200/50"
               priority
             />
           </Link>
