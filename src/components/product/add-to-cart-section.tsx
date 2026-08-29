@@ -190,7 +190,7 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           Disparaît automatiquement dès qu'il remonte au niveau du bouton principal ! ── */}
       <div
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl p-3 sm:px-6 transition-all duration-300 transform",
+          "fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200/80 dark:border-slate-800 shadow-2xl p-3 sm:px-6 transition-all duration-300 transform",
           showStickyBar ? "translate-y-0 opacity-100" : "translate-y-full opacity-0 pointer-events-none"
         )}
       >
@@ -201,14 +201,14 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
               <img
                 src={product.images[0]}
                 alt={product.name}
-                className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg border border-slate-200 dark:border-slate-800 shrink-0 shadow-2xs"
+                className="h-10 w-10 sm:h-12 sm:w-12 object-cover rounded-lg border border-slate-200 dark:border-slate-700 shrink-0 shadow-2xs bg-slate-100 dark:bg-slate-800"
               />
             )}
             <div className="min-w-0 hidden xs:block">
-              <p className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-xs sm:max-w-md">
+              <p className="text-xs font-black text-slate-900 dark:text-slate-100 truncate max-w-xs sm:max-w-md">
                 {product.name}
               </p>
-              <p className="text-xs font-extrabold text-[var(--color-accent)]">
+              <p className="text-xs font-black text-amber-500 dark:text-amber-400">
                 {unitPrice.toLocaleString('fr-FR')} FCFA
               </p>
             </div>
@@ -220,7 +220,7 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
               onClick={handleAdd}
               disabled={!!outOfStock}
               size="sm"
-              className="hidden sm:flex bg-slate-100 hover:bg-slate-200 text-slate-900 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 font-bold"
+              className="hidden sm:flex bg-slate-200 hover:bg-slate-300 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 font-extrabold border border-slate-300 dark:border-slate-700"
             >
               <ShoppingCart className="h-4 w-4" />
               <span>{added ? t.added : t.addToCart}</span>
@@ -230,7 +230,7 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
               onClick={handleBuyNow}
               disabled={!!outOfStock}
               size="md"
-              className="bg-[var(--color-accent)] hover:bg-[var(--color-gold-600)] text-[var(--color-navy-900)] font-black text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md btn-animate-attention flex items-center gap-2"
+              className="bg-amber-400 hover:bg-amber-500 text-slate-950 font-black text-xs sm:text-sm px-5 py-3 rounded-xl shadow-md btn-animate-attention flex items-center gap-2 border-none"
             >
               <ShoppingCart className="h-4 w-4 fill-current" />
               <span>{t.buyNow}</span>
