@@ -2,19 +2,26 @@
  * Module d'intégration CamPay via Collect USSD Push Direct (exactement comme njangimarket)
  */
 
-const CAMPAY_ENV = process.env.CAMPAY_ENV || process.env.CAMPAY_ENVIRONMENT || 'PROD'
-const BASE_URL = CAMPAY_ENV === 'DEMO' ? 'https://demo.campay.net/api' : 'https://www.campay.net/api'
+function getCampayBaseUrl(): string {
+  const env = (process.env.CAMPAY_ENV || process.env.CAMPAY_ENVIRONMENT || 'DEMO').trim().toUpperCase()
+  return env === 'PROD' || env === 'PRODUCTION'
+    ? 'https://www.campay.net/api'
+    : 'https://demo.campay.net/api'
+}
 
 export async function getCampayToken(): Promise<string> {
-  const username = process.env.CAMPAY_USERNAME || process.env.CAMPAY_APP_USERNAME || process.env.CAMPAY_API_KEY
-  const password = process.env.CAMPAY_PASSWORD || process.env.CAMPAY_APP_PASSWORD || process.env.CAMPAY_API_SECRET
+  const baseUrl = getCampayBaseUrl()
+  const username = (process.env.CAMPAY_USERNAME || process.env.CAMPAY_APP_USERNAME || process.env.CAMPAY_API_KEY || '').trim()
+  const password = (process.env.CAMPAY_PASSWORD || process.env.CAMPAY_APP_PASSWORD || process.env.CAMPAY_API_SECRET || '').trim()
 
   if (!username || !password || username === 'placeholder' || password === 'placeholder') {
     throw new Error('Clés API CamPay non configurées. Veuillez renseigner CAMPAY_USERNAME et CAMPAY_PASSWORD dans votre fichier .env.local.')
   }
 
+  console.log(`[CamPay Auth] Calling ${baseUrl}/token/ with Username starting: ${username.slice(0, 8)}...`)
+
   try {
-    const res = await fetch(`${BASE_URL}/token/`, {
+    const res = await fetch(`${baseUrl}/token/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
@@ -49,9 +56,12 @@ export async function collectPayment(params: {
     cleanPhone = `237${cleanPhone}`
   }
 
+  const baseUrl = getCampayBaseUrl()
+  const isDemo = baseUrl.includes('demo.campay.net')
+
   // En mode DEMO, CamPay déclenche le Push USSD réel sur téléphone uniquement pour les montants <= 25 FCFA (sans débit réel)
   let collectAmount = params.amount
-  if (CAMPAY_ENV === 'DEMO' && collectAmount > 25) {
+  if (isDemo && collectAmount > 25) {
     console.log('[CamPay DEMO Mode]: Montant ajusté à 10 FCFA pour déclencher le Push USSD réel de démonstration.')
     collectAmount = 10
   }
@@ -64,7 +74,7 @@ export async function collectPayment(params: {
     external_reference: params.externalReference,
   }
 
-  const res = await fetch(`${BASE_URL}/collect/`, {
+  const res = await fetch(`${baseUrl}/collect/`, {
     method: 'POST',
     headers: {
       'Authorization': `Token ${token}`,
@@ -88,8 +98,9 @@ export async function collectPayment(params: {
 
 export async function checkTransactionStatus(reference: string): Promise<{ status: string; code?: string }> {
   const token = await getCampayToken()
+  const baseUrl = getCampayBaseUrl()
 
-  const res = await fetch(`${BASE_URL}/transaction/${reference}/`, {
+  const res = await fetch(`${baseUrl}/transaction/${reference}/`, {
     method: 'GET',
     headers: {
       'Authorization': `Token ${token}`,
