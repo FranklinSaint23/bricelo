@@ -174,15 +174,15 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
           {t.buyNow}
         </Button>
 
-        <Button
+        <button
+          type="button"
           onClick={handleAdd}
           disabled={!!outOfStock}
-          size="lg"
-          className="w-full bg-[var(--color-navy-900)] text-white hover:bg-[var(--color-navy-950)] dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 font-extrabold shadow-sm transition-colors"
+          className="w-full h-12 px-6 text-base rounded-[var(--radius-lg)] font-black transition-all flex items-center justify-center gap-2 border shadow-sm bg-white text-slate-900 border-slate-300 hover:bg-slate-50 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 dark:border-none cursor-pointer"
         >
-          <ShoppingCart className="h-4 w-4" />
-          {added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}
-        </Button>
+          <ShoppingCart className="h-4.5 w-4.5 fill-current" />
+          <span>{added ? t.added : outOfStock ? t.outOfStockBtn : t.addToCart}</span>
+        </button>
       </div>
 
       {/* ── BARRE FLOTTANTE COLLANTE DE BAS DE PAGE (Sticky Bottom Bar) ──
@@ -216,15 +216,15 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
 
           {/* Boutons d'action collants */}
           <div className="flex items-center gap-2 shrink-0 ml-auto xs:ml-0">
-            <Button
+            <button
+              type="button"
               onClick={handleAdd}
               disabled={!!outOfStock}
-              size="sm"
-              className="hidden sm:flex bg-slate-200 hover:bg-slate-300 text-slate-900 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700 font-extrabold border border-slate-300 dark:border-slate-700"
+              className="hidden sm:flex h-10 px-4 text-xs sm:text-sm rounded-xl font-extrabold transition-all items-center gap-2 bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 cursor-pointer"
             >
-              <ShoppingCart className="h-4 w-4" />
+              <ShoppingCart className="h-4 w-4 fill-current" />
               <span>{added ? t.added : t.addToCart}</span>
-            </Button>
+            </button>
 
             <Button
               onClick={handleBuyNow}
