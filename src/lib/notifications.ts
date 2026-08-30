@@ -55,7 +55,7 @@ ${itemsText || `  • ${data.itemsCount} article(s)`}
 
 💰 *MONTANT TOTAL :* ${data.totalAmount.toLocaleString('fr-FR')} FCFA
 
-🚛 *Un livreur BRICELO va passer en boutique récupérer le colis pour livraison.*`
+🚛 *Un livreur BRICELO va passer en boutique récupérer la commande pour livraison.*`
 
   return `https://wa.me/${vendorPhone}?text=${encodeURIComponent(text)}`
 }

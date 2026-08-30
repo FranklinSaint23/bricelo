@@ -24,33 +24,36 @@ interface Props {
 }
 
 export function ProductDetailClient({ product, options, variants }: Props) {
-  // Prédéfinir la 1ère variante disponible si le produit est à variantes
-  const firstVariant = (variants && variants.length > 0)
-    ? (variants.find((v) => v.status === 'active' && v.stock_quantity > 0) || variants[0])
-    : null
+  // Toujours prédéfinir la 1ère variante du vendeur
+  const firstVariant = (variants && variants.length > 0) ? variants[0] : null
 
-  const initialPrice = firstVariant && firstVariant.price && firstVariant.price > 0
-    ? firstVariant.price
+  const initialPrice = firstVariant && firstVariant.price && Number(firstVariant.price) > 0
+    ? Number(firstVariant.price)
+    : firstVariant && (firstVariant as any).direct_price && Number((firstVariant as any).direct_price) > 0
+    ? Number((firstVariant as any).direct_price)
     : product.price
+
   const initialComparePrice = firstVariant
-    ? (firstVariant.compare_at_price ?? product.compare_at_price)
+    ? (firstVariant.compare_at_price !== undefined && firstVariant.compare_at_price !== null && Number(firstVariant.compare_at_price) > 0
+        ? Number(firstVariant.compare_at_price)
+        : product.compare_at_price)
     : product.compare_at_price
-  const initialStock = firstVariant ? firstVariant.stock_quantity : product.stock
+
+  const initialStock = firstVariant ? (firstVariant.stock_quantity ?? (firstVariant as any).stock ?? 0) : product.stock
+
+  const varImages = firstVariant?.images?.map((i) => i.url) || []
+  const initialImages = varImages.length > 0 ? [...varImages, ...(product.images || [])] : (product.images || [])
 
   const [effectivePrice, setEffectivePrice]                 = useState<number>(initialPrice)
   const [effectiveComparePrice, setEffectiveComparePrice] = useState<number | null>(initialComparePrice)
   const [effectiveStock, setEffectiveStock]               = useState<number>(initialStock)
-  const [effectiveImages, setEffectiveImages]             = useState<string[]>(
-    firstVariant && firstVariant.images && firstVariant.images.length > 0
-      ? [...firstVariant.images.map((i) => i.url), ...(product.images || [])]
-      : (product.images || [])
-  )
+  const [effectiveImages, setEffectiveImages]             = useState<string[]>(initialImages)
   const [effectiveDescription, setEffectiveDescription]   = useState<string>(
     (firstVariant?.description && firstVariant.description.trim()) ? firstVariant.description : (product.description || '')
   )
   const [activeVariant, setActiveVariant]                 = useState<AdvancedProductVariant | null>(firstVariant)
   const [isAvailable, setIsAvailable]                     = useState<boolean>(
-    firstVariant ? (firstVariant.status === 'active' && firstVariant.stock_quantity > 0) : (product.stock > 0)
+    firstVariant ? (firstVariant.status !== 'inactive' && initialStock > 0) : (product.stock > 0)
   )
 
   const discount = effectiveComparePrice && effectiveComparePrice > effectivePrice

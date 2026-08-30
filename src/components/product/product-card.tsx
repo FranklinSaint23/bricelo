@@ -18,8 +18,14 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const [wished, setWished] = useState(false)
   const { t } = useLanguage()
 
-  const variants = (product as any).variants ?? []
-  const hasVariants = variants.length > 0
+  const rawVariants = (product as any).variants ?? []
+  const sortedVariants = [...rawVariants].sort((a: any, b: any) => {
+    if (a.created_at && b.created_at) {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    }
+    return String(a.id).localeCompare(String(b.id))
+  })
+  const hasVariants = sortedVariants.length > 0
 
   let effectivePrice = product.price ?? 0
   let effectiveCompareAt = product.compare_at_price
@@ -29,8 +35,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
   let firstVarImage: string | null = null
 
   if (hasVariants) {
-    totalStock = variants.reduce((acc: number, v: any) => acc + Number(v.stock_quantity ?? v.stock ?? 0), 0)
-    firstVariant = variants.find((v: any) => Number(v.stock_quantity ?? v.stock ?? 0) > 0) || variants[0]
+    totalStock = sortedVariants.reduce((acc: number, v: any) => acc + Number(v.stock_quantity ?? v.stock ?? 0), 0)
+    firstVariant = sortedVariants[0]
 
     if (firstVariant) {
       const vPrice = firstVariant.price ?? firstVariant.direct_price
@@ -39,7 +45,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
       } else if (firstVariant.price_adjustment) {
         effectivePrice = (product.price ?? 0) + Number(firstVariant.price_adjustment)
       }
-      if (firstVariant.compare_at_price && Number(firstVariant.compare_at_price) > 0) {
+
+      if (firstVariant.compare_at_price !== undefined && firstVariant.compare_at_price !== null && Number(firstVariant.compare_at_price) > 0) {
         effectiveCompareAt = Number(firstVariant.compare_at_price)
       }
 
@@ -58,6 +65,9 @@ export function ProductCard({ product, className }: ProductCardProps) {
       const pricedVariant = variants.find((v: any) => Number(v.price ?? v.direct_price) > 0)
       if (pricedVariant) {
         effectivePrice = Number(pricedVariant.price ?? pricedVariant.direct_price)
+        if (pricedVariant.compare_at_price && Number(pricedVariant.compare_at_price) > 0) {
+          effectiveCompareAt = Number(pricedVariant.compare_at_price)
+        }
       }
     }
   }

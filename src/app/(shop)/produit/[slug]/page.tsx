@@ -67,7 +67,7 @@ export default async function ProductPage({ params }: PageProps) {
     .eq('product_id', product.id)
     .order('position')
 
-  // Récupérer les variantes relationnelles SKU
+  // Récupérer les variantes relationnelles SKU ordonnées chronologiquement
   const { data: variantsData } = await supabase
     .from('product_variants')
     .select(`
@@ -78,8 +78,16 @@ export default async function ProductPage({ params }: PageProps) {
       images:variant_images(*)
     `)
     .eq('product_id', product.id)
+    .order('created_at', { ascending: true })
 
-  const formattedVariants = (variantsData ?? []).map((v: any) => {
+  const sortedRawVariants = (variantsData ?? []).sort((a: any, b: any) => {
+    if (a.created_at && b.created_at) {
+      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    }
+    return String(a.id).localeCompare(String(b.id))
+  })
+
+  const formattedVariants = sortedRawVariants.map((v: any) => {
     const optionValues = (v.variant_values ?? []).map((vv: any) => {
       const ov = vv.option_value
       if (!ov) return null

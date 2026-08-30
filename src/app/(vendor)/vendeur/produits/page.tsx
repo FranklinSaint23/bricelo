@@ -24,7 +24,7 @@ export default async function VendorProductsPage() {
 
   const { data: products } = await supabase
     .from('products')
-    .select('id, name, slug, price, stock, images, is_active, category:categories(name)')
+    .select('id, name, slug, price, stock, images, is_active, category:categories(name), variants:product_variants(id, price, stock_quantity, direct_price, images:variant_images(url))')
     .eq('store_id', store.id)
     .order('created_at', { ascending: false })
 
@@ -66,36 +66,59 @@ export default async function VendorProductsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-slate-100)]">
-              {products.map((p) => (
-                <tr key={p.id} className="hover:bg-[var(--color-slate-50)] transition-colors">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-10 w-10 shrink-0 rounded-md overflow-hidden bg-[var(--color-slate-100)]">
-                        {p.images?.[0] && <Image src={p.images[0]} alt={p.name} fill className="object-cover" sizes="40px" />}
+              {products.map((p) => {
+                const firstVar = p.variants?.[0]
+                const firstVarWithPrice = p.variants?.find((v: any) => (v.price && Number(v.price) > 0) || (v.direct_price && Number(v.direct_price) > 0)) || firstVar
+                const displayImage = p.images?.[0] || firstVar?.images?.[0]?.url
+                const displayPrice = (firstVarWithPrice?.price && Number(firstVarWithPrice.price) > 0)
+                  ? Number(firstVarWithPrice.price)
+                  : (firstVarWithPrice?.direct_price && Number(firstVarWithPrice.direct_price) > 0)
+                  ? Number(firstVarWithPrice.direct_price)
+                  : (p.price && Number(p.price) > 0)
+                  ? Number(p.price)
+                  : 0
+                const totalVarStock = p.variants && p.variants.length > 0
+                  ? p.variants.reduce((sum: number, v: any) => sum + Number(v.stock_quantity ?? v.stock ?? 0), 0)
+                  : (Number(p.stock) || 0)
+                const displayStock = totalVarStock
+
+                return (
+                  <tr key={p.id} className="hover:bg-[var(--color-slate-50)] transition-colors">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-10 w-10 shrink-0 rounded-md overflow-hidden bg-[var(--color-slate-100)]">
+                          {displayImage ? (
+                            <Image src={displayImage} alt={p.name} fill className="object-cover" sizes="40px" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-400 font-bold bg-slate-100">
+                              N/A
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-medium text-[var(--color-navy-900)] line-clamp-1 max-w-[180px]">{p.name}</span>
                       </div>
-                      <span className="font-medium text-[var(--color-navy-900)] line-clamp-1 max-w-[180px]">{p.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-[var(--color-slate-500)]">{(p.category as any)?.name ?? '—'}</td>
-                  <td className="px-4 py-3 font-semibold text-[var(--color-navy-900)]">{formatPrice(p.price)}</td>
-                  <td className="px-4 py-3">
-                    <span className={p.stock === 0 ? 'text-[var(--color-danger)]' : 'text-green-600'}>{p.stock}</span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge variant={p.is_active ? 'success' : 'warning'}>{p.is_active ? 'Publié' : 'Masqué'}</Badge>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <Link href={`/vendeur/produits/${p.id}/modifier`}
-                        className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-[var(--color-slate-100)] text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] transition-colors">
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                      <ToggleProductButton productId={p.id} isActive={p.is_active} />
-                      <DeleteProductButton productId={p.id} productName={p.name} />
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--color-slate-500)]">{(p.category as any)?.name ?? '—'}</td>
+                    <td className="px-4 py-3 font-semibold text-[var(--color-navy-900)]">{formatPrice(displayPrice)}</td>
+                    <td className="px-4 py-3">
+                      <span className={displayStock === 0 ? 'text-[var(--color-danger)]' : 'text-green-600'}>{displayStock}</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge variant={p.is_active ? 'success' : 'warning'}>{p.is_active ? 'Publié' : 'Masqué'}</Badge>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-1">
+                        <Link href={`/vendeur/produits/${p.id}/modifier`}
+                          className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-[var(--color-slate-100)] text-[var(--color-slate-500)] hover:text-[var(--color-navy-900)] transition-colors">
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                        <ToggleProductButton productId={p.id} isActive={p.is_active} />
+                        <DeleteProductButton productId={p.id} productName={p.name} />
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

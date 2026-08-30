@@ -37,21 +37,21 @@ export function ProductVariantSelector({
   // Map des sélections courantes par nom d'option (ex: { "Couleur": "Noir", "Stockage": "256 Go" })
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({})
 
-  // Pré-sélectionner la 1ère variante active au chargement avec ses prix
+  // Pré-sélectionner la 1ère variante du vendeur au chargement
   useEffect(() => {
     if (variants && variants.length > 0) {
-      const activeV = variants.find((v) => v.status === 'active' && v.stock_quantity > 0) || variants[0]
+      const activeV = variants[0]
       if (activeV && activeV.option_values && activeV.option_values.length > 0) {
         const initial: Record<string, string> = {}
         options.forEach((opt) => {
           const matchVal = activeV.option_values?.find((ov) =>
-            opt.values.some((val) => val.value === ov.value)
+            opt.values.some((val) => val.value.toLowerCase().trim() === ov.value.toLowerCase().trim())
           )
           if (matchVal) {
             initial[opt.name] = matchVal.value
           } else {
-            const firstActive = opt.values.find((v) => v.is_active)
-            if (firstActive) initial[opt.name] = firstActive.value
+            const firstVal = opt.values[0]
+            if (firstVal) initial[opt.name] = firstVal.value
           }
         })
         setSelectedValues(initial)
@@ -62,9 +62,9 @@ export function ProductVariantSelector({
     if (options && options.length > 0) {
       const initial: Record<string, string> = {}
       options.forEach((opt) => {
-        const firstActive = opt.values.find((v) => v.is_active)
-        if (firstActive) {
-          initial[opt.name] = firstActive.value
+        const firstVal = opt.values[0]
+        if (firstVal) {
+          initial[opt.name] = firstVal.value
         }
       })
       setSelectedValues(initial)
@@ -98,8 +98,15 @@ export function ProductVariantSelector({
   }) || null
 
   // Déterminer le prix, le stock, la description et les images effectives
-  const effectivePrice = activeVariant ? (activeVariant.price || basePrice) : basePrice
-  const effectiveComparePrice = activeVariant ? (activeVariant.compare_at_price ?? null) : baseComparePrice
+  const effectivePrice = (activeVariant && activeVariant.price && Number(activeVariant.price) > 0)
+    ? Number(activeVariant.price)
+    : (activeVariant && (activeVariant as any).direct_price && Number((activeVariant as any).direct_price) > 0)
+    ? Number((activeVariant as any).direct_price)
+    : basePrice
+
+  const effectiveComparePrice = (activeVariant && activeVariant.compare_at_price !== undefined && activeVariant.compare_at_price !== null && Number(activeVariant.compare_at_price) > 0)
+    ? Number(activeVariant.compare_at_price)
+    : (baseComparePrice && Number(baseComparePrice) > 0 ? Number(baseComparePrice) : null)
   const effectiveStock = activeVariant ? (activeVariant.stock_quantity ?? (activeVariant as any).stock ?? baseStock) : baseStock
   const isAvailable = activeVariant
     ? (activeVariant.status !== 'inactive' && (activeVariant.stock_quantity > 0 || (activeVariant as any).stock > 0))
