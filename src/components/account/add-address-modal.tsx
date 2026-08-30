@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -52,6 +52,20 @@ export function AddAddressModal({ userId }: Props) {
     setLoading(false)
   }
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+  }, [open])
+
   return (
     <>
       <Button onClick={() => setOpen(true)}>
@@ -59,7 +73,7 @@ export function AddAddressModal({ userId }: Props) {
       </Button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 overscroll-contain touch-none" onClick={() => setOpen(false)}>
           <div className="bg-white rounded-[var(--radius-2xl)] w-full max-w-md shadow-xl p-6 flex flex-col gap-5" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold text-[var(--color-navy-900)]">Nouvelle adresse</h2>

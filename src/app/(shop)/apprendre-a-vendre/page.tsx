@@ -96,6 +96,21 @@ export default function LearnToSellPage() {
     loadDynamicTutorials()
   }, [])
 
+  // Verrouiller le scroll du body en arrière-plan lorsque la modal est ouverte sur mobile
+  useEffect(() => {
+    if (selectedCourse) {
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+    } else {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+    }
+  }, [selectedCourse])
+
   const filteredCourses = activeTab === 'all'
     ? courses
     : courses.filter((c) => c.category === activeTab)
@@ -223,8 +238,8 @@ export default function LearnToSellPage() {
 
       {/* ── 4. Modal de Lecteur Vidéo Intégré ── */}
       {selectedCourse && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in fade-in zoom-in duration-150 border border-slate-200 dark:border-slate-800">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 overscroll-contain touch-none">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden animate-in fade-in zoom-in duration-150 border border-slate-200 dark:border-slate-800 touch-auto">
             {/* Header Modal */}
             <div className="bg-[var(--color-navy-950)] text-white p-4 sm:p-5 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center gap-2">
@@ -245,7 +260,7 @@ export default function LearnToSellPage() {
             </div>
 
             {/* Corps Modal */}
-            <div className="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto overscroll-contain">
               <h2 className="text-lg sm:text-xl font-extrabold text-[var(--color-navy-900)] dark:text-amber-400">
                 {selectedCourse.title}
               </h2>
