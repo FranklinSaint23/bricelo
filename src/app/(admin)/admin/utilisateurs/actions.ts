@@ -163,7 +163,7 @@ export async function deleteUserAction(userId: string) {
       return { error: 'SÉCURITÉ : Impossible de supprimer un compte Administrateur.' }
     }
 
-    // 2. Si c'est un vendeur, supprimer sa boutique et tous ses produits
+    // 2. Si c'est un vendeur, nettoyer ses produits et sa boutique
     const { data: store } = await adminClient
       .from('stores')
       .select('id')
@@ -171,8 +171,15 @@ export async function deleteUserAction(userId: string) {
       .maybeSingle()
 
     if (store) {
+      // Détacher les commandes de la boutique pour préserver l'historique d'achats sans violer la clé étrangère orders_store_id_fkey
+      await adminClient.from('orders').update({ store_id: null }).eq('store_id', store.id)
       await adminClient.from('products').delete().eq('store_id', store.id)
-      await adminClient.from('stores').delete().eq('id', store.id)
+
+      const { error: storeDelErr } = await adminClient.from('stores').delete().eq('id', store.id)
+      if (storeDelErr) {
+        console.warn('[deleteUserAction] Suppression boutique bloquée, désactivation de sécurité:', storeDelErr.message)
+        await adminClient.from('stores').update({ is_active: false }).eq('id', store.id)
+      }
     }
 
     // 3. Supprimer de la table public.users
