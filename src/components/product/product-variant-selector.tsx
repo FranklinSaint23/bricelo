@@ -37,13 +37,37 @@ export function ProductVariantSelector({
   // Map des sélections courantes par nom d'option (ex: { "Couleur": "Noir", "Stockage": "256 Go" })
   const [selectedValues, setSelectedValues] = useState<Record<string, string>>({})
 
-  // Pré-sélectionner la 1ère variante du vendeur au chargement
+  // 1. Ne conserver QUE les variantes actives (non masquées par le vendeur)
+  const activeVariants = (variants || []).filter((v) => v.status !== 'inactive')
+
+  // 2. Filtrer les options et leurs valeurs pour ne conserver QUE celles associées à au moins une variante active
+  const visibleOptions = options.map((opt) => {
+    const validValues = opt.values.filter((val) => {
+      if (val.is_active === false) return false
+      return activeVariants.some((v) => {
+        if (v.option_values && v.option_values.length > 0) {
+          return v.option_values.some((ov) =>
+            ov.value?.toLowerCase().trim() === val.value?.toLowerCase().trim()
+          )
+        }
+        const comboStr = `${v.combination_key || ''} ${(v as any).name || ''} ${(v as any).value || ''}`.toLowerCase()
+        return comboStr.includes(val.value?.toLowerCase().trim())
+      })
+    })
+
+    return {
+      ...opt,
+      values: validValues,
+    }
+  }).filter((opt) => opt.values.length > 0)
+
+  // Pré-sélectionner la 1ère variante active du vendeur au chargement
   useEffect(() => {
-    if (variants && variants.length > 0) {
-      const activeV = variants[0]
+    if (activeVariants && activeVariants.length > 0) {
+      const activeV = activeVariants[0]
       if (activeV && activeV.option_values && activeV.option_values.length > 0) {
         const initial: Record<string, string> = {}
-        options.forEach((opt) => {
+        visibleOptions.forEach((opt) => {
           const matchVal = activeV.option_values?.find((ov) =>
             opt.values.some((val) => val.value.toLowerCase().trim() === ov.value.toLowerCase().trim())
           )
@@ -59,9 +83,9 @@ export function ProductVariantSelector({
       }
     }
 
-    if (options && options.length > 0) {
+    if (visibleOptions && visibleOptions.length > 0) {
       const initial: Record<string, string> = {}
-      options.forEach((opt) => {
+      visibleOptions.forEach((opt) => {
         const firstVal = opt.values[0]
         if (firstVal) {
           initial[opt.name] = firstVal.value
@@ -72,9 +96,9 @@ export function ProductVariantSelector({
   }, [options, variants])
 
   // Résoudre la variante active d'après les sélections
-  const activeVariant = variants.find((v) => {
+  const activeVariant = activeVariants.find((v) => {
     if (v.option_values && v.option_values.length > 0) {
-      const matchOpts = options.every((opt) => {
+      const matchOpts = visibleOptions.every((opt) => {
         const selectedVal = selectedValues[opt.name]
         if (!selectedVal) return true
         return v.option_values?.some((oVal) => {
@@ -90,7 +114,7 @@ export function ProductVariantSelector({
     }
 
     const comboStr = `${v.combination_key || ''} ${(v as any).name || ''} ${(v as any).value || ''}`.toLowerCase()
-    return options.every((opt) => {
+    return visibleOptions.every((opt) => {
       const selectedVal = selectedValues[opt.name]
       if (!selectedVal) return true
       return comboStr.includes(selectedVal.toLowerCase().trim())
@@ -141,7 +165,7 @@ export function ProductVariantSelector({
     })
   }, [selectedValues, activeVariant])
 
-  if (!options || options.length === 0) {
+  if (!visibleOptions || visibleOptions.length === 0) {
     return null
   }
 
@@ -156,10 +180,10 @@ export function ProductVariantSelector({
   function checkValueAvailability(targetOptName: string, candidateVal: string) {
     const simulated = { ...selectedValues, [targetOptName]: candidateVal }
     
-    // Trouver si au moins une variante correspond à la simulation
-    const matched = variants.find((v) => {
+    // Trouver si au moins une variante ACTIVE (non masquée par le vendeur) correspond à la simulation
+    const matched = activeVariants.find((v) => {
       if (v.option_values && v.option_values.length > 0) {
-        const matchOpts = options.every((opt) => {
+        const matchOpts = visibleOptions.every((opt) => {
           const sel = simulated[opt.name]
           if (!sel) return true
           return v.option_values?.some((oVal) => {
@@ -175,7 +199,7 @@ export function ProductVariantSelector({
       }
 
       const comboStr = `${v.combination_key || ''} ${(v as any).name || ''} ${(v as any).value || ''}`.toLowerCase()
-      return options.every((opt) => {
+      return visibleOptions.every((opt) => {
         const sel = simulated[opt.name]
         if (!sel) return true
         return comboStr.includes(sel.toLowerCase().trim())
@@ -183,13 +207,13 @@ export function ProductVariantSelector({
     })
 
     if (!matched) return { exists: false, inStock: false }
-    const inStock = matched.status !== 'inactive' && (matched.stock_quantity > 0 || (matched as any).stock > 0)
+    const inStock = matched.stock_quantity > 0 || (matched as any).stock > 0
     return { exists: true, inStock }
   }
 
   return (
     <div className="space-y-4 py-3 border-y border-slate-700/50 my-4">
-      {options.map((opt) => {
+      {visibleOptions.map((opt) => {
         const currentSelected = selectedValues[opt.name]
 
         return (
