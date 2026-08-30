@@ -79,17 +79,32 @@ export default async function ProductPage({ params }: PageProps) {
     `)
     .eq('product_id', product.id)
 
-  const formattedVariants = (variantsData ?? []).map((v: any) => ({
-    ...v,
-    stock_quantity: v.stock_quantity ?? v.stock ?? 0,
-    price: (v.price && Number(v.price) > 0) ? Number(v.price) : (v.direct_price && Number(v.direct_price) > 0) ? Number(v.direct_price) : product.price,
-    compare_at_price: (v.compare_at_price && Number(v.compare_at_price) > 0)
-      ? Number(v.compare_at_price)
-      : (product.compare_at_price && Number(product.compare_at_price) > 0)
-      ? Number(product.compare_at_price)
-      : null,
-    option_values: v.variant_values?.map((vv: any) => vv.option_value).filter(Boolean) ?? [],
-  }))
+  const formattedVariants = (variantsData ?? []).map((v: any) => {
+    const optionValues = (v.variant_values ?? []).map((vv: any) => {
+      const ov = vv.option_value
+      if (!ov) return null
+      const parentOpt = (optionsData ?? []).find((o: any) => o.id === ov.product_option_id)
+      return {
+        id: ov.id,
+        option_name: parentOpt?.name || 'Option',
+        value: ov.value,
+        label: ov.label || ov.value,
+      }
+    }).filter(Boolean)
+
+    return {
+      ...v,
+      stock_quantity: v.stock_quantity ?? v.stock ?? 0,
+      price: (v.price && Number(v.price) > 0) ? Number(v.price) : (v.direct_price && Number(v.direct_price) > 0) ? Number(v.direct_price) : product.price,
+      compare_at_price: (v.compare_at_price && Number(v.compare_at_price) > 0)
+        ? Number(v.compare_at_price)
+        : (product.compare_at_price && Number(product.compare_at_price) > 0)
+        ? Number(product.compare_at_price)
+        : null,
+      option_values: optionValues,
+      images: v.images || [],
+    }
+  })
 
   const { data: { user: authUser } } = await supabase.auth.getUser()
 

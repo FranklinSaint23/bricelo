@@ -194,6 +194,7 @@ export const WORLD_PRODUCT_PRESETS: ProductTypePreset[] = [
         name: 'Épaisseur',
         display_type: 'button',
         defaultValues: [
+          { value: '10 CM' },
           { value: '12 CM' },
           { value: '15 CM' },
           { value: '18 CM' },

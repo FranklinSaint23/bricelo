@@ -73,19 +73,37 @@ export function ProductVariantSelector({
 
   // Résoudre la variante active d'après les sélections
   const activeVariant = variants.find((v) => {
-    if (!v.option_values || v.option_values.length === 0) return false
+    if (v.option_values && v.option_values.length > 0) {
+      const matchOpts = options.every((opt) => {
+        const selectedVal = selectedValues[opt.name]
+        if (!selectedVal) return true
+        return v.option_values?.some((oVal) => {
+          const oValName = (oVal as any).option_name || (oVal as any).name
+          const valMatch = oVal.value?.toLowerCase().trim() === selectedVal.toLowerCase().trim()
+          if (oValName) {
+            return oValName.toLowerCase().trim() === opt.name.toLowerCase().trim() && valMatch
+          }
+          return valMatch
+        })
+      })
+      if (matchOpts) return true
+    }
+
+    const comboStr = `${v.combination_key || ''} ${(v as any).name || ''} ${(v as any).value || ''}`.toLowerCase()
     return options.every((opt) => {
       const selectedVal = selectedValues[opt.name]
       if (!selectedVal) return true
-      return v.option_values?.some((oVal) => oVal.value === selectedVal)
+      return comboStr.includes(selectedVal.toLowerCase().trim())
     })
   }) || null
 
   // Déterminer le prix, le stock, la description et les images effectives
   const effectivePrice = activeVariant ? (activeVariant.price || basePrice) : basePrice
   const effectiveComparePrice = activeVariant ? (activeVariant.compare_at_price ?? null) : baseComparePrice
-  const effectiveStock = activeVariant ? activeVariant.stock_quantity : baseStock
-  const isAvailable = activeVariant ? (activeVariant.status === 'active' && effectiveStock > 0) : baseStock > 0
+  const effectiveStock = activeVariant ? (activeVariant.stock_quantity ?? (activeVariant as any).stock ?? baseStock) : baseStock
+  const isAvailable = activeVariant
+    ? (activeVariant.status !== 'inactive' && (activeVariant.stock_quantity > 0 || (activeVariant as any).stock > 0))
+    : baseStock > 0
 
   const variantImages = activeVariant?.images?.map((i) => i.url) || []
   const effectiveImages = variantImages.length > 0 ? [...variantImages, ...productImages] : productImages
@@ -123,16 +141,32 @@ export function ProductVariantSelector({
     
     // Trouver si au moins une variante correspond à la simulation
     const matched = variants.find((v) => {
-      if (!v.option_values || v.option_values.length === 0) return false
+      if (v.option_values && v.option_values.length > 0) {
+        const matchOpts = options.every((opt) => {
+          const sel = simulated[opt.name]
+          if (!sel) return true
+          return v.option_values?.some((oVal) => {
+            const oValName = (oVal as any).option_name || (oVal as any).name
+            const valMatch = oVal.value?.toLowerCase().trim() === sel.toLowerCase().trim()
+            if (oValName) {
+              return oValName.toLowerCase().trim() === opt.name.toLowerCase().trim() && valMatch
+            }
+            return valMatch
+          })
+        })
+        if (matchOpts) return true
+      }
+
+      const comboStr = `${v.combination_key || ''} ${(v as any).name || ''} ${(v as any).value || ''}`.toLowerCase()
       return options.every((opt) => {
         const sel = simulated[opt.name]
         if (!sel) return true
-        return v.option_values?.some((oVal) => oVal.value === sel)
+        return comboStr.includes(sel.toLowerCase().trim())
       })
     })
 
     if (!matched) return { exists: false, inStock: false }
-    const inStock = matched.status === 'active' && matched.stock_quantity > 0
+    const inStock = matched.status !== 'inactive' && (matched.stock_quantity > 0 || (matched as any).stock > 0)
     return { exists: true, inStock }
   }
 
