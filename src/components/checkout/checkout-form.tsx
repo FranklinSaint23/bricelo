@@ -264,6 +264,8 @@ export function CheckoutForm({ addresses, userId }: Props) {
             customerPhone: shippingAddress.phone || newDelivery.phone || '',
             city: shippingAddress.city || newDelivery.city || 'Douala',
             addressLine: (shippingAddress as any).address_line || `${newDelivery.quartier}`,
+            deliveryDay: newDelivery.delivery_day || null,
+            deliveryTime: newDelivery.delivery_time || null,
             storeName: storeData?.name ?? 'Boutique BRICELO',
             storePhone: storeData?.phone ?? null,
             totalAmount: storeSub + storeShipping,

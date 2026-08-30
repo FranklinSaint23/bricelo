@@ -18,6 +18,8 @@ export type OrderNotificationData = {
   customerPhone: string
   city: string
   addressLine: string
+  deliveryDay?: string | null
+  deliveryTime?: string | null
   storeName: string
   storePhone?: string | null
   totalAmount: number
@@ -38,16 +40,19 @@ export async function buildVendorWhatsAppLink(data: OrderNotificationData): Prom
   const vendorPhone = rawPhone.startsWith('237') ? rawPhone : `237${rawPhone}`
   const payLabel = data.paymentMethod === 'cash' ? 'Paiement à la livraison (Espèces)' : 'Paiement en ligne (Mobile Money)'
   const dateStr = data.createdAt || new Date().toLocaleString('fr-FR', { timeZone: 'Africa/Douala' })
+  const deliveryStr = data.deliveryDay ? `${data.deliveryDay}${data.deliveryTime ? ` (${data.deliveryTime})` : ''}` : 'Dès que possible'
 
   const itemsText = (data.items || []).map(i => `  • ${i.name}${i.variantName ? ` [${i.variantName}]` : ''} x${i.quantity} — ${i.totalPrice.toLocaleString('fr-FR')} FCFA`).join('\n')
 
   const text = `📦 *RAMASSAGE COMMANDE BRICELO !*
 
 • *N° Commande :* #${data.orderId.slice(0, 8).toUpperCase()}
-• *Date & Heure :* ${dateStr}
 • *Boutique Vendeur :* ${data.storeName}
+• *Date & Heure de commande :* ${dateStr}
+
 • *Ville de livraison :* ${data.city}
-• *Lieu / Adresse :* ${data.addressLine || 'Centre-ville'}
+• *Lieu de livraison :* ${data.addressLine || 'Centre-ville'}
+• *Date & Heure de livraison :* ${deliveryStr}
 • *Mode de Paiement :* ${payLabel}
 
 📋 *ARTICLES À PRÉPARER EN BOUTIQUE :*
@@ -217,6 +222,8 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
       </tr>
     `).join('')
 
+    const deliveryStr = data.deliveryDay ? `${data.deliveryDay}${data.deliveryTime ? ` (${data.deliveryTime})` : ''}` : 'Dès que possible'
+
     if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'placeholder') {
       // 1. ENVOI E-MAIL EXHAUSTIF À L'ADMIN
       const resAdmin = await fetch('https://api.resend.com/emails', {
@@ -228,7 +235,7 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
         body: JSON.stringify({
           from: 'BRICELO Marketplace <onboarding@resend.dev>',
           to: [adminEmail],
-          subject: `📦 [BRICELO ADMIN] Nouvelle commande #${data.orderId.slice(0, 8).toUpperCase()} - ${data.totalAmount.toLocaleString('fr-FR')} FCFA`,
+          subject: `📦 [BRICELO ADMIN] N° #${data.orderId.slice(0, 8).toUpperCase()} — ${data.storeName} — ${data.totalAmount.toLocaleString('fr-FR')} FCFA`,
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 680px; margin: 0 auto; padding: 24px; color: #1e293b; background-color: #f8fafc; border-radius: 12px;">
               <div style="background-color: #0f172a; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 24px;">
@@ -239,31 +246,26 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
               <!-- DÉTAILS DE LA COMMANDE -->
               <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
                 <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">ℹ️ Informations Générales</h3>
-                <p><strong>N° Commande :</strong> #${data.orderId.slice(0, 8).toUpperCase()}</p>
-                <p><strong>Date & Heure :</strong> ${dateStr}</p>
-                <p><strong>Mode de paiement :</strong> <span style="background-color: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${payLabel}</span></p>
+                <p style="margin: 6px 0;"><strong>N° Commande :</strong> #${data.orderId.slice(0, 8).toUpperCase()}</p>
+                <p style="margin: 6px 0;"><strong>Boutique Vendeur :</strong> <strong style="color: #0284c7;">${data.storeName}</strong></p>
+                <p style="margin: 6px 0;"><strong>Date & Heure de commande :</strong> ${dateStr}</p>
+                <p style="margin: 6px 0;"><strong>Mode de paiement :</strong> <span style="background-color: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-weight: bold;">${payLabel}</span></p>
               </div>
 
               <!-- CLIENT ET LIVRAISON -->
               <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
                 <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">👤 Client & Lieu de Livraison</h3>
-                <p><strong>Nom du client :</strong> ${data.customerName}</p>
-                <p><strong>Téléphone client :</strong> <a href="tel:${data.customerPhone}" style="color: #0284c7; font-weight: bold;">${data.customerPhone}</a></p>
-                ${data.customerEmail ? `<p><strong>E-mail client :</strong> ${data.customerEmail}</p>` : ''}
-                <p><strong>Ville :</strong> ${data.city}</p>
-                <p><strong>Lieu / Adresse de livraison :</strong> ${data.addressLine || 'Non spécifié'}</p>
-              </div>
-
-              <!-- BOUTIQUE VENDEUR -->
-              <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">🏪 Boutique Vendeur</h3>
-                <p><strong>Nom de la boutique :</strong> ${data.storeName}</p>
-                ${data.storePhone ? `<p><strong>Téléphone Vendeur :</strong> ${data.storePhone}</p>` : ''}
+                <p style="margin: 6px 0;"><strong>Nom du client :</strong> ${data.customerName}</p>
+                <p style="margin: 6px 0;"><strong>Téléphone client :</strong> <a href="tel:${data.customerPhone}" style="color: #0284c7; font-weight: bold;">${data.customerPhone}</a></p>
+                ${data.customerEmail ? `<p style="margin: 6px 0;"><strong>E-mail client :</strong> ${data.customerEmail}</p>` : ''}
+                <p style="margin: 6px 0;"><strong>Ville de livraison :</strong> ${data.city}</p>
+                <p style="margin: 6px 0;"><strong>Lieu de livraison :</strong> ${data.addressLine || 'Centre-ville'}</p>
+                <p style="margin: 6px 0;"><strong>Date & Heure de livraison :</strong> <span style="color: #0284c7; font-weight: bold;">${deliveryStr}</span></p>
               </div>
 
               <!-- TABLEAU DES ARTICLES -->
               <div style="background-color: #ffffff; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
-                <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">🛒 Contenu de la Commande</h3>
+                <h3 style="color: #0f172a; margin-top: 0; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;">📋 Articles à préparer (${data.storeName})</h3>
                 <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
                   <thead>
                     <tr style="background-color: #f1f5f9; text-align: left;">
@@ -280,19 +282,20 @@ export async function sendOrderNotificationEmail(data: OrderNotificationData) {
 
                 <div style="margin-top: 16px; text-align: right; font-size: 14px;">
                   <p style="margin: 4px 0;">Sous-total : <strong>${data.subtotal.toLocaleString('fr-FR')} FCFA</strong></p>
-                  <p style="margin: 4px 0;">Livraison fixe : <strong>${data.shippingCost.toLocaleString('fr-FR')} FCFA</strong></p>
+                  <p style="margin: 4px 0;">Livraison : <strong>${data.shippingCost.toLocaleString('fr-FR')} FCFA</strong></p>
                   <p style="margin: 8px 0 0 0; font-size: 18px; color: #059669; font-weight: bold;">TOTAL : ${data.totalAmount.toLocaleString('fr-FR')} FCFA</p>
                 </div>
               </div>
 
               <!-- BOUTON TRANSMISSION WHATSAPP AU VENDEUR -->
-              <div style="text-align: center; margin: 28px 0 16px 0;">
-                <a href="${vendorWhatsAppUrl}" target="_blank" style="background-color: #25D366; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: bold; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3);">
-                  📲 Transmettre la commande au Vendeur (${data.storeName}) sur WhatsApp
-                </a>
-                <p style="color: #64748b; font-size: 12px; margin-top: 8px;">
-                  Ce bouton pré-remplit les détails de la commande pour le vendeur (sans le numéro du client).
+              <div style="background-color: #ecfdf5; border: 1px solid #a7f3d0; padding: 20px; border-radius: 10px; text-align: center; margin: 24px 0;">
+                <h4 style="color: #065f46; margin: 0 0 10px 0; font-size: 16px;">📲 TRANSMISSION RAPIDE AU VENDEUR</h4>
+                <p style="color: #047857; font-size: 13px; margin: 0 0 16px 0;">
+                  Cliquez sur le bouton ci-dessous pour transmettre automatiquement la fiche de ramassage au vendeur sur WhatsApp :
                 </p>
+                <a href="${vendorWhatsAppUrl}" target="_blank" style="background-color: #25D366; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 10px; font-weight: bold; font-size: 15px; display: inline-block; box-shadow: 0 4px 12px rgba(37,211,102,0.3);">
+                  💬 Envoyer la commande à ${data.storeName} sur WhatsApp
+                </a>
               </div>
 
               <div style="text-align: center; margin-top: 24px; font-size: 12px; color: #94a3b8;">
