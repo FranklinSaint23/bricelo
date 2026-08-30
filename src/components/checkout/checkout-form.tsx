@@ -500,9 +500,16 @@ export function CheckoutForm({ addresses, userId }: Props) {
                     />
                   </div>
 
-                  <span className={`text-[11px] sm:text-xs font-extrabold leading-tight line-clamp-1 ${isSelected ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
-                    {isDisabled ? 'Non dispo' : opt.shortLabel}
-                  </span>
+                  <div className="flex flex-col items-center">
+                    <span className={`text-[11px] sm:text-xs font-extrabold leading-tight ${isSelected ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
+                      {isDisabled ? 'Non dispo' : opt.shortLabel}
+                    </span>
+                    {opt.id === 'cash' && !isDisabled && (
+                      <span className="text-[10px] text-slate-500 font-semibold leading-none mt-0.5">
+                        (à la livraison)
+                      </span>
+                    )}
+                  </div>
                 </label>
               )
             })}
@@ -555,10 +562,8 @@ export function CheckoutForm({ addresses, userId }: Props) {
             </div>
           )}
 
-          <Button onClick={handleOrder} loading={loading} size="lg" className="w-full mt-2 font-bold py-4">
-            {paymentMethod === 'cash'
-              ? (lang === 'fr' ? 'Valider la commande (Paiement à la livraison)' : 'Confirm order (Cash on delivery)')
-              : (lang === 'fr' ? 'Procéder au paiement mobile' : 'Proceed to mobile payment')}
+          <Button onClick={handleOrder} loading={loading} size="lg" className="w-full mt-2 font-bold py-4 text-sm sm:text-base">
+            {lang === 'fr' ? 'Valider ma commande' : 'Confirm my order'}
           </Button>
         </CardBody>
       </Card>
