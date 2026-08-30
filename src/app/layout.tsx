@@ -12,6 +12,9 @@ export const metadata: Metadata = {
   title: { default: 'BRICELO - Marketplace multi-vendeurs', template: '%s | BRICELO' },
   description: 'Découvrez des milliers de produits sur BRICELO, la marketplace de confiance. Qualité, confiance, livraison rapide.',
   keywords: ['marketplace', 'ecommerce', 'Cameroun', 'boutique en ligne', 'bricelo'],
+  authors: [{ name: 'Franklin NJIEPI', url: 'https://wa.me/237650435901' }],
+  creator: 'Franklin NJIEPI',
+  publisher: 'Franklin NJIEPI',
   openGraph: {
     type: 'website',
     locale: 'fr_FR',

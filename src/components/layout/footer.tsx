@@ -46,14 +46,20 @@ const socials = [
   },
 ]
 
-function LinkList({ links }: { links: { href: string; label: string }[] }) {
+function LinkList({ links }: { links: { href: string; label: string; external?: boolean }[] }) {
   return (
     <ul className="flex flex-col gap-1.5">
       {links.map(l => (
         <li key={l.href}>
-          <Link href={l.href} className="text-sm text-white/65 hover:text-white transition-colors leading-snug">
-            {l.label}
-          </Link>
+          {l.external ? (
+            <a href={l.href} target="_blank" rel="noopener noreferrer" className="text-sm text-amber-400 font-bold hover:underline transition-colors leading-snug flex items-center gap-1.5">
+              <span>{l.label}</span>
+            </a>
+          ) : (
+            <Link href={l.href} className="text-sm text-white/65 hover:text-white transition-colors leading-snug">
+              {l.label}
+            </Link>
+          )}
         </li>
       ))}
     </ul>
@@ -83,6 +89,7 @@ export function Footer() {
     { href: '/a-propos',        label: t.footerAboutUs },
     { href: '/register',        label: t.footerJoinUs },
     { href: '/confidentialite', label: t.footerPrivacy },
+    { href: 'https://wa.me/237650435901', label: 'Contacter le développeur', external: true },
   ]
 
   const serviceLinks = [

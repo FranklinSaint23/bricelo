@@ -1,0 +1,11 @@
+/* TEAM */
+  Developer: Franklin NJIEPI
+  Contact: +237650435901
+  WhatsApp: https://wa.me/237650435901
+  Role: Lead Software Engineer / Fullstack Developer
+
+/* SITE */
+  Last update: 2026/08/30
+  Language: French / English
+  Doctype: HTML5
+  Standards: Next.js 16, React, TypeScript, TailwindCSS, Supabase
