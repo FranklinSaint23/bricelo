@@ -224,6 +224,8 @@ export function ProductForm({
     setLoading(true)
     const supabase = createClient()
 
+    const firstVarComparePrice = advancedVariants.find((v) => v.compare_at_price && Number(v.compare_at_price) > 0)?.compare_at_price
+
     const payload = {
       store_id:         storeId,
       name:             name.trim(),
@@ -231,7 +233,7 @@ export function ProductForm({
       product_type:     productType,
       description:      description.trim(),
       price:            productType === 'variable' ? 0 : Number(price),
-      compare_at_price: comparePrice ? Number(comparePrice) : null,
+      compare_at_price: comparePrice ? Number(comparePrice) : (firstVarComparePrice ? Number(firstVarComparePrice) : null),
       promo_ends_at:    promoEndsAt ? new Date(promoEndsAt).toISOString() : null,
       stock:            productType === 'digital' ? 9999 : (productType === 'variable' ? 0 : (Number(stock) || 0)),
       category_id:      categoryId || null,

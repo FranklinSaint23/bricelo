@@ -78,6 +78,8 @@ export async function saveProductOptionsAndVariants(
     const varPrice = Number(v.price) || 0
     const varStock = Number(v.stock_quantity) || 0
 
+    const compareAtVal = (v.compare_at_price && Number(v.compare_at_price) > 0) ? Number(v.compare_at_price) : null
+
     // Payload complet avec nouvelles colonnes (migration 013 & 014)
     const fullPayload: any = {
       product_id: productId,
@@ -86,7 +88,7 @@ export async function saveProductOptionsAndVariants(
       price: varPrice,
       direct_price: varPrice,
       price_adjustment: 0,
-      compare_at_price: v.compare_at_price ? Number(v.compare_at_price) : null,
+      compare_at_price: compareAtVal,
       stock_quantity: varStock,
       stock: varStock,
       sku: v.sku?.trim() || null,
@@ -114,6 +116,7 @@ export async function saveProductOptionsAndVariants(
         name: varName,
         value: varVal,
         price_adjustment: varPrice,
+        compare_at_price: compareAtVal,
         stock: varStock,
         stock_quantity: varStock,
         sku: v.sku?.trim() || null,
@@ -139,6 +142,7 @@ export async function saveProductOptionsAndVariants(
           name: varName,
           value: varVal,
           price_adjustment: varPrice,
+          compare_at_price: compareAtVal,
           stock: varStock,
           sku: v.sku?.trim() || null,
         }

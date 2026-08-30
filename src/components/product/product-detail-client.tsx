@@ -27,17 +27,27 @@ export function ProductDetailClient({ product, options, variants }: Props) {
   // Toujours prédéfinir la 1ère variante du vendeur
   const firstVariant = (variants && variants.length > 0) ? variants[0] : null
 
-  const initialPrice = firstVariant && firstVariant.price && Number(firstVariant.price) > 0
+  const rawPrice = firstVariant && firstVariant.price && Number(firstVariant.price) > 0
     ? Number(firstVariant.price)
     : firstVariant && (firstVariant as any).direct_price && Number((firstVariant as any).direct_price) > 0
     ? Number((firstVariant as any).direct_price)
     : product.price
 
-  const initialComparePrice = firstVariant
+  const rawCompare = firstVariant
     ? (firstVariant.compare_at_price !== undefined && firstVariant.compare_at_price !== null && Number(firstVariant.compare_at_price) > 0
         ? Number(firstVariant.compare_at_price)
         : product.compare_at_price)
     : product.compare_at_price
+
+  let initialPrice = rawPrice
+  let initialComparePrice = rawCompare
+
+  if (rawCompare && Number(rawCompare) > 0 && Number(rawCompare) !== Number(rawPrice)) {
+    const p1 = Number(rawPrice)
+    const p2 = Number(rawCompare)
+    initialPrice = Math.min(p1, p2)
+    initialComparePrice = Math.max(p1, p2)
+  }
 
   const initialStock = firstVariant ? (firstVariant.stock_quantity ?? (firstVariant as any).stock ?? 0) : product.stock
 

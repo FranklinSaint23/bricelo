@@ -98,15 +98,25 @@ export function ProductVariantSelector({
   }) || null
 
   // Déterminer le prix, le stock, la description et les images effectives
-  const effectivePrice = (activeVariant && activeVariant.price && Number(activeVariant.price) > 0)
+  const rawPrice = (activeVariant && activeVariant.price && Number(activeVariant.price) > 0)
     ? Number(activeVariant.price)
     : (activeVariant && (activeVariant as any).direct_price && Number((activeVariant as any).direct_price) > 0)
     ? Number((activeVariant as any).direct_price)
     : basePrice
 
-  const effectiveComparePrice = (activeVariant && activeVariant.compare_at_price !== undefined && activeVariant.compare_at_price !== null && Number(activeVariant.compare_at_price) > 0)
+  const rawCompare = (activeVariant && activeVariant.compare_at_price !== undefined && activeVariant.compare_at_price !== null && Number(activeVariant.compare_at_price) > 0)
     ? Number(activeVariant.compare_at_price)
     : (baseComparePrice && Number(baseComparePrice) > 0 ? Number(baseComparePrice) : null)
+
+  let effectivePrice = rawPrice
+  let effectiveComparePrice = rawCompare
+
+  if (rawCompare && Number(rawCompare) > 0 && Number(rawCompare) !== Number(rawPrice)) {
+    const p1 = Number(rawPrice)
+    const p2 = Number(rawCompare)
+    effectivePrice = Math.min(p1, p2)
+    effectiveComparePrice = Math.max(p1, p2)
+  }
   const effectiveStock = activeVariant ? (activeVariant.stock_quantity ?? (activeVariant as any).stock ?? baseStock) : baseStock
   const isAvailable = activeVariant
     ? (activeVariant.status !== 'inactive' && (activeVariant.stock_quantity > 0 || (activeVariant as any).stock > 0))

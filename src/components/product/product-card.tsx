@@ -71,6 +71,13 @@ export function ProductCard({ product, className }: ProductCardProps) {
         }
       }
     }
+
+    if (effectiveCompareAt && effectiveCompareAt > 0 && effectiveCompareAt !== effectivePrice) {
+      const p1 = effectivePrice
+      const p2 = effectiveCompareAt
+      effectivePrice = Math.min(p1, p2)
+      effectiveCompareAt = Math.max(p1, p2)
+    }
   }
 
   const displayImage = firstVarImage || product.images?.[0] || null
