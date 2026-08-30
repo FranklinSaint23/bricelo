@@ -163,6 +163,9 @@ export async function deleteUserAction(userId: string) {
       return { error: 'SÉCURITÉ : Impossible de supprimer un compte Administrateur.' }
     }
 
+    // Détacher les commandes passées par cet utilisateur pour préserver l'historique d'achats
+    await adminClient.from('orders').update({ user_id: null }).eq('user_id', userId)
+
     // 2. Si c'est un vendeur, nettoyer ses produits et sa boutique
     const { data: store } = await adminClient
       .from('stores')
