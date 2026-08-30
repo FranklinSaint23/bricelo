@@ -25,7 +25,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
     }
     return String(a.id).localeCompare(String(b.id))
   })
-  const hasVariants = sortedVariants.length > 0
+  const variants = sortedVariants
+  const hasVariants = variants.length > 0
 
   let effectivePrice = product.price ?? 0
   let effectiveCompareAt = product.compare_at_price
@@ -62,7 +63,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
     }
 
     if (!effectivePrice || effectivePrice === 0) {
-      const pricedVariant = variants.find((v: any) => Number(v.price ?? v.direct_price) > 0)
+      const pricedVariant = sortedVariants.find((v: any) => Number(v.price ?? v.direct_price) > 0)
       if (pricedVariant) {
         effectivePrice = Number(pricedVariant.price ?? pricedVariant.direct_price)
         if (pricedVariant.compare_at_price && Number(pricedVariant.compare_at_price) > 0) {

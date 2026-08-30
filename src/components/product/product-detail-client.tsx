@@ -104,9 +104,9 @@ export function ProductDetailClient({ product, options, variants }: Props) {
             <ProductVariantSelector
               options={options}
               variants={variants}
-              basePrice={product.price}
-              baseComparePrice={product.compare_at_price}
-              baseStock={product.stock}
+              basePrice={initialPrice}
+              baseComparePrice={initialComparePrice}
+              baseStock={initialStock}
               productDescription={product.description || ''}
               productImages={product.images || []}
               onVariantSelected={(resolved) => {

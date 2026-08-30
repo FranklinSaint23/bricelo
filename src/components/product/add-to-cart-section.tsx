@@ -96,7 +96,11 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
     router.push('/checkout')
   }
 
-  const outOfStock = product.stock === 0 || selectedValues.some(v => v.stock === 0)
+  const variantStock = resolvedVariant
+    ? Number(resolvedVariant.stock_quantity ?? resolvedVariant.stock ?? 0)
+    : (selectedValues.length > 0 ? Math.min(...selectedValues.map(v => Number(v.stock ?? 0))) : Number(product.stock ?? 0))
+
+  const outOfStock = !isAvailable || variantStock <= 0
 
   return (
     <div className="flex flex-col gap-4">
