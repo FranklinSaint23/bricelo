@@ -3,7 +3,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { createPortal } from 'react-dom'
+import { useRouter, usePathname } from 'next/navigation'
 import {
   Search, ShoppingCart, Bell, User, Menu, X, ChevronDown,
   Phone, MessageCircle, Grid3X3, UserPlus,
@@ -94,6 +95,7 @@ const categories = [
 
 export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const cartCount = useCartStore((s) => s.itemCount())
   const { theme, toggle: toggleTheme } = useTheme()
   const { lang, t, toggle: toggleLang } = useLanguage()
@@ -109,7 +111,12 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
     setMounted(true)
   }, [])
 
-  /* Bloquer le défilement de l'arrière-plan quand le menu mobile (catégories) est ouvert */
+  // Fermer automatiquement le menu mobile lors d'un changement de page
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  /* Bloquer le défilement de l'arrière-plan proprement sans tremblement ni décalage de scrollbar */
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden'
@@ -439,16 +446,16 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
       </div>
 
       {/* ── MENU MOBILE SLIDE-OVER DRAWER (3/4 de l'écran avec fond sombre & Connexion en haut) ── */}
-      {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex justify-end">
+      {mounted && mobileOpen && createPortal(
+        <div className="md:hidden fixed inset-0 z-[100] flex justify-end">
           {/* Backdrop sombre au clic pour fermer */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-200"
             onClick={() => setMobileOpen(false)}
           />
 
           {/* Tiroir latéral (78% de la largeur sur mobile: w-[78%] max-w-xs) */}
-          <div className="relative w-[78%] max-w-xs h-full bg-[var(--color-surface)] shadow-2xl flex flex-col z-50 overflow-y-auto">
+          <div className="relative w-[78%] max-w-xs h-full bg-white dark:bg-[var(--color-navy-950)] shadow-2xl flex flex-col z-[101] overflow-y-auto transform transition-transform duration-200 ease-in-out">
             {/* Header du Tiroir avec logo et bouton fermer */}
             <div className="p-3.5 border-b border-slate-700/60 flex items-center justify-between bg-[var(--color-navy-950)]">
               <Link href="/" onClick={() => setMobileOpen(false)} className="shrink-0 flex items-center">
@@ -574,7 +581,8 @@ export function Navbar({ user: initialUser, notifCount = 0 }: NavbarProps) {
               </Link>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   )

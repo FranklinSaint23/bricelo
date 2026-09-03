@@ -1,16 +1,24 @@
 import { redirect } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { Navbar } from '@/components/layout/navbar'
 import { CinetPayButton } from '@/components/checkout/cinetpay-button'
 import { formatPrice } from '@/lib/utils'
-import { ShieldCheck, Store, MapPin, ShoppingBag } from 'lucide-react'
+import { ShieldCheck, Store, MapPin, ShoppingBag, ShieldAlert, ArrowLeft } from 'lucide-react'
+import { getPaymentSettings } from '@/lib/settings'
 
 export default async function PaiementPage({ searchParams }: { searchParams: Promise<{ orders?: string; method?: string }> }) {
   const params = await searchParams
   const orderIds = params.orders?.split(',').filter(Boolean) ?? []
   const paymentMethod = params.method || 'orange_money'
   if (!orderIds.length) redirect('/panier')
+
+  const paymentSettings = await getPaymentSettings()
+  const isMethodDisabled =
+    (paymentMethod === 'orange_money' && !paymentSettings.orange_money) ||
+    (paymentMethod === 'mtn_momo' && !paymentSettings.mtn_momo) ||
+    (!paymentSettings.orange_money && !paymentSettings.mtn_momo)
 
   const adminClient = getAdminClient()
 
@@ -145,7 +153,25 @@ export default async function PaiementPage({ searchParams }: { searchParams: Pro
             </div>
           </div>
 
-          <CinetPayButton orderIds={orderIds} amount={grandTotal} paymentMethod={paymentMethod} />
+          {isMethodDisabled ? (
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-300 text-center flex flex-col items-center gap-3">
+              <ShieldAlert className="h-8 w-8 text-amber-600" />
+              <div>
+                <p className="text-sm font-bold text-amber-900">Paiement temporairement indisponible</p>
+                <p className="text-xs text-amber-800 mt-1">
+                  {paymentSettings.notice_message || 'Le paiement en ligne par Mobile Money est désactivé pour le moment.'}
+                </p>
+              </div>
+              <Link
+                href="/panier"
+                className="mt-2 inline-flex items-center gap-2 px-4 py-2 bg-[var(--color-navy-900)] text-white text-xs font-bold rounded-lg hover:bg-[var(--color-navy-950)] transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" /> Retourner au panier
+              </Link>
+            </div>
+          ) : (
+            <CinetPayButton orderIds={orderIds} amount={grandTotal} paymentMethod={paymentMethod} />
+          )}
         </div>
       </main>
     </>

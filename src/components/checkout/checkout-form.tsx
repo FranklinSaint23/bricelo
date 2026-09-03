@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Plus, CreditCard, Building2, Calendar, Clock, Navigation, User, Mail } from 'lucide-react'
+import { MapPin, Plus, CreditCard, Building2, Calendar, Clock, Navigation, User, Mail, ShieldAlert, AlertTriangle } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -12,8 +12,13 @@ import { useLanguage } from '@/components/providers/language-provider'
 import { createClient } from '@/lib/supabase/client'
 import { sendOrderNotificationEmail } from '@/lib/notifications'
 import type { Address } from '@/types'
+import type { PaymentSettings } from '@/lib/settings'
 
-interface Props { addresses: Address[]; userId: string | null }
+interface Props {
+  addresses: Address[]
+  userId: string | null
+  paymentSettings?: PaymentSettings | null
+}
 
 const CITIES = ['Douala', 'Yaoundé']
 const DAYS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi']
@@ -41,12 +46,16 @@ interface NewDelivery {
   delivery_time: string
 }
 
-export function CheckoutForm({ addresses, userId }: Props) {
+export function CheckoutForm({ addresses, userId, paymentSettings }: Props) {
   const router = useRouter()
   const { t, lang } = useLanguage()
   const { items, total, clearCart } = useCartStore()
 
   const DAYS = lang === 'fr' ? DAYS_FR : DAYS_EN
+
+  const isOrangeEnabled = paymentSettings ? Boolean(paymentSettings.orange_money) : false
+  const isMtnEnabled = paymentSettings ? Boolean(paymentSettings.mtn_momo) : false
+  const noticeMsg = paymentSettings?.notice_message || 'Paiement indisponible pour le moment'
 
   const PAYMENT_OPTIONS = [
     {
@@ -58,6 +67,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
       border: 'border-emerald-500',
       activeBg: 'bg-emerald-50/70 border-emerald-500',
       checkColor: 'bg-emerald-600 border-emerald-600',
+      disabled: false,
     },
     {
       id: 'orange_money' as PaymentMethod,
@@ -68,6 +78,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
       border: 'border-orange-500',
       activeBg: 'bg-orange-50/70 border-orange-500',
       checkColor: 'bg-orange-600 border-orange-600',
+      disabled: !isOrangeEnabled,
     },
     {
       id: 'mtn_momo' as PaymentMethod,
@@ -78,6 +89,7 @@ export function CheckoutForm({ addresses, userId }: Props) {
       border: 'border-amber-500',
       activeBg: 'bg-amber-50/70 border-amber-500',
       checkColor: 'bg-amber-600 border-amber-600',
+      disabled: !isMtnEnabled,
     },
   ]
 
@@ -97,7 +109,12 @@ export function CheckoutForm({ addresses, userId }: Props) {
     delivery_time: '9h - 10h',
   })
 
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(hasDigitalItem ? 'orange_money' : 'cash')
+  // Sélectionner par défaut un mode valide
+  const defaultMethod: PaymentMethod = hasDigitalItem
+    ? isOrangeEnabled ? 'orange_money' : isMtnEnabled ? 'mtn_momo' : 'cash'
+    : 'cash'
+
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(defaultMethod)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -455,24 +472,30 @@ export function CheckoutForm({ addresses, userId }: Props) {
         <CardBody className="space-y-3">
           {hasDigitalItem && (
             <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-semibold flex items-start gap-2">
+              <ShieldAlert className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
               <span>
-                Votre panier contient un produit digital. Le paiement en espèces est désactivé. Veuillez choisir un mode de paiement en ligne sécurisé (Orange Money ou MTN Mobile Money).
+                Votre panier contient un produit digital. Le paiement en espèces à la livraison est désactivé pour les produits téléchargeables.
               </span>
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3">
             {PAYMENT_OPTIONS.map((opt) => {
-              const isDisabled = hasDigitalItem && opt.id === 'cash'
+              const isCashDisabledForDigital = hasDigitalItem && opt.id === 'cash'
+              const isDisabled = opt.disabled || isCashDisabledForDigital
               const isSelected = paymentMethod === opt.id
+
               return (
-                <label
+                <div
                   key={opt.id}
-                  className={`flex flex-col items-center justify-between p-2.5 sm:p-3 rounded-xl border-2 transition-all text-center relative ${
+                  onClick={() => {
+                    if (!isDisabled) setPaymentMethod(opt.id)
+                  }}
+                  className={`flex flex-col items-center justify-between p-3 rounded-xl border-2 transition-all text-center relative ${
                     isDisabled
-                      ? 'opacity-40 cursor-not-allowed bg-slate-100 border-slate-200'
+                      ? 'opacity-50 cursor-not-allowed bg-slate-100 border-slate-200/80'
                       : isSelected
-                      ? `${opt.activeBg} cursor-pointer`
+                      ? `${opt.activeBg} cursor-pointer shadow-2xs`
                       : 'border-[var(--color-slate-200)] bg-white hover:bg-[var(--color-slate-50)] cursor-pointer'
                   }`}
                 >
@@ -488,13 +511,13 @@ export function CheckoutForm({ addresses, userId }: Props) {
 
                   <div className="absolute top-2 right-2">
                     <div className={`h-3.5 w-3.5 rounded-full border flex items-center justify-center shrink-0 ${
-                      isSelected ? `${opt.checkColor} text-white` : 'border-[var(--color-slate-300)] bg-white'
+                      isSelected && !isDisabled ? `${opt.checkColor} text-white` : 'border-[var(--color-slate-300)] bg-white'
                     }`}>
-                      {isSelected && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                      {isSelected && !isDisabled && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
                     </div>
                   </div>
 
-                  <div className={`h-11 w-full max-w-[85px] rounded-lg flex items-center justify-center overflow-hidden p-1.5 my-1.5 transition-transform ${opt.logoBg} ${isSelected ? 'scale-105 shadow-2xs' : 'opacity-90'}`}>
+                  <div className={`h-11 w-full max-w-[85px] rounded-lg flex items-center justify-center overflow-hidden p-1.5 my-1.5 transition-transform ${opt.logoBg} ${isSelected && !isDisabled ? 'scale-105 shadow-2xs' : 'opacity-85'}`}>
                     <img
                       src={opt.imageSrc}
                       alt={opt.label}
@@ -502,17 +525,26 @@ export function CheckoutForm({ addresses, userId }: Props) {
                     />
                   </div>
 
-                  <div className="flex flex-col items-center">
-                    <span className={`text-[11px] sm:text-xs font-extrabold leading-tight ${isSelected ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
-                      {isDisabled ? 'Non dispo' : opt.shortLabel}
+                  <div className="flex flex-col items-center w-full">
+                    <span className={`text-xs font-bold leading-tight ${isSelected && !isDisabled ? 'text-[var(--color-navy-900)]' : 'text-[var(--color-slate-600)]'}`}>
+                      {opt.shortLabel}
                     </span>
-                    {opt.id === 'cash' && !isDisabled && (
+
+                    {opt.disabled ? (
+                      <span className="mt-1 px-1.5 py-0.5 text-[9px] font-bold leading-tight bg-amber-100 text-amber-800 rounded border border-amber-200/80 text-center">
+                        {noticeMsg}
+                      </span>
+                    ) : isCashDisabledForDigital ? (
+                      <span className="mt-1 text-[10px] text-slate-400 font-semibold leading-none">
+                        (Désactivé pour produit digital)
+                      </span>
+                    ) : opt.id === 'cash' ? (
                       <span className="text-[10px] text-slate-500 font-semibold leading-none mt-0.5">
                         (à la livraison)
                       </span>
-                    )}
+                    ) : null}
                   </div>
-                </label>
+                </div>
               )
             })}
           </div>

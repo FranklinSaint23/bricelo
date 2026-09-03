@@ -4,13 +4,19 @@ import { redirect } from 'next/navigation'
 import { CreditCard } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { formatPrice, formatDate } from '@/lib/utils'
+import { getPaymentSettings } from '@/lib/settings'
+import { PaymentSettingsControl } from '@/components/admin/payment-settings-control'
 
 export default async function AdminPaiementsPage() {
   const headersList = await headers()
   const userId = headersList.get('x-user-id')
   if (!userId) redirect('/login')
 
-  const supabase = await createClient()
+  const [supabase, paymentSettings] = await Promise.all([
+    createClient(),
+    getPaymentSettings(),
+  ])
+
   const { data: payments } = await supabase
     .from('payments')
     .select('id, amount, status, provider, transaction_ref, created_at, order:orders(id, store:stores(name))')
@@ -31,6 +37,9 @@ export default async function AdminPaiementsPage() {
         <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Paiements</h1>
         <p className="text-sm text-[var(--color-slate-500)] mt-0.5">{payments?.length ?? 0} transaction{(payments?.length ?? 0) > 1 ? 's' : ''}</p>
       </div>
+
+      {/* Configuration d'activation/désactivation manuelle des paiements */}
+      <PaymentSettingsControl initialSettings={paymentSettings} />
 
       {/* Résumé */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
