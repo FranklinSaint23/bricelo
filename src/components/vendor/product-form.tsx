@@ -570,39 +570,55 @@ export function ProductForm({
         </Card>
       )}
 
-      {/* Photos du produit (Affiché uniquement pour Produit Simple et Digital. Masqué si Produit à Variantes car chaque variante possède ses propres visuels) */}
-      {productType !== 'variable' && (
-        <Card>
-          <CardHeader><p className="font-semibold text-[var(--color-navy-900)]">Photos & Visuel de Couverture</p></CardHeader>
-          <CardBody className="flex flex-col gap-4">
-            <div className="flex flex-wrap gap-3">
-              {images.map((url) => (
-                <div key={url} className="relative h-24 w-24 rounded-[var(--radius-md)] overflow-hidden border border-[var(--color-slate-200)] group">
-                  <Image src={url} alt="photo produit" fill className="object-cover" sizes="96px" />
-                  <button
-                    type="button"
-                    onClick={() => removeImage(url)}
-                    className="absolute top-1 right-1 h-6 w-6 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
+      {/* Photos du produit & Visuel de Couverture (Disponible pour tous les types de produits) */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <p className="font-semibold text-[var(--color-navy-900)]">Photos & Visuel de Couverture</p>
+            {images.length > 0 && (
+              <span className="text-xs text-slate-500 font-medium">{images.length} photo{images.length > 1 ? 's' : ''} ajoutée{images.length > 1 ? 's' : ''}</span>
+            )}
+          </div>
+        </CardHeader>
+        <CardBody className="flex flex-col gap-4">
+          <div className="flex flex-wrap gap-3">
+            {images.map((url, idx) => (
+              <div key={url} className="relative h-24 w-24 rounded-xl overflow-hidden border-2 border-slate-200 shadow-2xs group bg-slate-100">
+                <Image src={url} alt={`photo produit ${idx + 1}`} fill className="object-cover" sizes="96px" />
+                
+                {/* Badge 1ère photo (Couverture) */}
+                {idx === 0 && (
+                  <span className="absolute bottom-1 left-1 bg-amber-400 text-slate-950 font-black text-[9px] px-1.5 py-0.5 rounded shadow-2xs">
+                    Couverture
+                  </span>
+                )}
 
-              <label className="flex flex-col items-center justify-center h-24 w-24 rounded-[var(--radius-md)] border-2 border-dashed border-[var(--color-slate-200)] hover:border-[var(--color-accent)] cursor-pointer bg-[var(--color-slate-50)] hover:bg-white transition-colors">
-                <Upload className="h-5 w-5 text-[var(--color-slate-400)] mb-1" />
-                <span className="text-[10px] font-medium text-[var(--color-slate-500)] text-center px-1">
-                  {uploadingImg ? 'Upload…' : '+ Photo'}
-                </span>
-                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
-              </label>
-            </div>
-            <p className="text-xs text-[var(--color-slate-400)]">
-              Téléversez une ou plusieurs photos de qualité. La première image servira de photo de couverture dans le catalogue.
-            </p>
-          </CardBody>
-        </Card>
-      )}
+                {/* Bouton Petite Croix Rouge d'annulation / suppression toujours visible */}
+                <button
+                  type="button"
+                  onClick={() => removeImage(url)}
+                  className="absolute top-1 right-1 h-6 w-6 rounded-full bg-rose-600 hover:bg-rose-700 active:scale-90 text-white flex items-center justify-center shadow-md transition-all z-10 cursor-pointer"
+                  title="Supprimer cette image"
+                  aria-label="Supprimer cette image"
+                >
+                  <X className="h-3.5 w-3.5 stroke-[2.5]" />
+                </button>
+              </div>
+            ))}
+
+            <label className="flex flex-col items-center justify-center h-24 w-24 rounded-xl border-2 border-dashed border-[var(--color-slate-300)] hover:border-[var(--color-accent)] cursor-pointer bg-[var(--color-slate-50)] hover:bg-white transition-colors shadow-2xs">
+              <Upload className="h-5 w-5 text-[var(--color-slate-400)] mb-1" />
+              <span className="text-[10px] font-bold text-[var(--color-navy-900)] text-center px-1">
+                {uploadingImg ? 'Upload…' : '+ Photo'}
+              </span>
+              <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" disabled={uploadingImg} />
+            </label>
+          </div>
+          <p className="text-xs text-[var(--color-slate-500)]">
+            Téléversez une ou plusieurs photos de votre produit. Cliquez sur la <strong>petite croix rouge (✕)</strong> pour supprimer ou remplacer une image. La première photo servira de couverture principale.
+          </p>
+        </CardBody>
+      </Card>
 
       {/* Visibilité & Badges */}
       <Card>
