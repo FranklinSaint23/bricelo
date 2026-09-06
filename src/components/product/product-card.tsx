@@ -19,7 +19,8 @@ export function ProductCard({ product, className }: ProductCardProps) {
   const { t } = useLanguage()
 
   const rawVariants = (product as any).variants ?? []
-  const sortedVariants = [...rawVariants].sort((a: any, b: any) => {
+  const activeVariants = rawVariants.filter((v: any) => v.status !== 'inactive')
+  const sortedVariants = [...activeVariants].sort((a: any, b: any) => {
     if (a.created_at && b.created_at) {
       return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     }
@@ -30,7 +31,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
 
   let effectivePrice = product.price ?? 0
   let effectiveCompareAt = product.compare_at_price
-  let totalStock = product.stock ?? 0
+  let totalStock = product.stock !== undefined && product.stock !== null ? Number(product.stock) : 99
 
   let firstVariant: any = null
   let firstVarImage: string | null = null

@@ -131,17 +131,35 @@ export default async function ProductPage({ params }: PageProps) {
 
   const { data: related } = await supabase
     .from('products')
-    .select('id, name, slug, price, compare_at_price, images, rating, review_count, store:stores(id, name, slug)')
+    .select('id, name, slug, price, compare_at_price, stock, product_type, promotion_label, is_new, promo_ends_at, images, rating, review_count, store:stores(id, name, slug), variants:product_variants(id, price, compare_at_price, stock_quantity, status, direct_price, price_adjustment, created_at, images:variant_images(url))')
     .eq('category_id', product.category_id)
     .eq('is_active', true)
     .neq('id', product.id)
     .limit(4)
 
+  const effectiveTrackPrice = (product.price && Number(product.price) > 0)
+    ? Number(product.price)
+    : (formattedVariants[0]?.price && Number(formattedVariants[0].price) > 0)
+    ? Number(formattedVariants[0].price)
+    : 0
+
+  const firstVarImages = formattedVariants.flatMap((v: any) => v.images || [])
+  const firstVarImgObj = firstVarImages.find((img: any) => typeof img === 'string' || img?.url)
+  const effectiveTrackImage = (Array.isArray(product.images) && product.images.length > 0)
+    ? product.images[0]
+    : (typeof firstVarImgObj === 'string' ? firstVarImgObj : (firstVarImgObj?.url || null))
+
+  const trackableProduct = {
+    ...product,
+    price: effectiveTrackPrice,
+    images: effectiveTrackImage ? [effectiveTrackImage] : [],
+  }
+
   return (
     <>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Tracking produits récemment consultés */}
-      <TrackProductView product={product} />
+      <TrackProductView product={trackableProduct} />
 
       {/* Breadcrumb */}
       <ProductBreadcrumb product={product as any} />

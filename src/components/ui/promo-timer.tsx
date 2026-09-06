@@ -56,25 +56,25 @@ export function PromoTimer({ className, endsAt }: Props) {
   const pad = (n: number) => String(n).padStart(2, '0')
 
   return (
-    <div className={cn('bg-red-50/90 dark:bg-red-950/40 border border-red-200/80 dark:border-red-800/60 rounded-lg p-2 flex flex-col gap-1 w-full max-w-full overflow-hidden shadow-2xs', className)}>
+    <div className={cn('bg-red-50/95 dark:bg-red-950/50 border border-red-200/90 dark:border-red-800/70 rounded-xl p-1.5 sm:p-2 flex flex-col gap-1 w-full max-w-full overflow-hidden shadow-2xs', className)}>
       <div className="flex items-center gap-1 shrink-0">
-        <Timer className="h-3.5 w-3.5 text-red-600 dark:text-red-400 shrink-0 animate-pulse" />
-        <span className="text-[10px] sm:text-xs font-extrabold text-red-700 dark:text-red-300 uppercase tracking-tight whitespace-nowrap">
+        <Timer className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-red-600 dark:text-red-400 shrink-0 animate-pulse" />
+        <span className="text-[9px] sm:text-xs font-black text-red-700 dark:text-red-300 uppercase tracking-tight truncate">
           Fin de promo dans :
         </span>
       </div>
-      <div className="flex items-center gap-1 font-mono text-[10px] sm:text-xs font-bold shrink-0">
+      <div className="flex items-center gap-0.5 sm:gap-1 font-mono text-[9px] sm:text-xs font-bold shrink-0 flex-wrap">
         {d > 0 && (
           <>
-            <span className="bg-red-600 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-black">{d}j</span>
-            <span className="text-red-500 font-extrabold">:</span>
+            <span className="bg-red-600 text-white px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-black shrink-0">{d}j</span>
+            <span className="text-red-500 font-black text-[9px] sm:text-xs shrink-0">:</span>
           </>
         )}
-        <span className="bg-[var(--color-navy-900)] dark:bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold">{pad(h)}h</span>
-        <span className="text-[var(--color-slate-400)] font-extrabold">:</span>
-        <span className="bg-[var(--color-navy-900)] dark:bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold">{pad(m)}m</span>
-        <span className="text-[var(--color-slate-400)] font-extrabold">:</span>
-        <span className="bg-[var(--color-navy-900)] dark:bg-slate-800 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-bold">{pad(s)}s</span>
+        <span className="bg-[var(--color-navy-900)] dark:bg-slate-800 text-white px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-bold shrink-0">{pad(h)}h</span>
+        <span className="text-[var(--color-slate-400)] font-black text-[9px] sm:text-xs shrink-0">:</span>
+        <span className="bg-[var(--color-navy-900)] dark:bg-slate-800 text-white px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-bold shrink-0">{pad(m)}m</span>
+        <span className="text-[var(--color-slate-400)] font-black text-[9px] sm:text-xs shrink-0">:</span>
+        <span className="bg-red-600 text-white px-1 sm:px-1.5 py-0.5 rounded text-[9px] sm:text-xs font-black shrink-0 animate-pulse">{pad(s)}s</span>
       </div>
     </div>
   )
