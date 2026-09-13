@@ -96,11 +96,30 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
     router.push('/checkout')
   }
 
+  const isDigital = (product as any).product_type === 'digital'
+  const isVariable = (product as any).product_type === 'variable' || (product.variants && product.variants.length > 0)
+
   const variantStock = resolvedVariant
     ? Number(resolvedVariant.stock_quantity ?? resolvedVariant.stock ?? 0)
-    : (selectedValues.length > 0 ? Math.min(...selectedValues.map(v => Number(v.stock ?? 0))) : Number(product.stock ?? 0))
+    : (selectedValues.length > 0
+      ? Math.min(...selectedValues.map(v => Number(v.stock ?? 0)))
+      : (product.stock && Number(product.stock) > 0 ? Number(product.stock) : 0))
 
-  const outOfStock = !isAvailable || variantStock <= 0
+  const maxAvailableStock = isDigital
+    ? 9999
+    : resolvedVariant
+    ? variantStock
+    : isVariable
+    ? (variantStock > 0 ? variantStock : (product.stock && Number(product.stock) > 0 ? Number(product.stock) : 99))
+    : (product.stock !== undefined && product.stock !== null && Number(product.stock) > 0 ? Number(product.stock) : 99)
+
+  const outOfStock = !isAvailable || maxAvailableStock <= 0
+
+  useEffect(() => {
+    if (qty > maxAvailableStock && maxAvailableStock > 0) {
+      setQty(maxAvailableStock)
+    }
+  }, [maxAvailableStock])
 
   return (
     <div className="flex flex-col gap-4">
@@ -160,11 +179,23 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
       {/* Quantité */}
       <p className="text-xs font-semibold text-[var(--color-slate-500)] uppercase tracking-wide">{t.quantity}</p>
       <div className="flex items-center border border-[var(--color-slate-200)] rounded-[var(--radius-md)] overflow-hidden w-fit">
-        <button onClick={() => setQty((q) => Math.max(1, q - 1))} className="h-10 w-10 flex items-center justify-center hover:bg-[var(--color-slate-100)] transition-colors">
+        <button
+          type="button"
+          onClick={() => setQty((q) => Math.max(1, q - 1))}
+          disabled={outOfStock || qty <= 1}
+          className="h-10 w-10 flex items-center justify-center hover:bg-[var(--color-slate-100)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="Diminuer la quantité"
+        >
           <Minus className="h-3.5 w-3.5" />
         </button>
-        <span className="w-10 text-center text-sm font-medium">{qty}</span>
-        <button onClick={() => setQty((q) => Math.min(product.stock, q + 1))} className="h-10 w-10 flex items-center justify-center hover:bg-[var(--color-slate-100)] transition-colors">
+        <span className="w-10 text-center text-sm font-bold text-[var(--color-navy-900)]">{qty}</span>
+        <button
+          type="button"
+          onClick={() => setQty((q) => Math.min(maxAvailableStock > 0 ? maxAvailableStock : 99, q + 1))}
+          disabled={outOfStock || (maxAvailableStock > 0 && qty >= maxAvailableStock)}
+          className="h-10 w-10 flex items-center justify-center hover:bg-[var(--color-slate-100)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          aria-label="Augmenter la quantité"
+        >
           <Plus className="h-3.5 w-3.5" />
         </button>
       </div>

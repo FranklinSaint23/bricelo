@@ -258,17 +258,11 @@ export function CheckoutForm({ addresses, userId, paymentSettings }: Props) {
         // Ne décrémenter le stock et n'envoyer l'e-mail de confirmation QUE si le paiement est en espèces à la livraison.
         // Pour les paiements Mobile Money (Orange/MTN), la décrémentation du stock et l'envoi de l'e-mail ont lieu UNIQUEMENT après validation réelle du paiement USSD.
         if (paymentMethod === 'cash') {
-          for (const item of storeItems) {
-            if (item.variant?.id && !item.variant.id.includes('_')) {
-              try {
-                await supabase.rpc('decrement_variant_stock', {
-                  p_variant_id: item.variant.id,
-                  p_quantity: item.quantity,
-                })
-              } catch (rpcErr) {
-                console.warn('RPC decrement_variant_stock fallback:', rpcErr)
-              }
-            }
+          try {
+            const { processCashOrderStock } = await import('@/app/checkout/actions')
+            await processCashOrderStock(order.id)
+          } catch (stkErr) {
+            console.error('[Cash Order Stock Decrement] Error:', stkErr)
           }
 
           const storeData = storeItems[0]?.product?.store as any
