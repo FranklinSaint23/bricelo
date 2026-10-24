@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ChevronLeft, ChevronRight, Star, ArrowRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, ArrowRight, Loader2 } from 'lucide-react'
 import { cn, formatPrice } from '@/lib/utils'
 import { useLanguage } from '@/components/providers/language-provider'
 import type { Product } from '@/types'
@@ -16,8 +16,22 @@ export function FeaturedBannerMobile({ products }: Props) {
   const { t } = useLanguage()
   const [idx, setIdx] = useState(0)
   const [paused, setPaused] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
+
+  useEffect(() => {
+    if (!isNavigating) return
+    const timer = setTimeout(() => setIsNavigating(false), 8000)
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setIsNavigating(false)
+    }
+    window.addEventListener('pageshow', handlePageShow)
+    return () => {
+      clearTimeout(timer)
+      window.removeEventListener('pageshow', handlePageShow)
+    }
+  }, [isNavigating])
 
   const next = useCallback(() => setIdx(i => (i + 1) % products.length), [products.length])
   const prev = useCallback(() => setIdx(i => (i - 1 + products.length) % products.length), [products.length])
@@ -50,7 +64,15 @@ export function FeaturedBannerMobile({ products }: Props) {
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
       onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
 
-      <Link href={`/produit/${product.slug}`} key={idx} className="slide-fade block relative rounded-2xl overflow-hidden bg-[var(--color-navy-900)] shadow-md">
+      <Link
+        href={`/produit/${product.slug}`}
+        key={idx}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return
+          setIsNavigating(true)
+        }}
+        className="slide-fade block relative rounded-2xl overflow-hidden bg-[var(--color-navy-900)] shadow-md"
+      >
         {/* Image */}
         <div className="relative h-56 w-full bg-[var(--color-navy-800)]">
           {image ? (
@@ -101,6 +123,22 @@ export function FeaturedBannerMobile({ products }: Props) {
             {t.viewProduct} <ArrowRight className="h-3.5 w-3.5" />
           </div>
         </div>
+
+        {/* Spinner de confirmation de clic & chargement */}
+        {isNavigating && (
+          <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 p-4 text-center animate-in fade-in duration-150">
+            <div className="relative flex items-center justify-center">
+              <div className="h-10 w-10 rounded-full border-3 border-amber-400/30 border-t-amber-400 animate-spin" />
+              <Loader2 className="absolute h-5 w-5 text-amber-400 animate-spin" />
+            </div>
+            <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
+              Chargement du produit...
+            </span>
+            <span className="text-[10px] text-white/60 font-medium">
+              Veuillez patienter
+            </span>
+          </div>
+        )}
       </Link>
 
       {/* Dots */}
