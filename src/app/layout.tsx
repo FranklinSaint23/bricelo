@@ -2,8 +2,10 @@ import type { Metadata } from 'next'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import './globals.css'
+import { Suspense } from 'react'
 import { ScrollToTop } from '@/components/ui/scroll-to-top'
 import { AppProviders } from '@/components/providers/app-providers'
+import { BriceloTracker } from '@/components/analytics/bricelo-tracker'
 
 const geistSans = GeistSans
 const geistMono = GeistMono
@@ -27,6 +29,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
         <AppProviders>
+          <Suspense fallback={null}>
+            <BriceloTracker />
+          </Suspense>
           {children}
           <ScrollToTop />
         </AppProviders>
