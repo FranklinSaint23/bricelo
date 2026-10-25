@@ -74,52 +74,63 @@ export default async function AdminAnalyticsPage() {
   const orderItems = orderItemsData ?? []
   const rawAnalytics = (analyticsRecord?.value as any) || {}
 
-  // 2. Calcul du temps réel (Live Visitors)
+  // 2. Calcul du temps réel (Live Visitors réels)
   const now = Date.now()
   const cutoff = now - 5 * 60 * 1000 // 5 minutes
   const liveSessionsMap = rawAnalytics.live_sessions || {}
-  const activeNow = Object.values(liveSessionsMap).filter((ts: any) => Number(ts) >= cutoff).length || 1
+  const activeNow = Object.values(liveSessionsMap).filter((ts: any) => Number(ts) >= cutoff).length
 
-  // 3. Calculs financiers & volume e-commerce
+  // 3. Calculs financiers & volume e-commerce réels
   const totalOrders = orders.length
   const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
   const averageBasket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0
   const successfulPayments = payments.filter((p) => p.status === 'success')
   const collectedRevenue = successfulPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
 
-  // 4. Sources d'Acquisition (D'où viennent les visiteurs)
+  // 4. Sources d'Acquisition réelles
   const storedChannels = rawAnalytics.channels || {}
-  const rawTotalChannels = Object.values(storedChannels).reduce((s: number, v: any) => s + (Number(v) || 0), 0) as number
-
-  // Valeurs calibrées avec activité réelle
   const channels = [
-    { name: 'WhatsApp', icon: '📱', color: 'bg-emerald-500', barBg: 'bg-emerald-100 dark:bg-emerald-950/60', count: (storedChannels.whatsapp || 0) + 24, desc: 'Statuts & partages dans les groupes WhatsApp' },
-    { name: 'Facebook', icon: '📘', color: 'bg-blue-600', barBg: 'bg-blue-100 dark:bg-blue-950/60', count: (storedChannels.facebook || 0) + 18, desc: 'Publications et publicités Meta' },
-    { name: 'Accès Direct', icon: '🌐', color: 'bg-amber-500', barBg: 'bg-amber-100 dark:bg-amber-950/60', count: (storedChannels.direct || 0) + 31, desc: 'Visiteurs tapant directement bricelo.com' },
-    { name: 'Recherche Google', icon: '🔍', color: 'bg-sky-500', barBg: 'bg-sky-100 dark:bg-sky-950/60', count: (storedChannels.google || 0) + 15, desc: 'Recherches naturelles sur Google' },
-    { name: 'Instagram & TikTok', icon: '📷', color: 'bg-purple-600', barBg: 'bg-purple-100 dark:bg-purple-950/60', count: (storedChannels.instagram || 0) + (storedChannels.tiktok || 0) + 9, desc: 'Réseaux visuels et vidéos' },
+    { name: 'WhatsApp', icon: '📱', color: 'bg-emerald-500', barBg: 'bg-emerald-100 dark:bg-emerald-950/60', count: Number(storedChannels.whatsapp) || 0, desc: 'Statuts & partages dans les groupes WhatsApp' },
+    { name: 'Facebook', icon: '📘', color: 'bg-blue-600', barBg: 'bg-blue-100 dark:bg-blue-950/60', count: Number(storedChannels.facebook) || 0, desc: 'Publications et publicités Meta' },
+    { name: 'Accès Direct', icon: '🌐', color: 'bg-amber-500', barBg: 'bg-amber-100 dark:bg-amber-950/60', count: Number(storedChannels.direct) || 0, desc: 'Visiteurs tapant directement bricelo.com' },
+    { name: 'Recherche Google', icon: '🔍', color: 'bg-sky-500', barBg: 'bg-sky-100 dark:bg-sky-950/60', count: Number(storedChannels.google) || 0, desc: 'Recherches naturelles sur Google' },
+    { name: 'Instagram & TikTok', icon: '📷', color: 'bg-purple-600', barBg: 'bg-purple-100 dark:bg-purple-950/60', count: (Number(storedChannels.instagram) || 0) + (Number(storedChannels.tiktok) || 0), desc: 'Réseaux visuels et vidéos' },
   ]
   const totalTrafficVisits = channels.reduce((sum, c) => sum + c.count, 0)
+  const todayVisitors = Number(rawAnalytics.visitors?.today) || 0
 
-  // 5. Appareils & Systèmes d'exploitation
+  // 5. Appareils & Systèmes d'exploitation réels
   const storedDevices = rawAnalytics.devices || {}
+  const androidCount = Number(storedDevices.android) || 0
+  const iosCount = Number(storedDevices.ios) || 0
+  const desktopCount = Number(storedDevices.desktop) || 0
+  const tabletCount = Number(storedDevices.tablet) || 0
+  const totalDevices = androidCount + iosCount + desktopCount + tabletCount
+
   const deviceList = [
-    { label: 'Mobile Android (Tecno, Samsung, Infinix...)', percent: 74, count: (storedDevices.android || 0) + 72, color: 'bg-emerald-500', icon: Smartphone },
-    { label: 'Mobile iPhone (Apple iOS)', percent: 18, count: (storedDevices.ios || 0) + 18, color: 'bg-indigo-500', icon: Smartphone },
-    { label: 'Ordinateurs (Windows / Mac)', percent: 8, count: (storedDevices.desktop || 0) + 8, color: 'bg-slate-500', icon: Laptop },
+    { label: 'Mobile Android (Tecno, Samsung, Infinix...)', percent: totalDevices > 0 ? Math.round((androidCount / totalDevices) * 100) : 0, count: androidCount, color: 'bg-emerald-500', icon: Smartphone },
+    { label: 'Mobile iPhone (Apple iOS)', percent: totalDevices > 0 ? Math.round((iosCount / totalDevices) * 100) : 0, count: iosCount, color: 'bg-indigo-500', icon: Smartphone },
+    { label: 'Ordinateurs (Windows / Mac)', percent: totalDevices > 0 ? Math.round((desktopCount / totalDevices) * 100) : 0, count: desktopCount, color: 'bg-slate-500', icon: Laptop },
   ]
 
-  // 6. Entonnoir de Vente (Conversion Funnel)
+  // 6. Entonnoir de Vente réel (Conversion Funnel)
   const storedFunnel = rawAnalytics.funnel || {}
+  const funnelVisitors = Math.max(Number(rawAnalytics.visitors?.total) || 0, totalTrafficVisits)
+  const funnelBase = Math.max(funnelVisitors, 1)
+  const funnelProductViews = Number(storedFunnel.product_views) || 0
+  const funnelCartAdds = Number(storedFunnel.cart_adds) || 0
+  const funnelCheckoutStarts = Number(storedFunnel.checkout_starts) || 0
+  const funnelOrdersCompleted = totalOrders
+
   const funnelSteps = [
-    { step: 1, label: 'Visiteurs sur BRICELO', count: Math.max(totalTrafficVisits, totalOrders * 12 + 45), percent: 100, color: 'bg-blue-500' },
-    { step: 2, label: 'Consultation Fiches Produits', count: Math.max(storedFunnel.product_views || 0, Math.round(totalTrafficVisits * 0.62)), percent: 62, color: 'bg-sky-500' },
-    { step: 3, label: 'Ajouts au Panier', count: Math.max(storedFunnel.cart_adds || 0, Math.round(totalTrafficVisits * 0.28)), percent: 28, color: 'bg-amber-500' },
-    { step: 4, label: 'Débuts de Commande', count: Math.max(storedFunnel.checkout_starts || 0, Math.round(totalTrafficVisits * 0.14)), percent: 14, color: 'bg-orange-500' },
-    { step: 5, label: 'Paiements Finalisés & Validés', count: totalOrders || 1, percent: Math.max(Math.round((totalOrders / Math.max(totalTrafficVisits, 1)) * 100), 4), color: 'bg-emerald-500' },
+    { step: 1, label: 'Visiteurs sur BRICELO', count: funnelVisitors, percent: funnelVisitors > 0 ? 100 : 0, color: 'bg-blue-500' },
+    { step: 2, label: 'Consultation Fiches Produits', count: funnelProductViews, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelProductViews / funnelBase) * 100)) : 0, color: 'bg-sky-500' },
+    { step: 3, label: 'Ajouts au Panier', count: funnelCartAdds, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCartAdds / funnelBase) * 100)) : 0, color: 'bg-amber-500' },
+    { step: 4, label: 'Débuts de Commande', count: funnelCheckoutStarts, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCheckoutStarts / funnelBase) * 100)) : 0, color: 'bg-orange-500' },
+    { step: 5, label: 'Paiements Finalisés & Validés', count: funnelOrdersCompleted, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelOrdersCompleted / funnelBase) * 100)) : 0, color: 'bg-emerald-500' },
   ]
 
-  // 7. Graphique des 7 derniers jours
+  // 7. Graphique des 7 derniers jours réels
   const daysMap = new Map<string, { label: string; dateStr: string; count: number; total: number }>()
   for (let i = 6; i >= 0; i--) {
     const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
@@ -139,20 +150,21 @@ export default async function AdminAnalyticsPage() {
   const dailyChart = Array.from(daysMap.values())
   const maxDayRevenue = Math.max(...dailyChart.map((d) => d.total), 1)
 
-  // 8. Répartition par Villes au Cameroun
-  const cityCounts: Record<string, number> = {
-    'Douala': 54,
-    'Yaoundé': 32,
-    'Bafoussam': 9,
-    'Kribi & Autres': 5,
-  }
+  // 8. Répartition par Villes réelles au Cameroun
+  const cityCounts: Record<string, number> = {}
+  const storedCities = rawAnalytics.cities || {}
+  Object.entries(storedCities).forEach(([cityName, count]) => {
+    if (cityName && Number(count) > 0) {
+      cityCounts[cityName] = (cityCounts[cityName] || 0) + Number(count)
+    }
+  })
   orders.forEach((o) => {
     const c = (o.shipping_address as any)?.city
     if (c) cityCounts[c] = (cityCounts[c] || 0) + 1
   })
   const totalCityReports = Object.values(cityCounts).reduce((a, b) => a + b, 0)
 
-  // 9. Top Produits vendus
+  // 9. Top Produits vendus réels
   const productSalesMap = new Map<string, { id: string; name: string; slug: string; image: string; price: number; unitsSold: number; totalGenerated: number }>()
   orderItems.forEach((item) => {
     const pId = item.product_id
@@ -180,23 +192,6 @@ export default async function AdminAnalyticsPage() {
       })
     }
   })
-
-  // S'il n'y a pas encore assez de ventes, afficher les produits du catalogue avec leurs vues
-  if (productSalesMap.size < 4 && products.length > 0) {
-    products.slice(0, 4).forEach((pr, idx) => {
-      if (!productSalesMap.has(pr.id)) {
-        productSalesMap.set(pr.id, {
-          id: pr.id,
-          name: pr.name,
-          slug: pr.slug,
-          image: pr.images?.[0] || '/placeholder.png',
-          price: Number(pr.price) || 0,
-          unitsSold: Math.max(1, 4 - idx),
-          totalGenerated: (Number(pr.price) || 0) * Math.max(1, 4 - idx),
-        })
-      }
-    })
-  }
 
   const topProducts = Array.from(productSalesMap.values()).slice(0, 5)
 
@@ -230,7 +225,7 @@ export default async function AdminAnalyticsPage() {
           <div>
             <p className="text-xs text-slate-400 font-medium">Visiteurs Détectés (Aujourd'hui)</p>
             <p className="text-xl font-black text-white mt-0.5">
-              {Math.max(totalTrafficVisits, totalOrders * 8 + 38)} personnes
+              {todayVisitors} personne{todayVisitors > 1 ? 's' : ''}
             </p>
           </div>
           <Link
@@ -268,7 +263,11 @@ export default async function AdminAnalyticsPage() {
         <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Taux de Conversion Global</span>
           <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">
-            {totalOrders > 0 ? `${((totalOrders / Math.max(totalTrafficVisits, 1)) * 100).toFixed(1)} %` : '—'}
+            {totalTrafficVisits > 0 && totalOrders > 0
+              ? `${((totalOrders / totalTrafficVisits) * 100).toFixed(1)} %`
+              : totalOrders > 0
+              ? '100 %'
+              : '0 %'}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
             Visiteurs transformés en acheteurs
@@ -302,7 +301,7 @@ export default async function AdminAnalyticsPage() {
 
           <div className="space-y-4">
             {channels.map((ch) => {
-              const pct = Math.round((ch.count / Math.max(totalTrafficVisits, 1)) * 100)
+              const pct = totalTrafficVisits > 0 ? Math.round((ch.count / totalTrafficVisits) * 100) : 0
               return (
                 <div key={ch.name} className="space-y-1.5 p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
                   <div className="flex items-center justify-between text-xs">
@@ -357,10 +356,12 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="mt-6 p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/50 dark:border-amber-800/40 text-xs">
-            <span className="font-bold text-amber-800 dark:text-amber-300">💡 Conseil d'optimisation :</span>
-            <p className="text-[11px] text-amber-700/90 dark:text-amber-400/90 mt-1 leading-relaxed">
-              Plus de <strong>92% de vos clients</strong> visitent Bricelo depuis un smartphone. Notre interface mobile est 100% optimisée pour leur confort.
+          <div className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800/50 text-xs">
+            <span className="font-bold text-slate-800 dark:text-slate-200">ℹ️ Appareils détectés :</span>
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+              {totalDevices > 0
+                ? `${totalDevices} session(s) analysée(s) en direct selon les types d'écrans de vos utilisateurs.`
+                : 'En attente des premières visites de clients sur le site.'}
             </p>
           </div>
         </div>
@@ -472,26 +473,32 @@ export default async function AdminAnalyticsPage() {
             <p className="text-xs text-slate-400 mb-5">Villes principales au Cameroun</p>
 
             <div className="space-y-3">
-              {Object.entries(cityCounts).map(([cityName, count]) => {
-                const pct = Math.round((count / Math.max(totalCityReports, 1)) * 100)
-                return (
-                  <div key={cityName} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-base">📍</span>
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{cityName}</span>
+              {Object.keys(cityCounts).length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  Aucune ville enregistrée pour le moment.
+                </div>
+              ) : (
+                Object.entries(cityCounts).map(([cityName, count]) => {
+                  const pct = Math.round((count / Math.max(totalCityReports, 1)) * 100)
+                  return (
+                    <div key={cityName} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-base">📍</span>
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{cityName}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-black text-slate-900 dark:text-white">{pct}%</span>
+                        <span className="text-slate-400 font-medium">({count})</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className="font-black text-slate-900 dark:text-white">{pct}%</span>
-                      <span className="text-slate-400 font-medium">({count})</span>
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              )}
             </div>
           </div>
 
           <p className="mt-4 text-[11px] text-slate-400 text-center">
-            🇨🇲 Douala & Yaoundé concentrent la majorité des visites et livraisons.
+            🇨🇲 Localisations réelles issues des adresses de commande.
           </p>
         </div>
       </div>
@@ -516,35 +523,41 @@ export default async function AdminAnalyticsPage() {
         </div>
 
         <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {topProducts.map((p, idx) => (
-            <div key={p.id} className="py-3.5 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <span className="font-black text-sm text-slate-300 dark:text-slate-600 w-5 text-center">
-                  #{idx + 1}
-                </span>
-                <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden relative shrink-0 border border-slate-200 dark:border-slate-700">
-                  <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-[var(--color-navy-900)] dark:text-white truncate">
-                    {p.name}
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Prix unitaire : {formatPrice(p.price)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-right shrink-0">
-                <p className="text-xs font-black text-amber-600 dark:text-amber-400">
-                  {p.unitsSold} commande(s)
-                </p>
-                <p className="text-[11px] text-slate-500 font-semibold">
-                  {formatPrice(p.totalGenerated)}
-                </p>
-              </div>
+          {topProducts.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">
+              Aucun article commandé pour le moment.
             </div>
-          ))}
+          ) : (
+            topProducts.map((p, idx) => (
+              <div key={p.id} className="py-3.5 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="font-black text-sm text-slate-300 dark:text-slate-600 w-5 text-center">
+                    #{idx + 1}
+                  </span>
+                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden relative shrink-0 border border-slate-200 dark:border-slate-700">
+                    <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-[var(--color-navy-900)] dark:text-white truncate">
+                      {p.name}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Prix unitaire : {formatPrice(p.price)}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-black text-amber-600 dark:text-amber-400">
+                    {p.unitsSold} commande{p.unitsSold > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-[11px] text-slate-500 font-semibold">
+                    {formatPrice(p.totalGenerated)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

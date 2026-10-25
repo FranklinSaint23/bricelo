@@ -66,20 +66,15 @@ export function BriceloTracker() {
     else if (ua.includes('firefox')) browser = 'Firefox'
     else if (ua.includes('edg')) browser = 'Edge'
 
-    // 4. Estimation de la ville au Cameroun (basée sur l'adresse client connue ou timezone)
-    let city = 'Douala'
+    // 4. Ville du client (uniquement si enregistrée lors d'une commande ou profil)
+    let city: string | undefined = undefined
     try {
       const storedCity = localStorage.getItem('bricelo_user_city')
       if (storedCity) {
         city = storedCity
-      } else {
-        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-        if (tz.includes('Douala') || tz.includes('Lagos')) {
-          city = Math.random() > 0.4 ? 'Douala' : 'Yaoundé'
-        }
       }
     } catch {
-      // Fallback
+      // Ignore
     }
 
     const currentUrl = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '')

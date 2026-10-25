@@ -89,9 +89,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // Mise à jour de la ville
-    const city = payload.city || 'Douala'
-    analytics.cities[city] = (analytics.cities[city] || 0) + 1
+    // Mise à jour de la ville uniquement si renseignée
+    if (payload.city) {
+      analytics.cities[payload.city] = (analytics.cities[payload.city] || 0) + 1
+    }
 
     // Mise à jour top pages
     const cleanPath = payload.path.split('?')[0]
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
       path: cleanPath,
       channel: payload.channel,
       device: payload.device,
-      city,
+      city: payload.city || null,
       timestamp: now,
     })
     analytics.recent_activity = analytics.recent_activity.slice(0, 15)
