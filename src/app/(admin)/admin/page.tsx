@@ -62,31 +62,31 @@ export default async function AdminDashboard() {
         </Link>
       </div>
 
-      {/* Bannière PostHog Live Analytics */}
+      {/* Bannière Analytics Studio Intégré */}
       <div className="mb-6 bg-gradient-to-r from-[var(--color-navy-950)] via-[var(--color-navy-900)] to-slate-900 rounded-2xl p-5 sm:p-6 text-white border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
-            <Activity className="h-6 w-6 text-amber-400 animate-pulse" />
+            <Activity className="h-6 w-6 text-amber-400" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-white">Trafic & Activité Visiteurs en Temps Réel</h2>
+              <h2 className="text-sm sm:text-base font-bold text-white">Analytics & Performances BRICELO</h2>
               <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                PostHog Live
+                Temps Réel
               </span>
             </div>
             <p className="text-xs text-slate-300 mt-1 max-w-xl">
-              Visualisez le nombre de visiteurs, les clics en direct et revivez les sessions vidéo de navigation de vos clients.
+              Suivez l'évolution des ventes, les graphiques hebdomadaires, le panier moyen et les produits les plus performants.
             </p>
           </div>
         </div>
         <Link
           href="/admin/analytics"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all shrink-0"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-[var(--color-navy-950)] font-bold text-xs shadow-xs transition-colors shrink-0"
         >
-          <span>Ouvrir le Dashboard Analytics</span>
-          <ArrowRight className="h-3.5 w-3.5 text-amber-400" />
+          <span>Voir les Graphiques & Chiffres</span>
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
