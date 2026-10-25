@@ -4,11 +4,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
 import {
-  TrendingUp, ShoppingBag, Users, CreditCard, Package, Store,
-  BarChart3, Smartphone, Laptop, Globe, ArrowUpRight, CheckCircle2,
-  Share2, Search, ArrowRight, Eye, ShoppingCart, DollarSign,
+  TrendingUp, ShoppingBag, Users, Package,
+  BarChart3, Smartphone, Laptop, CheckCircle2,
+  Share2, ArrowRight, Eye, DollarSign,
   MapPin, Activity, ChevronRight, Clock, Compass, Target,
-  UserCheck, UserPlus, RefreshCw, Layers
+  UserCheck, UserPlus, Layers
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { AnalyticsHeaderActions } from '@/components/admin/analytics-header-actions'
@@ -21,11 +21,11 @@ function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60)
   const remSecs = seconds % 60
   if (mins < 60) {
-    return remSecs > 0 ? `${mins} min ${remSecs} s` : `${mins} min`
+    return remSecs > 0 ? `${mins}m ${remSecs}s` : `${mins} min`
   }
   const hours = Math.floor(mins / 60)
   const remMins = mins % 60
-  return `${hours} h ${remMins} min`
+  return `${hours}h ${remMins}m`
 }
 
 export default async function AdminAnalyticsPage() {
@@ -209,11 +209,11 @@ export default async function AdminAnalyticsPage() {
   const funnelOrdersCompleted = totalOrders
 
   const funnelSteps = [
-    { step: '1', label: 'Visites Boutique', count: funnelVisitors, percent: funnelVisitors > 0 ? 100 : 0 },
-    { step: '2', label: 'Fiches Produits Vues', count: funnelProductViews, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelProductViews / funnelBase) * 100)) : 0 },
-    { step: '3', label: 'Ajouts au Panier', count: funnelCartAdds, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCartAdds / funnelBase) * 100)) : 0 },
-    { step: '4', label: 'Débuts de Commande', count: funnelCheckoutStarts, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCheckoutStarts / funnelBase) * 100)) : 0 },
-    { step: '5', label: 'Commandes Payées', count: funnelOrdersCompleted, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelOrdersCompleted / funnelBase) * 100)) : 0 },
+    { step: '1', label: 'Visites', count: funnelVisitors, percent: funnelVisitors > 0 ? 100 : 0 },
+    { step: '2', label: 'Vues Produits', count: funnelProductViews, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelProductViews / funnelBase) * 100)) : 0 },
+    { step: '3', label: 'Panier', count: funnelCartAdds, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCartAdds / funnelBase) * 100)) : 0 },
+    { step: '4', label: 'Checkout', count: funnelCheckoutStarts, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCheckoutStarts / funnelBase) * 100)) : 0 },
+    { step: '5', label: 'Commandes', count: funnelOrdersCompleted, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelOrdersCompleted / funnelBase) * 100)) : 0 },
   ]
 
   // 9. Graphique des 7 derniers jours réels
@@ -252,15 +252,19 @@ export default async function AdminAnalyticsPage() {
   })
   const totalCityReports = Object.values(cityCounts).reduce((a, b) => a + b, 0)
 
-  // 11. Top Produits vendus réels
-  const productSalesMap = new Map<string, { id: string; name: string; slug: string; image: string; price: number; unitsSold: number; totalGenerated: number }>()
+  // 11. Top Produits vendus réels (avec récupération robuste de l'image de snapshot ou du produit)
+  const productSalesMap = new Map<string, { id: string; name: string; slug: string; image: string | null; price: number; unitsSold: number; totalGenerated: number }>()
   orderItems.forEach((item) => {
     const pId = item.product_id
     if (!pId) return
     const snapshot = item.snapshot as any
-    const name = snapshot?.name || 'Produit'
-    const image = snapshot?.images?.[0] || '/placeholder.png'
-    const price = Number(item.unit_price) || 0
+    const productFromDb = products.find((prod) => prod.id === pId)
+
+    const name = snapshot?.name || productFromDb?.name || 'Produit'
+    // Récupération de l'image : snapshot.image (format direct), snapshot.images[0] ou produit en base
+    const image = snapshot?.image || snapshot?.images?.[0] || productFromDb?.images?.[0] || null
+    const slug = snapshot?.slug || productFromDb?.slug || ''
+    const price = Number(item.unit_price) || Number(productFromDb?.price) || 0
     const qty = Number(item.quantity) || 1
     const total = Number(item.total_price) || price * qty
 
@@ -268,11 +272,12 @@ export default async function AdminAnalyticsPage() {
       const p = productSalesMap.get(pId)!
       p.unitsSold += qty
       p.totalGenerated += total
+      if (!p.image && image) p.image = image
     } else {
       productSalesMap.set(pId, {
         id: pId,
         name,
-        slug: snapshot?.slug || '',
+        slug,
         image,
         price,
         unitsSold: qty,
@@ -286,152 +291,163 @@ export default async function AdminAnalyticsPage() {
   const recentActivities = Array.isArray(rawAnalytics.recent_activity) ? rawAnalytics.recent_activity.slice(0, 8) : []
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
-      {/* ── EN-TÊTE ÉPURÉ & PROFESSIONNEL ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
-        <div>
-          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
-            <Link href="/admin" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
-              Administration
-            </Link>
-            <ChevronRight className="h-3 w-3 text-slate-400" />
-            <span className="text-slate-700 dark:text-slate-300 font-medium">Google Analytics Suite</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-              Analytique & Audience en Temps Réel
-            </h1>
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span>{activeNow} en direct</span>
-            </div>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Mesures de trafic, temps d'engagement, rétention client, navigation et entonnoir e-commerce.
-          </p>
+    <div className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden">
+      {/* ── EN-TÊTE RESPONSIVE ── */}
+      <div className="flex flex-col gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500 flex-wrap">
+          <Link href="/admin" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+            Administration
+          </Link>
+          <ChevronRight className="h-3 w-3 text-slate-400 shrink-0" />
+          <span className="text-slate-700 dark:text-slate-300 font-medium truncate">Analytics Suite</span>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <AnalyticsHeaderActions />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                Analytique & Audience
+              </h1>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80 shrink-0">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{activeNow} en direct</span>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              Mesures de trafic, temps d'engagement, rétention et conversions.
+            </p>
+          </div>
+
+          <div className="shrink-0 self-start sm:self-auto">
+            <AnalyticsHeaderActions />
+          </div>
         </div>
       </div>
 
-      {/* ── KPI METRICS CARDS (EXECUTIVE SAAS / GA4 METRICS) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* ── KPI METRICS CARDS (2 COLONNES SUR MOBILE, 4 SUR DESKTOP) ── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Chiffre d'Affaires */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Chiffre d'Affaires
-            </span>
-            <DollarSign className="h-4 w-4 text-slate-400" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3 sm:p-5 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Chiffre d'Affaires
+              </span>
+              <DollarSign className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0" />
+            </div>
+            <p className="text-base sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              {formatPrice(totalRevenue)}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
-            {formatPrice(totalRevenue)}
-          </p>
-          <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
-            <span>{formatPrice(collectedRevenue)} encaissé</span>
-          </div>
-        </div>
-
-        {/* Durée Moyenne de Session (Time on Site) */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Durée Moyenne / Session
-            </span>
-            <Clock className="h-4 w-4 text-amber-500" />
-          </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
-            {formatDuration(avgSessionSeconds)}
-          </p>
-          <div className="mt-2 text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
-            <Compass className="h-3.5 w-3.5 text-slate-400" />
-            <span>Temps total : <strong>{formatDuration(totalEngagementSeconds)}</strong></span>
+          <div className="mt-2 text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1 truncate">
+            <CheckCircle2 className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
+            <span className="truncate">{formatPrice(collectedRevenue)} encaissé</span>
           </div>
         </div>
 
-        {/* Taux d'Engagement & Rebond (Bounce Rate) */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Taux d'Engagement
-            </span>
-            <Target className="h-4 w-4 text-indigo-500" />
+        {/* Durée Moyenne de Session */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3 sm:p-5 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Durée / Session
+              </span>
+              <Clock className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
+            </div>
+            <p className="text-base sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              {formatDuration(avgSessionSeconds)}
+            </p>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
-            {engagementRate} %
-          </p>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Taux de rebond : <strong className="text-slate-800 dark:text-slate-200 font-semibold">{bounceRate} %</strong>
+          <div className="mt-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 truncate">
+            <Compass className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-slate-400 shrink-0" />
+            <span className="truncate">Total : <strong>{formatDuration(totalEngagementSeconds)}</strong></span>
+          </div>
+        </div>
+
+        {/* Taux d'Engagement */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3 sm:p-5 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Engagement
+              </span>
+              <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-indigo-500 shrink-0" />
+            </div>
+            <p className="text-base sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              {engagementRate} %
+            </p>
+          </div>
+          <p className="mt-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
+            Rebond : <strong className="text-slate-800 dark:text-slate-200">{bounceRate}%</strong>
           </p>
         </div>
 
-        {/* Sessions & Pages par Session */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
-          <div className="flex items-center justify-between text-slate-500">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Volume Sessions & Pages
-            </span>
-            <Layers className="h-4 w-4 text-slate-400" />
+        {/* Volume Sessions */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-3 sm:p-5 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between text-slate-500 mb-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 truncate">
+                Sessions & Pages
+              </span>
+              <Layers className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0" />
+            </div>
+            <p className="text-base sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight truncate">
+              {totalSessions} <span className="text-xs font-normal text-slate-400">sessions</span>
+            </p>
           </div>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
-            {totalSessions} <span className="text-sm font-normal text-slate-400">sessions</span>
-          </p>
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            <strong>{pagesPerSession}</strong> page(s) vue(s) par session
+          <p className="mt-2 text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">
+            <strong>{pagesPerSession}</strong> page/session
           </p>
         </div>
       </div>
 
       {/* ── SECTION GOOGLE ANALYTICS : TEMPS PAR PAGE & AUDIENCE RÉCURRENTE ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* Tableau des Pages & Temps passé sur chaque page (8 cols) */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Eye className="h-4 w-4 text-amber-500" />
-              <span>Pages Consultées & Temps Passé (Google Analytics Pages)</span>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+              <Eye className="h-4 w-4 text-amber-500 shrink-0" />
+              <span className="truncate">Pages & Temps Passé (GA4)</span>
             </h2>
-            <span className="text-xs font-medium text-slate-500">{totalPageViews} vues</span>
+            <span className="text-xs font-medium text-slate-500 shrink-0">{totalPageViews} vues</span>
           </div>
-          <p className="text-xs text-slate-400 mb-5">
-            Détail du temps moyen passé par les visiteurs sur chaque URL de la boutique
+          <p className="text-xs text-slate-400 mb-4 truncate">
+            Durée moyenne de lecture passée sur chaque écran
           </p>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs min-w-[320px]">
               <thead>
-                <tr className="border-b border-slate-100 dark:border-slate-800 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-                  <th className="py-2.5 pr-4">Page / URL</th>
-                  <th className="py-2.5 px-3 text-right">Vues</th>
-                  <th className="py-2.5 px-3 text-right">Part Trafic</th>
-                  <th className="py-2.5 pl-3 text-right">Temps Moyen</th>
+                <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th className="py-2 pr-2">Page / URL</th>
+                  <th className="py-2 px-2 text-right">Vues</th>
+                  <th className="py-2 px-2 text-right hidden sm:table-cell">Part</th>
+                  <th className="py-2 pl-2 text-right">Temps Moyen</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {pagesList.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-8 text-center text-slate-400">
+                    <td colSpan={4} className="py-6 text-center text-slate-400 text-xs">
                       Aucune page enregistrée pour l'instant.
                     </td>
                   </tr>
                 ) : (
-                  pagesList.slice(0, 7).map((p) => (
+                  pagesList.slice(0, 6).map((p) => (
                     <tr key={p.path} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="py-3 pr-4 font-mono font-medium text-slate-800 dark:text-slate-200 truncate max-w-[280px]">
+                      <td className="py-2.5 pr-2 font-mono font-medium text-slate-800 dark:text-slate-200 truncate max-w-[150px] sm:max-w-[280px]">
                         {p.path}
                       </td>
-                      <td className="py-3 px-3 text-right font-semibold text-slate-900 dark:text-white">
+                      <td className="py-2.5 px-2 text-right font-semibold text-slate-900 dark:text-white">
                         {p.views}
                       </td>
-                      <td className="py-3 px-3 text-right text-slate-500 dark:text-slate-400">
+                      <td className="py-2.5 px-2 text-right text-slate-500 dark:text-slate-400 hidden sm:table-cell">
                         {p.pct}%
                       </td>
-                      <td className="py-3 pl-3 text-right">
-                        <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded text-[11px]">
-                          <Clock className="h-3 w-3" />
+                      <td className="py-2.5 pl-2 text-right whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-1.5 py-0.5 rounded text-[10px] sm:text-[11px]">
+                          <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                           <span>{formatDuration(p.avgSeconds)}</span>
                         </span>
                       </td>
@@ -444,25 +460,25 @@ export default async function AdminAnalyticsPage() {
         </div>
 
         {/* Rétention Audience : Nouveaux vs Récurrents (4 cols) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Users className="h-4 w-4 text-indigo-500" />
-                <span>Fidélité de l'Audience</span>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <Users className="h-4 w-4 text-indigo-500 shrink-0" />
+                <span className="truncate">Fidélité Audience</span>
               </h2>
-              <span className="text-xs font-medium text-slate-500">Google Retention</span>
+              <span className="text-xs font-medium text-slate-500 shrink-0">Rétention</span>
             </div>
-            <p className="text-xs text-slate-400 mb-5">
-              Nouveaux visiteurs vs Clients fidèles revenant sur la boutique
+            <p className="text-xs text-slate-400 mb-4 truncate">
+              Nouveaux visiteurs vs Clients fidèles
             </p>
 
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               {/* Nouveaux Visiteurs */}
               <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
-                    <UserPlus className="h-3.5 w-3.5 text-emerald-500" />
+                    <UserPlus className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                     <span>Nouveaux Visiteurs</span>
                   </span>
                   <span className="font-bold text-slate-900 dark:text-white">{newVisitorsPct}%</span>
@@ -470,63 +486,63 @@ export default async function AdminAnalyticsPage() {
                 <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                   <div style={{ width: `${newVisitorsPct}%` }} className="h-full rounded-full bg-emerald-500" />
                 </div>
-                <p className="text-[10px] text-slate-400 pt-0.5">Première découverte du catalogue BRICELO</p>
+                <p className="text-[10px] text-slate-400 pt-0.5">Première découverte de BRICELO</p>
               </div>
 
               {/* Visiteurs Récurrents */}
               <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center justify-between text-xs">
                   <span className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
-                    <UserCheck className="h-3.5 w-3.5 text-indigo-500" />
-                    <span>Visiteurs Récurrents (Fidèles)</span>
+                    <UserCheck className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                    <span>Clients Fidèles (Récurrents)</span>
                   </span>
                   <span className="font-bold text-slate-900 dark:text-white">{returningVisitorsPct}%</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                   <div style={{ width: `${returningVisitorsPct}%` }} className="h-full rounded-full bg-indigo-500" />
                 </div>
-                <p className="text-[10px] text-slate-400 pt-0.5">Utilisateurs revenus après une première session</p>
+                <p className="text-[10px] text-slate-400 pt-0.5">Utilisateurs revenus sur la boutique</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
-            <span>Mesure basée sur cookies anonymes</span>
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400 flex items-center justify-between">
+            <span>Mesure sans cookies tiers</span>
             <span className="font-medium text-slate-600 dark:text-slate-400">100% Souverain</span>
           </div>
         </div>
       </div>
 
       {/* ── SECTION : GRAPHIQUE 7 JOURS & ACQUISITION DE TRAFIC ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* Graphique hebdomadaire (8 cols) */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-amber-500" />
-                <span>Ventes Quotidiennes Réelles (7 Derniers Jours)</span>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <BarChart3 className="h-4 w-4 text-amber-500 shrink-0" />
+                <span className="truncate">Ventes Quotidiennes (7 Derniers Jours)</span>
               </h2>
-              <span className="text-xs font-medium text-slate-500">Commandes confirmées</span>
+              <span className="text-xs font-medium text-slate-500 shrink-0">Commandes</span>
             </div>
-            <p className="text-xs text-slate-400 mb-6">
-              Total hebdomadaire : <strong className="text-slate-700 dark:text-slate-300">{formatPrice(weeklyTotalRevenue)}</strong> ({weeklyTotalOrders} commande{weeklyTotalOrders > 1 ? 's' : ''})
+            <p className="text-xs text-slate-400 mb-5 truncate">
+              Total hebdo : <strong className="text-slate-700 dark:text-slate-300">{formatPrice(weeklyTotalRevenue)}</strong> ({weeklyTotalOrders} commande{weeklyTotalOrders > 1 ? 's' : ''})
             </p>
 
-            <div className="h-52 w-full flex items-end justify-between gap-2 sm:gap-3 pt-6 pb-2 border-b border-slate-100 dark:border-slate-800">
+            <div className="h-40 sm:h-52 w-full flex items-end justify-between gap-1 sm:gap-3 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800">
               {dailyChart.map((d) => {
                 const heightPct = maxDayRevenue > 0 && d.total > 0
                   ? Math.max(Math.round((d.total / maxDayRevenue) * 100), 10)
                   : 4
 
                 return (
-                  <div key={d.dateStr} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 pointer-events-none bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-md whitespace-nowrap border border-slate-800">
+                  <div key={d.dateStr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative min-w-0">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 pointer-events-none bg-slate-900 text-white text-[10px] font-semibold px-2 py-1 rounded shadow-md whitespace-nowrap border border-slate-800">
                       <p>{d.total > 0 ? formatPrice(d.total) : '0 FCFA'}</p>
-                      <p className="text-[10px] text-amber-400 font-normal">{d.count} commande(s)</p>
+                      <p className="text-[9px] text-amber-400 font-normal">{d.count} commande(s)</p>
                     </div>
 
-                    <div className="w-full max-w-[42px] rounded-t-md bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-end h-full">
+                    <div className="w-full max-w-[36px] rounded-t-md bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-end h-full">
                       <div
                         style={{ height: `${heightPct}%` }}
                         className={`w-full rounded-t-md transition-all duration-300 ${
@@ -536,7 +552,7 @@ export default async function AdminAnalyticsPage() {
                         }`}
                       />
                     </div>
-                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 capitalize">
+                    <span className="text-[9px] sm:text-[11px] font-medium text-slate-500 dark:text-slate-400 capitalize truncate w-full text-center">
                       {d.label}
                     </span>
                   </div>
@@ -545,38 +561,38 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between text-[11px] text-slate-400">
-            <span>Montant en FCFA par jour civil</span>
-            <span>Mise à jour en temps réel</span>
+          <div className="mt-3 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400">
+            <span>Montant en FCFA par jour</span>
+            <span>Direct DB</span>
           </div>
         </div>
 
         {/* Canaux d'Acquisition (4 cols) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Share2 className="h-4 w-4 text-amber-500" />
-                <span>Canaux d'Acquisition (Sources)</span>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <Share2 className="h-4 w-4 text-amber-500 shrink-0" />
+                <span className="truncate">Canaux d'Acquisition</span>
               </h2>
-              <span className="text-xs font-medium text-slate-500">{totalTrafficVisits} visite(s)</span>
+              <span className="text-xs font-medium text-slate-500 shrink-0">{totalTrafficVisits} visite(s)</span>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Provenance des internautes lors de leur arrivée sur le site
+            <p className="text-xs text-slate-400 mb-4 truncate">
+              Origine du trafic des visiteurs
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {channels.map((ch) => {
                 const pct = totalTrafficVisits > 0 ? Math.round((ch.count / totalTrafficVisits) * 100) : 0
                 return (
                   <div key={ch.name} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate pr-2">
                         {ch.name}
                       </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-slate-400 text-[11px]">{ch.count}</span>
-                        <span className="font-semibold text-slate-700 dark:text-slate-300 min-w-[32px] text-right">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="text-slate-400 text-[11px]">({ch.count})</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 min-w-[28px] text-right">
                           {pct}%
                         </span>
                       </div>
@@ -597,12 +613,12 @@ export default async function AdminAnalyticsPage() {
             {/* Campagnes UTM */}
             {campaignList.length > 0 && (
               <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-2">Campagnes UTM Actives :</p>
+                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-2">Campagnes UTM :</p>
                 <div className="space-y-1">
                   {campaignList.slice(0, 3).map((camp) => (
                     <div key={camp.name} className="flex items-center justify-between text-[11px] text-slate-500">
-                      <span className="truncate max-w-[180px] font-mono">{camp.name}</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200">{camp.count} clics</span>
+                      <span className="truncate max-w-[160px] font-mono">{camp.name}</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200 shrink-0">{camp.count} clics</span>
                     </div>
                   ))}
                 </div>
@@ -610,50 +626,50 @@ export default async function AdminAnalyticsPage() {
             )}
           </div>
 
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-            Trafic local / dev exclu du comptage.
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] sm:text-[11px] text-slate-400">
+            Dev/Localhost exclu automatiquement.
           </div>
         </div>
       </div>
 
       {/* ── SECTION ENTONNOIR & APPAREILS / NAVIGATEURS ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* Entonnoir E-commerce (8 cols) */}
-        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-emerald-500" />
-              <span>Entonnoir E-commerce (Google Analytics Funnel)</span>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+              <TrendingUp className="h-4 w-4 text-emerald-500 shrink-0" />
+              <span className="truncate">Entonnoir E-commerce (Funnel)</span>
             </h2>
-            <span className="text-xs text-slate-500 font-medium">Conversion globale</span>
+            <span className="text-xs text-slate-500 font-medium shrink-0">Conversion</span>
           </div>
-          <p className="text-xs text-slate-400 mb-6">
-            Découverte du site &rarr; Consultation produit &rarr; Panier &rarr; Commande finalisée
+          <p className="text-xs text-slate-400 mb-5 truncate">
+            Parcours de la visite jusqu'à l'achat finalisé
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
             {funnelSteps.map((f) => (
               <div
                 key={f.step}
-                className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
+                className="p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Étape {f.step}
                     </span>
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    <span className="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-300">
                       {f.percent}%
                     </span>
                   </div>
-                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+                  <p className="text-[11px] sm:text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate">
                     {f.label}
                   </p>
                 </div>
 
-                <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
-                  <p className="text-base font-bold text-slate-900 dark:text-white">{f.count}</p>
-                  <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700 mt-1.5 overflow-hidden">
+                <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">{f.count}</p>
+                  <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700 mt-1 overflow-hidden">
                     <div
                       style={{ width: `${f.percent}%` }}
                       className="h-full rounded-full bg-emerald-500"
@@ -666,32 +682,32 @@ export default async function AdminAnalyticsPage() {
         </div>
 
         {/* Technologies : Appareils & Navigateurs (4 cols) */}
-        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Smartphone className="h-4 w-4 text-indigo-500" />
-                <span>Technologies & Écrans</span>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                <Smartphone className="h-4 w-4 text-indigo-500 shrink-0" />
+                <span className="truncate">Technologies & Écrans</span>
               </h2>
-              <span className="text-xs text-slate-500 font-medium">{totalDevices} sessions</span>
+              <span className="text-xs text-slate-500 font-medium shrink-0">{totalDevices} sessions</span>
             </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Systèmes et navigateurs utilisés par les visiteurs
+            <p className="text-xs text-slate-400 mb-4 truncate">
+              Systèmes et navigateurs utilisés
             </p>
 
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {deviceList.map((dev) => {
                 const Icon = dev.icon
                 return (
                   <div key={dev.label} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
-                        <Icon className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{dev.label}</span>
+                      <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300 truncate pr-2">
+                        <Icon className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        <span className="truncate">{dev.label}</span>
                       </span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-slate-400 text-[11px]">({dev.count})</span>
-                        <span className="font-semibold text-slate-900 dark:text-white min-w-[30px] text-right">
+                        <span className="font-semibold text-slate-900 dark:text-white min-w-[28px] text-right">
                           {dev.percent}%
                         </span>
                       </div>
@@ -725,30 +741,30 @@ export default async function AdminAnalyticsPage() {
             )}
           </div>
 
-          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
-            Données 100% anonymisées sans pistage invasif.
+          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[10px] sm:text-[11px] text-slate-400">
+            Données anonymisées sans pistage invasif.
           </div>
         </div>
       </div>
 
       {/* ── SECTION : VILLES CAMEROUN & TOP PRODUITS VENDUS ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* Villes de commande réelles (5 cols) */}
-        <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-rose-500" />
-              <span>Géographie Réelle (Cameroun)</span>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+              <MapPin className="h-4 w-4 text-rose-500 shrink-0" />
+              <span className="truncate">Géographie Réelle (Cameroun)</span>
             </h2>
-            <span className="text-xs text-slate-500 font-medium">{totalCityReports} adresse(s)</span>
+            <span className="text-xs text-slate-500 font-medium shrink-0">{totalCityReports} adresse(s)</span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">
+          <p className="text-xs text-slate-400 mb-4 truncate">
             Villes confirmées lors de la commande des clients
           </p>
 
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {Object.keys(cityCounts).length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-400">
+              <div className="py-8 text-center text-xs text-slate-400">
                 Aucune adresse de commande enregistrée pour le moment.
               </div>
             ) : (
@@ -759,12 +775,12 @@ export default async function AdminAnalyticsPage() {
                     key={cityName}
                     className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs"
                   >
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2">
                       {cityName}
                     </span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                       <span className="text-slate-400 text-[11px]">{count} commande(s)</span>
-                      <span className="font-bold text-slate-700 dark:text-slate-300 min-w-[32px] text-right">
+                      <span className="font-bold text-slate-700 dark:text-slate-300 min-w-[28px] text-right">
                         {pct}%
                       </span>
                     </div>
@@ -776,44 +792,48 @@ export default async function AdminAnalyticsPage() {
         </div>
 
         {/* Top Produits Vendus (7 cols) */}
-        <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+        <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Package className="h-4 w-4 text-amber-500" />
-              <span>Articles les Plus Vendus (E-commerce)</span>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+              <Package className="h-4 w-4 text-amber-500 shrink-0" />
+              <span className="truncate">Articles les Plus Vendus</span>
             </h2>
             <Link
               href="/admin/produits"
-              className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+              className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 shrink-0"
             >
               <span>Catalogue</span>
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <p className="text-xs text-slate-400 mb-4">
-            Classement par volume de commandes réelles et chiffre d'affaires
+          <p className="text-xs text-slate-400 mb-4 truncate">
+            Classement par volume de commandes réelles
           </p>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {topProducts.length === 0 ? (
-              <div className="py-10 text-center text-xs text-slate-400">
+              <div className="py-8 text-center text-xs text-slate-400">
                 Aucun article commandé pour le moment.
               </div>
             ) : (
               topProducts.map((p, idx) => (
-                <div key={p.id} className="py-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="text-xs font-semibold text-slate-400 w-4 text-center">
+                <div key={p.id} className="py-2.5 sm:py-3 flex items-center justify-between gap-2.5 sm:gap-3 min-w-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
+                    <span className="text-xs font-semibold text-slate-400 w-4 text-center shrink-0">
                       #{idx + 1}
                     </span>
-                    <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden relative shrink-0 border border-slate-200 dark:border-slate-700">
-                      <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+                    <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden relative shrink-0 border border-slate-200 dark:border-slate-700 flex items-center justify-center">
+                      {p.image ? (
+                        <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+                      ) : (
+                        <Package className="h-5 w-5 text-slate-400" />
+                      )}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
                         {p.name}
                       </p>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[11px] text-slate-400 truncate">
                         {formatPrice(p.price)}
                       </p>
                     </div>
@@ -834,21 +854,21 @@ export default async function AdminAnalyticsPage() {
         </div>
       </div>
 
-      {/* ── SECTION : FLUX D'ACTIVITÉ EN TEMPS RÉEL (REAL-TIME STREAM) ── */}
+      {/* ── SECTION : FLUX D'ACTIVITÉ EN TEMPS RÉEL (RESPONSIVE) ── */}
       {recentActivities.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Activity className="h-4 w-4 text-emerald-500" />
-              <span>Flux d'Activité en Temps Réel</span>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+              <Activity className="h-4 w-4 text-emerald-500 shrink-0" />
+              <span className="truncate">Flux d'Activité en Direct</span>
             </h2>
-            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+            <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 shrink-0">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
               Direct
             </span>
           </div>
-          <p className="text-xs text-slate-400 mb-4">
-            Dernières actions enregistrées sur la boutique en direct
+          <p className="text-xs text-slate-400 mb-3 truncate">
+            Dernières actions enregistrées sur la boutique
           </p>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
@@ -856,19 +876,21 @@ export default async function AdminAnalyticsPage() {
               const diffSecs = Math.max(1, Math.round((now - act.timestamp) / 1000))
               const timeAgo = diffSecs < 60 ? `Il y a ${diffSecs}s` : `Il y a ${Math.round(diffSecs / 60)} min`
               return (
-                <div key={i} className="py-2.5 flex items-center justify-between text-xs gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div key={i} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1 sm:gap-3 min-w-0">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
                     <span className="font-semibold text-slate-900 dark:text-white shrink-0">
                       {act.event_name || 'Visite'}
                     </span>
-                    <span className="font-mono text-slate-500 dark:text-slate-400 truncate">
+                    <span className="font-mono text-slate-500 dark:text-slate-400 truncate text-[11px]">
                       {act.path}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0 text-[11px] text-slate-400">
+                  <div className="flex items-center gap-2 sm:gap-3 shrink-0 text-[11px] text-slate-400 pl-4 sm:pl-0">
                     <span>{act.device}</span>
+                    <span>•</span>
                     <span className="font-medium text-slate-500">{act.channel}</span>
+                    <span>•</span>
                     <span className="text-slate-400">{timeAgo}</span>
                   </div>
                 </div>
