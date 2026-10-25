@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import posthog from 'posthog-js'
 import { CheckCircle2, User, Building2, FileText, ChevronRight, ChevronLeft, Lock, Eye, EyeOff, Info } from 'lucide-react'
 import { submitVendorApplication } from './actions'
 import { Button } from '@/components/ui/button'
@@ -38,9 +37,6 @@ export function VendorApplicationForm() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError]   = useState<string | null>(null)
-  const posthogConfigured = Boolean(
-    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  )
 
   // Step 1 — personal
   const [fullName,     setFullName]     = useState('')
@@ -117,11 +113,6 @@ export function VendorApplicationForm() {
     if (result?.error) {
       setError(result.error)
       return
-    }
-    if (posthogConfigured) {
-      posthog.capture('vendor_application_submitted', {
-        has_business_type: Boolean(businessType),
-      })
     }
     setSuccess(true)
   }

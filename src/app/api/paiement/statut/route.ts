@@ -1,6 +1,4 @@
-import { after, type NextRequest, NextResponse } from 'next/server'
-import { SeverityNumber } from '@opentelemetry/api-logs'
-import { posthogLog, posthogLogProvider } from '@/instrumentation'
+import { type NextRequest, NextResponse } from 'next/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { checkTransactionStatus } from '@/lib/campay'
 import { decrementStockForOrder } from '@/lib/stock'
@@ -63,19 +61,6 @@ export async function GET(request: NextRequest) {
 
         const payMethod = payment.payment_method || (payment.metadata as any)?.payment_method || 'orange_money'
         await sendConfirmationForOrders(supabase, orderIds, payMethod)
-
-        posthogLog?.emit({
-          body: 'payment_confirmation_completed',
-          severityNumber: SeverityNumber.INFO,
-          attributes: {
-            endpoint: '/api/paiement/statut',
-            order_count: orderIds.length,
-            payment_method: payMethod,
-          },
-        })
-        after(async () => {
-          await posthogLogProvider?.forceFlush()
-        })
 
         return NextResponse.json({ status: 'SUCCESSFUL', orderIds })
       }

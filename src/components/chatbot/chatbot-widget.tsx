@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, X, Send, Bot, Loader2 } from 'lucide-react'
-import posthog from 'posthog-js'
 import { cn } from '@/lib/utils'
 
 interface Message {
@@ -18,10 +17,6 @@ export function ChatbotWidget() {
   const [input, setInput]   = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
-  const conversationId = useRef(crypto.randomUUID())
-  const posthogConfigured = Boolean(
-    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  )
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -41,11 +36,7 @@ export function ChatbotWidget() {
       const res = await fetch('/api/chatbot', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: newMessages,
-          conversationId: conversationId.current,
-          distinctId: posthogConfigured ? posthog.get_distinct_id() : undefined,
-        }),
+        body: JSON.stringify({ messages: newMessages }),
       })
       const data = await res.json()
       setMessages([...newMessages, { role: 'assistant', content: data.reply }])

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import posthog from 'posthog-js'
 import { ShoppingCart, Minus, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useCartStore } from '@/store/cart-store'
@@ -31,9 +30,6 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
   const { t } = useLanguage()
   const { theme } = useTheme()
   const isDark = theme === 'dark'
-  const posthogConfigured = Boolean(
-    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  )
 
   // Intersection Observer pour faire apparaître le bouton collant dès que le bouton principal défile hors écran
   useEffect(() => {
@@ -90,15 +86,6 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
 
   function handleAdd() {
     addItem(product, finalVariant, qty)
-    if (posthogConfigured) {
-      posthog.capture('product_added_to_cart', {
-        product_id: product.id,
-        product_type: (product as any).product_type ?? 'simple',
-        quantity: qty,
-        unit_price: unitPrice,
-        has_variant: Boolean(finalVariant),
-      })
-    }
     setAdded(true)
     setTimeout(() => setAdded(false), 2000)
   }
@@ -106,15 +93,6 @@ export function AddToCartSection({ product, resolvedVariant, overridePrice, isAv
   function handleBuyNow() {
     clearCart()
     addItem(product, finalVariant, qty)
-    if (posthogConfigured) {
-      posthog.capture('checkout_started', {
-        product_id: product.id,
-        product_type: (product as any).product_type ?? 'simple',
-        quantity: qty,
-        unit_price: unitPrice,
-        has_variant: Boolean(finalVariant),
-      })
-    }
     router.push('/checkout')
   }
 
