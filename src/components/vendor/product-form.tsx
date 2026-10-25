@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { Upload, X, Plus, Sparkles, Trash2, Layers, Tag, BedDouble, Shirt, Footprints, AlertCircle, FileText, Download, Link as LinkIcon, Lock, FileCheck, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -77,6 +78,9 @@ export function ProductForm({
   mode,
 }: Props) {
   const router = useRouter()
+  const posthogConfigured = Boolean(
+    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  )
   const [loading, setLoading]                 = useState(false)
   const [error, setError]                     = useState<string | null>(null)
   const [uploadingImg, setUploadingImg]       = useState(false)
@@ -273,6 +277,16 @@ export function ProductForm({
       )
     }
 
+    if (productId && posthogConfigured) {
+      posthog.capture(mode === 'create' ? 'product_created' : 'product_updated', {
+        product_id: productId,
+        product_type: productType,
+        is_active: isActive,
+        is_featured: isFeatured,
+        image_count: images.length,
+        variant_count: advancedVariants.length,
+      })
+    }
     router.push('/vendeur/produits')
   }
 

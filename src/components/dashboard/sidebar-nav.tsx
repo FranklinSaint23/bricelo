@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard, Package, ShoppingBag, Store,
-  Users, CreditCard, Tag, GraduationCap,
+  Users, CreditCard, Tag, GraduationCap, Activity,
 } from 'lucide-react'
 
 const vendorItems = [
@@ -16,14 +16,15 @@ const vendorItems = [
 ]
 
 const adminItems = [
-  { href: '/admin',              icon: LayoutDashboard, label: 'Vue globale',   exact: true },
-  { href: '/admin/utilisateurs', icon: Users,           label: 'Utilisateurs',  exact: false },
-  { href: '/admin/vendeurs',     icon: Store,           label: 'Vendeurs',      exact: false },
-  { href: '/admin/produits',     icon: Package,         label: 'Produits',      exact: false },
-  { href: '/admin/categories',   icon: Tag,             label: 'Catégories',    exact: false },
-  { href: '/admin/commandes',    icon: ShoppingBag,     label: 'Commandes',     exact: false },
-  { href: '/admin/paiements',    icon: CreditCard,      label: 'Paiements',     exact: false },
-  { href: '/admin/tutoriels',    icon: GraduationCap,   label: 'Académie & Tutos', exact: false },
+  { href: '/admin',              icon: LayoutDashboard, label: 'Vue globale',       exact: true },
+  { href: '/admin/analytics',    icon: Activity,        label: 'Analytics & Trafic',exact: false },
+  { href: '/admin/utilisateurs', icon: Users,           label: 'Utilisateurs',      exact: false },
+  { href: '/admin/vendeurs',     icon: Store,           label: 'Vendeurs',          exact: false },
+  { href: '/admin/produits',     icon: Package,         label: 'Produits',          exact: false },
+  { href: '/admin/categories',   icon: Tag,             label: 'Catégories',        exact: false },
+  { href: '/admin/commandes',    icon: ShoppingBag,     label: 'Commandes',         exact: false },
+  { href: '/admin/paiements',    icon: CreditCard,      label: 'Paiements',         exact: false },
+  { href: '/admin/tutoriels',    icon: GraduationCap,   label: 'Académie & Tutos',  exact: false },
 ]
 
 export function SidebarNav({ variant }: { variant: 'vendor' | 'admin' }) {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CreditCard, Smartphone, CheckCircle, Loader2, ShieldCheck } from 'lucide-react'
@@ -51,6 +52,9 @@ export function CamPayButton({ orderIds, amount, paymentMethod }: Props) {
 
   const isMtnMode = paymentMethod === 'mtn_momo'
   const isOrangeMode = paymentMethod === 'orange_money'
+  const posthogConfigured = Boolean(
+    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  )
 
   // Nettoyer l'intervalle au démontage
   useEffect(() => {
@@ -79,6 +83,13 @@ export function CamPayButton({ orderIds, amount, paymentMethod }: Props) {
       const data = await res.json()
       if (!res.ok || !data.success) throw new Error(data.error ?? 'Échec lors de la demande de paiement.')
 
+      if (posthogConfigured) {
+        posthog.capture('payment_initiated', {
+          payment_method: paymentMethod,
+          amount,
+          order_count: orderIds.length,
+        })
+      }
       setPaymentRef(data.reference)
       setWaitingPin(true)
       setLoading(false)
@@ -92,6 +103,13 @@ export function CamPayButton({ orderIds, amount, paymentMethod }: Props) {
 
           if (statusData.status === 'SUCCESSFUL') {
             if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+            if (posthogConfigured) {
+              posthog.capture('payment_completed', {
+                payment_method: paymentMethod,
+                amount,
+                order_count: orderIds.length,
+              })
+            }
             router.push(`/commande-confirmee?orders=${orderIds.join(',')}&paiement=success`)
           } else if (statusData.status === 'FAILED') {
             failedAttempts++

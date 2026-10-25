@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import posthog from 'posthog-js'
 import { Star, Check, AlertCircle, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { submitReview } from '@/app/(shop)/produit/[slug]/review-action'
@@ -20,6 +21,9 @@ export function WriteReviewForm({ productId, slug, existingReview, defaultName =
   const [success, setSuccess]         = useState(false)
   const [error, setError]             = useState<string | null>(null)
   const [isPending, start]            = useTransition()
+  const posthogConfigured = Boolean(
+    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  )
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -29,6 +33,13 @@ export function WriteReviewForm({ productId, slug, existingReview, defaultName =
     start(async () => {
       const res = await submitReview(productId, slug, rating, comment, reviewerName)
       if ('error' in res) { setError(res.error ?? 'Erreur'); return }
+      if (posthogConfigured) {
+        posthog.capture('product_review_submitted', {
+          product_id: productId,
+          rating,
+          is_update: Boolean(existingReview),
+        })
+      }
       setSuccess(true)
     })
   }

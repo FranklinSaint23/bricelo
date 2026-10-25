@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Users, Store, Package, ShoppingBag, CreditCard, TrendingUp, ArrowRight } from 'lucide-react'
+import { Users, Store, Package, ShoppingBag, CreditCard, TrendingUp, ArrowRight, Activity } from 'lucide-react'
 import { OrderStatusBadge } from '@/components/ui/badge'
 import { formatPrice, formatDate } from '@/lib/utils'
 
@@ -37,20 +37,57 @@ export default async function AdminDashboard() {
   const revenue = revenueData?.reduce((s, p) => s + p.amount, 0) ?? 0
 
   const stats = [
+    { icon: Activity,    label: 'Analytics & Trafic', value: 'Live 🟢',         color: 'text-amber-600',   bg: 'bg-amber-50',   border: 'border-l-amber-400',   href: '/admin/analytics' },
     { icon: Users,       label: 'Utilisateurs',     value: userCount ?? 0,    color: 'text-blue-600',    bg: 'bg-blue-50',    border: 'border-l-blue-400',    href: '/admin/utilisateurs' },
     { icon: Store,       label: 'Boutiques actives', value: storeCount ?? 0,   color: 'text-violet-600',  bg: 'bg-violet-50',  border: 'border-l-violet-400',  href: '/admin/vendeurs' },
     { icon: Package,     label: 'Produits actifs',   value: productCount ?? 0, color: 'text-sky-600',     bg: 'bg-sky-50',     border: 'border-l-sky-400',     href: '/admin/produits' },
     { icon: ShoppingBag, label: 'Commandes',          value: orderCount ?? 0,   color: 'text-orange-600',  bg: 'bg-orange-50',  border: 'border-l-orange-400',  href: '/admin/commandes' },
     { icon: CreditCard,  label: 'Volume paiements',   value: formatPrice(revenue), color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-l-emerald-400', href: '/admin/paiements' },
-    { icon: TrendingUp,  label: 'Taux conversion',    value: orderCount && userCount ? `${((orderCount / userCount) * 100).toFixed(1)} %` : '—', color: 'text-teal-600', bg: 'bg-teal-50', border: 'border-l-teal-400', href: null },
   ]
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       {/* En-tête */}
-      <div className="mb-8">
-        <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Vue globale</h1>
-        <p className="text-sm text-[var(--color-slate-500)] mt-0.5">Tableau de bord administrateur BRICELO</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold text-[var(--color-navy-900)]">Vue globale</h1>
+          <p className="text-sm text-[var(--color-slate-500)] mt-0.5">Tableau de bord administrateur BRICELO</p>
+        </div>
+        <Link
+          href="/admin/analytics"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-[var(--color-navy-950)] font-bold text-xs shadow-xs transition-colors self-start sm:self-auto"
+        >
+          <Activity className="h-4 w-4" />
+          <span>Voir l'Analytics complet →</span>
+        </Link>
+      </div>
+
+      {/* Bannière PostHog Live Analytics */}
+      <div className="mb-6 bg-gradient-to-r from-[var(--color-navy-950)] via-[var(--color-navy-900)] to-slate-900 rounded-2xl p-5 sm:p-6 text-white border border-white/10 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+            <Activity className="h-6 w-6 text-amber-400 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-white">Trafic & Activité Visiteurs en Temps Réel</h2>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                PostHog Live
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-1 max-w-xl">
+              Visualisez le nombre de visiteurs, les clics en direct et revivez les sessions vidéo de navigation de vos clients.
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/admin/analytics"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition-all shrink-0"
+        >
+          <span>Ouvrir le Dashboard Analytics</span>
+          <ArrowRight className="h-3.5 w-3.5 text-amber-400" />
+        </Link>
       </div>
 
       {/* Alerte commandes en attente */}

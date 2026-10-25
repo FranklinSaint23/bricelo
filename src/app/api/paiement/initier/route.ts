@@ -1,4 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server'
+import { after, type NextRequest, NextResponse } from 'next/server'
+import { SeverityNumber } from '@opentelemetry/api-logs'
+import { posthogLog, posthogLogProvider } from '@/instrumentation'
 import { createClient } from '@/lib/supabase/server'
 import { getAdminClient } from '@/lib/supabase/admin'
 import { v4 as uuidv4 } from 'uuid'
@@ -72,6 +74,19 @@ export async function POST(request: NextRequest) {
         .from('payments')
         .update({ metadata: { parent_transaction_ref: transactionRef, order_ids: orderIds, campay_reference: campayRes.reference, phone } })
         .eq('transaction_ref', transactionRef)
+
+      posthogLog?.emit({
+        body: 'payment_initiation_accepted',
+        severityNumber: SeverityNumber.INFO,
+        attributes: {
+          endpoint: '/api/paiement/initier',
+          order_count: orderIds.length,
+          payment_method: paymentMethod || 'unknown',
+        },
+      })
+      after(async () => {
+        await posthogLogProvider?.forceFlush()
+      })
 
       return NextResponse.json({
         success: true,

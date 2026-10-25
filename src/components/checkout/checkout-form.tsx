@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import posthog from 'posthog-js'
 import { MapPin, Plus, CreditCard, Building2, Calendar, Clock, Navigation, User, Mail, ShieldAlert, AlertTriangle } from 'lucide-react'
 import { useCartStore } from '@/store/cart-store'
 import { formatPrice } from '@/lib/utils'
@@ -50,6 +51,9 @@ export function CheckoutForm({ addresses, userId, paymentSettings }: Props) {
   const router = useRouter()
   const { t, lang } = useLanguage()
   const { items, total, clearCart } = useCartStore()
+  const posthogConfigured = Boolean(
+    process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN && process.env.NEXT_PUBLIC_POSTHOG_HOST,
+  )
 
   const DAYS = lang === 'fr' ? DAYS_FR : DAYS_EN
 
@@ -304,6 +308,16 @@ export function CheckoutForm({ addresses, userId, paymentSettings }: Props) {
         }
       }
 
+      if (posthogConfigured) {
+        posthog.capture('order_submitted', {
+          order_count: orderIds.length,
+          item_count: items.reduce((count, item) => count + item.quantity, 0),
+          payment_method: paymentMethod,
+          grand_total: grandTotal,
+          is_guest: isGuest,
+          has_digital_item: hasDigitalItem,
+        })
+      }
       clearCart()
       if (paymentMethod === 'cash') {
         router.push(`/commande-confirmee?orders=${orderIds.join(',')}`)
