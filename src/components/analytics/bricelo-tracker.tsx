@@ -11,8 +11,20 @@ export function BriceloTracker() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    // Ne pas tracer les pages de l'espace administration
+    // Ne JAMAIS tracer en local / développement pour ne pas fausser les stats
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') return
+
+    // Ne pas tracer les pages de l'espace administration ni les routes API
     if (pathname.startsWith('/admin') || pathname.startsWith('/api')) return
+
+    // Ne pas tracer si l'utilisateur est un administrateur connecté
+    if (
+      document.cookie.includes('bricelo_is_admin') ||
+      localStorage.getItem('bricelo_is_admin') === 'true' ||
+      sessionStorage.getItem('bricelo_is_admin') === 'true'
+    ) {
+      return
+    }
 
     // 1. Récupération ou création des identifiants anonymes
     let visitorId = localStorage.getItem('bricelo_vid')

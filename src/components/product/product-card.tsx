@@ -16,26 +16,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, className }: ProductCardProps) {
   const [wished, setWished] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
   const { t } = useLanguage()
-
-  const handleProductClick = (e: React.MouseEvent) => {
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return
-    setIsNavigating(true)
-  }
-
-  useEffect(() => {
-    if (!isNavigating) return
-    const timer = setTimeout(() => setIsNavigating(false), 8000)
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) setIsNavigating(false)
-    }
-    window.addEventListener('pageshow', handlePageShow)
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('pageshow', handlePageShow)
-    }
-  }, [isNavigating])
 
   const rawVariants = (product as any).variants ?? []
   const activeVariants = rawVariants.filter((v: any) => v.status !== 'inactive')
@@ -115,7 +96,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
       {/* Image */}
       <Link
         href={`/produit/${product.slug}`}
-        onClick={handleProductClick}
         className="block relative overflow-hidden bg-[var(--color-slate-50)]"
         style={{ aspectRatio: '1/1' }}
       >
@@ -193,7 +173,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </Link>
         )}
 
-        <Link href={`/produit/${product.slug}`} onClick={handleProductClick}>
+        <Link href={`/produit/${product.slug}`}>
           <h3 className="text-sm font-medium text-[var(--color-navy-900)] line-clamp-2 leading-snug hover:text-[var(--color-accent)] transition-colors">
             {product.name}
           </h3>
@@ -233,22 +213,6 @@ export function ProductCard({ product, className }: ProductCardProps) {
           <p className="text-[10px] text-[var(--color-danger)] mt-1">{t.lowStock(totalStock)}</p>
         )}
       </div>
-
-      {/* Spinner de confirmation de clic & chargement */}
-      {isNavigating && (
-        <div className="absolute inset-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 p-3 text-center animate-in fade-in duration-150">
-          <div className="relative flex items-center justify-center">
-            <div className="h-10 w-10 rounded-full border-3 border-amber-400/30 border-t-amber-500 animate-spin" />
-            <Loader2 className="absolute h-5 w-5 text-amber-500 animate-spin" />
-          </div>
-          <span className="text-xs font-black text-[var(--color-navy-900)] dark:text-white uppercase tracking-wider">
-            Chargement...
-          </span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-            Veuillez patienter
-          </span>
-        </div>
-      )}
     </div>
   )
 }

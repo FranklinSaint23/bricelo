@@ -6,6 +6,7 @@ import { Suspense } from 'react'
 import { ScrollToTop } from '@/components/ui/scroll-to-top'
 import { AppProviders } from '@/components/providers/app-providers'
 import { BriceloTracker } from '@/components/analytics/bricelo-tracker'
+import { ProductNavigationLoader } from '@/components/ui/product-navigation-loader'
 
 const geistSans = GeistSans
 const geistMono = GeistMono
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense fallback={null}>
             <BriceloTracker />
           </Suspense>
+          <ProductNavigationLoader />
           {children}
           <ScrollToTop />
         </AppProviders>

@@ -37,20 +37,6 @@ interface Props {
 export function RecentlyViewed({ excludeId }: Props = {}) {
   const [products, setProducts] = useState<RecentlyViewedProduct[]>([])
   const [loading, setLoading] = useState(true)
-  const [navigatingId, setNavigatingId] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!navigatingId) return
-    const timer = setTimeout(() => setNavigatingId(null), 8000)
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) setNavigatingId(null)
-    }
-    window.addEventListener('pageshow', handlePageShow)
-    return () => {
-      clearTimeout(timer)
-      window.removeEventListener('pageshow', handlePageShow)
-    }
-  }, [navigatingId])
 
   useEffect(() => {
     async function loadValidRecentProducts() {
@@ -194,10 +180,6 @@ export function RecentlyViewed({ excludeId }: Props = {}) {
             <Link
               key={p.id}
               href={`/produit/${p.slug}`}
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return
-                setNavigatingId(p.id)
-              }}
               className="shrink-0 w-36 sm:w-44 group bg-white rounded-2xl border border-[var(--color-slate-200)] hover:border-amber-400 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1 overflow-hidden flex flex-col justify-between relative"
             >
               <div>
@@ -233,19 +215,6 @@ export function RecentlyViewed({ excludeId }: Props = {}) {
                   {formatPrice(p.price)}
                 </span>
               </div>
-
-              {/* Spinner de confirmation de clic */}
-              {navigatingId === p.id && (
-                <div className="absolute inset-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2 p-2 text-center rounded-2xl animate-in fade-in duration-150">
-                  <div className="relative flex items-center justify-center">
-                    <div className="h-9 w-9 rounded-full border-3 border-amber-400/30 border-t-amber-500 animate-spin" />
-                    <Loader2 className="absolute h-4.5 w-4.5 text-amber-500 animate-spin" />
-                  </div>
-                  <span className="text-[10px] font-black text-[var(--color-navy-900)] dark:text-white uppercase tracking-wider">
-                    Chargement...
-                  </span>
-                </div>
-              )}
             </Link>
           ))}
         </div>

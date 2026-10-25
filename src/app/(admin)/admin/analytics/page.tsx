@@ -6,11 +6,11 @@ import { createClient } from '@/lib/supabase/server'
 import {
   TrendingUp, ShoppingBag, Users, CreditCard, Package, Store,
   BarChart3, Smartphone, Laptop, Globe, ArrowUpRight, CheckCircle2,
-  Share2, Search, ArrowRight, Eye, RefreshCw, ShoppingCart, DollarSign,
-  Compass, MapPin, Radio, Activity
+  Share2, Search, ArrowRight, Eye, ShoppingCart, DollarSign,
+  MapPin, Activity, ChevronRight
 } from 'lucide-react'
-import { formatPrice, formatDate } from '@/lib/utils'
-import { OrderStatusBadge } from '@/components/ui/badge'
+import { formatPrice } from '@/lib/utils'
+import { AnalyticsHeaderActions } from '@/components/admin/analytics-header-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,7 +21,7 @@ export default async function AdminAnalyticsPage() {
 
   const supabase = await createClient()
 
-  // 1. Récupération des données Supabase avec tolérance aux pannes
+  // 1. Récupération des données Supabase réelles
   let ordersData: any[] = []
   let paymentsData: any[] = []
   let usersData: any[] = []
@@ -90,16 +90,17 @@ export default async function AdminAnalyticsPage() {
   // 4. Sources d'Acquisition réelles
   const storedChannels = rawAnalytics.channels || {}
   const channels = [
-    { name: 'WhatsApp', icon: '📱', color: 'bg-emerald-500', barBg: 'bg-emerald-100 dark:bg-emerald-950/60', count: Number(storedChannels.whatsapp) || 0, desc: 'Statuts & partages dans les groupes WhatsApp' },
-    { name: 'Facebook', icon: '📘', color: 'bg-blue-600', barBg: 'bg-blue-100 dark:bg-blue-950/60', count: Number(storedChannels.facebook) || 0, desc: 'Publications et publicités Meta' },
-    { name: 'Accès Direct', icon: '🌐', color: 'bg-amber-500', barBg: 'bg-amber-100 dark:bg-amber-950/60', count: Number(storedChannels.direct) || 0, desc: 'Visiteurs tapant directement bricelo.com' },
-    { name: 'Recherche Google', icon: '🔍', color: 'bg-sky-500', barBg: 'bg-sky-100 dark:bg-sky-950/60', count: Number(storedChannels.google) || 0, desc: 'Recherches naturelles sur Google' },
-    { name: 'Instagram & TikTok', icon: '📷', color: 'bg-purple-600', barBg: 'bg-purple-100 dark:bg-purple-950/60', count: (Number(storedChannels.instagram) || 0) + (Number(storedChannels.tiktok) || 0), desc: 'Réseaux visuels et vidéos' },
+    { name: 'Accès Direct', count: Number(storedChannels.direct) || 0, desc: 'Trafic direct (bricelo.com)' },
+    { name: 'WhatsApp', count: Number(storedChannels.whatsapp) || 0, desc: 'Liens partagés sur WhatsApp' },
+    { name: 'Recherche Google', count: Number(storedChannels.google) || 0, desc: 'Recherches naturelles Google' },
+    { name: 'Facebook', count: Number(storedChannels.facebook) || 0, desc: 'Publications et publicités Meta' },
+    { name: 'Instagram & TikTok', count: (Number(storedChannels.instagram) || 0) + (Number(storedChannels.tiktok) || 0), desc: 'Réseaux sociaux vidéo & photo' },
   ]
   const totalTrafficVisits = channels.reduce((sum, c) => sum + c.count, 0)
   const todayVisitors = Number(rawAnalytics.visitors?.today) || 0
+  const totalRecordedVisitors = Number(rawAnalytics.visitors?.total) || totalTrafficVisits
 
-  // 5. Appareils & Systèmes d'exploitation réels
+  // 5. Appareils réels
   const storedDevices = rawAnalytics.devices || {}
   const androidCount = Number(storedDevices.android) || 0
   const iosCount = Number(storedDevices.ios) || 0
@@ -108,14 +109,14 @@ export default async function AdminAnalyticsPage() {
   const totalDevices = androidCount + iosCount + desktopCount + tabletCount
 
   const deviceList = [
-    { label: 'Mobile Android (Tecno, Samsung, Infinix...)', percent: totalDevices > 0 ? Math.round((androidCount / totalDevices) * 100) : 0, count: androidCount, color: 'bg-emerald-500', icon: Smartphone },
-    { label: 'Mobile iPhone (Apple iOS)', percent: totalDevices > 0 ? Math.round((iosCount / totalDevices) * 100) : 0, count: iosCount, color: 'bg-indigo-500', icon: Smartphone },
-    { label: 'Ordinateurs (Windows / Mac)', percent: totalDevices > 0 ? Math.round((desktopCount / totalDevices) * 100) : 0, count: desktopCount, color: 'bg-slate-500', icon: Laptop },
+    { label: 'Mobile Android', count: androidCount, percent: totalDevices > 0 ? Math.round((androidCount / totalDevices) * 100) : 0, icon: Smartphone },
+    { label: 'Mobile iPhone (iOS)', count: iosCount, percent: totalDevices > 0 ? Math.round((iosCount / totalDevices) * 100) : 0, icon: Smartphone },
+    { label: 'Ordinateurs', count: desktopCount, percent: totalDevices > 0 ? Math.round((desktopCount / totalDevices) * 100) : 0, icon: Laptop },
   ]
 
-  // 6. Entonnoir de Vente réel (Conversion Funnel)
+  // 6. Entonnoir de Vente (Conversion Funnel réel)
   const storedFunnel = rawAnalytics.funnel || {}
-  const funnelVisitors = Math.max(Number(rawAnalytics.visitors?.total) || 0, totalTrafficVisits)
+  const funnelVisitors = Math.max(totalRecordedVisitors, totalTrafficVisits)
   const funnelBase = Math.max(funnelVisitors, 1)
   const funnelProductViews = Number(storedFunnel.product_views) || 0
   const funnelCartAdds = Number(storedFunnel.cart_adds) || 0
@@ -123,11 +124,11 @@ export default async function AdminAnalyticsPage() {
   const funnelOrdersCompleted = totalOrders
 
   const funnelSteps = [
-    { step: 1, label: 'Visiteurs sur BRICELO', count: funnelVisitors, percent: funnelVisitors > 0 ? 100 : 0, color: 'bg-blue-500' },
-    { step: 2, label: 'Consultation Fiches Produits', count: funnelProductViews, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelProductViews / funnelBase) * 100)) : 0, color: 'bg-sky-500' },
-    { step: 3, label: 'Ajouts au Panier', count: funnelCartAdds, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCartAdds / funnelBase) * 100)) : 0, color: 'bg-amber-500' },
-    { step: 4, label: 'Débuts de Commande', count: funnelCheckoutStarts, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCheckoutStarts / funnelBase) * 100)) : 0, color: 'bg-orange-500' },
-    { step: 5, label: 'Paiements Finalisés & Validés', count: funnelOrdersCompleted, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelOrdersCompleted / funnelBase) * 100)) : 0, color: 'bg-emerald-500' },
+    { step: '1', label: 'Visiteurs Uniques', count: funnelVisitors, percent: funnelVisitors > 0 ? 100 : 0 },
+    { step: '2', label: 'Fiches Produits vues', count: funnelProductViews, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelProductViews / funnelBase) * 100)) : 0 },
+    { step: '3', label: 'Ajouts au Panier', count: funnelCartAdds, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCartAdds / funnelBase) * 100)) : 0 },
+    { step: '4', label: 'Initié commande', count: funnelCheckoutStarts, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelCheckoutStarts / funnelBase) * 100)) : 0 },
+    { step: '5', label: 'Commandes Finalisées', count: funnelOrdersCompleted, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelOrdersCompleted / funnelBase) * 100)) : 0 },
   ]
 
   // 7. Graphique des 7 derniers jours réels
@@ -149,6 +150,8 @@ export default async function AdminAnalyticsPage() {
   })
   const dailyChart = Array.from(daysMap.values())
   const maxDayRevenue = Math.max(...dailyChart.map((d) => d.total), 1)
+  const weeklyTotalRevenue = dailyChart.reduce((s, d) => s + d.total, 0)
+  const weeklyTotalOrders = dailyChart.reduce((s, d) => s + d.count, 0)
 
   // 8. Répartition par Villes réelles au Cameroun
   const cityCounts: Record<string, number> = {}
@@ -196,159 +199,199 @@ export default async function AdminAnalyticsPage() {
   const topProducts = Array.from(productSalesMap.values()).slice(0, 5)
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-8">
-      {/* ── BANNIÈRE TEMPS RÉEL (Live Pulse) ── */}
-      <div className="bg-gradient-to-r from-[var(--color-navy-950)] via-[var(--color-navy-900)] to-slate-900 rounded-3xl p-6 text-white border border-white/10 shadow-lg flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="relative flex items-center justify-center">
-            <span className="absolute h-12 w-12 rounded-full bg-emerald-400/20 animate-ping" />
-            <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400">
-              <Radio className="h-6 w-6 animate-pulse" />
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      {/* ── EN-TÊTE ÉPURÉ & PROFESSIONNEL ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200/80 dark:border-slate-800">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-slate-500 mb-1">
+            <Link href="/admin" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+              Administration
+            </Link>
+            <ChevronRight className="h-3 w-3 text-slate-400" />
+            <span className="text-slate-700 dark:text-slate-300 font-medium">Analytique</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Analytique & Performances
+            </h1>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/80">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>{activeNow} en direct</span>
             </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="text-3xl font-black text-white tracking-tight">{activeNow}</span>
-              <span className="px-2.5 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                En ligne en ce moment
-              </span>
-            </div>
-            <p className="text-xs text-slate-300 mt-1">
-              Visiteurs naviguant actuellement sur les pages et fiches produits de BRICELO.
-            </p>
-          </div>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Métriques d'audience et de ventes 100% réelles issues de votre base de données BRICELO.
+          </p>
         </div>
 
-        <div className="flex items-center gap-4 relative z-10 border-t md:border-t-0 md:border-l border-white/10 pt-4 md:pt-0 md:pl-6">
-          <div>
-            <p className="text-xs text-slate-400 font-medium">Visiteurs Détectés (Aujourd'hui)</p>
-            <p className="text-xl font-black text-white mt-0.5">
-              {todayVisitors} personne{todayVisitors > 1 ? 's' : ''}
-            </p>
-          </div>
-          <Link
-            href="/admin"
-            className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/15 transition-colors shrink-0"
-          >
-            ← Vue Globale
-          </Link>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <AnalyticsHeaderActions />
         </div>
       </div>
 
-      {/* ── CHIFFRES CLÉS FINANCIERS & E-COMMERCE ── */}
+      {/* ── KPI CARDS (HAUTE DENSITÉ & MINIMALISTES) ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Chiffre d'Affaires</span>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-navy-900)] dark:text-white mt-1">
+        {/* Chiffre d'Affaires */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Chiffre d'Affaires
+            </span>
+            <DollarSign className="h-4 w-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
             {formatPrice(totalRevenue)}
           </p>
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            <span>Encaissé : {formatPrice(collectedRevenue)}</span>
+          <div className="mt-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+            <span>{formatPrice(collectedRevenue)} encaissé</span>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Commandes Totales</span>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-navy-900)] dark:text-white mt-1">
+        {/* Commandes Totales */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Commandes Totales
+            </span>
+            <ShoppingBag className="h-4 w-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
             {totalOrders}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            Panier moyen : <strong className="text-slate-800 dark:text-white">{formatPrice(averageBasket)}</strong>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Panier moyen : <strong className="text-slate-800 dark:text-slate-200 font-semibold">{formatPrice(averageBasket)}</strong>
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Taux de Conversion Global</span>
-          <p className="text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">
+        {/* Taux de Conversion */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Taux de Conversion
+            </span>
+            <TrendingUp className="h-4 w-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
             {totalTrafficVisits > 0 && totalOrders > 0
               ? `${((totalOrders / totalTrafficVisits) * 100).toFixed(1)} %`
               : totalOrders > 0
               ? '100 %'
-              : '0 %'}
+              : '0.0 %'}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            Visiteurs transformés en acheteurs
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            Visites converties en achats réels
           </p>
         </div>
 
-        <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-2xl border border-slate-200 dark:border-slate-800 p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Comptes Inscrits</span>
-          <p className="text-2xl sm:text-3xl font-black text-[var(--color-navy-900)] dark:text-white mt-1">
-            {users.length}
+        {/* Visiteurs Détectés */}
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-2xs">
+          <div className="flex items-center justify-between text-slate-500">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Visites Aujourd'hui
+            </span>
+            <Eye className="h-4 w-4 text-slate-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1.5 tracking-tight">
+            {todayVisitors}
           </p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            {users.filter((u) => u.role === 'customer').length} clients • {stores.filter((s) => s.is_active).length} boutiques
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {totalRecordedVisitors} visiteur(s) unique(s) cumulé(s)
           </p>
         </div>
       </div>
 
-      {/* ── CANAUX D'ACQUISITION (D'où viennent vos clients ?) ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-white dark:bg-[var(--color-navy-950)] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-base font-bold text-[var(--color-navy-900)] dark:text-white flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-amber-500" />
-              <span>Canaux d'Acquisition (D'où viennent vos visiteurs ?)</span>
-            </h2>
-            <span className="text-xs font-bold text-slate-400">Total : {totalTrafficVisits} visites</span>
-          </div>
-          <p className="text-xs text-slate-400 mb-6">
-            Détection automatique des liens partagés sur WhatsApp, Facebook, Instagram et des recherches Google.
-          </p>
+      {/* ── SECTION PRINCIPALE : GRAPHIQUE 7 JOURS & ACQUISITION ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Graphique hebdomadaire (8 cols) */}
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-amber-500" />
+                <span>Ventes Quotidiennes (7 Derniers Jours)</span>
+              </h2>
+              <span className="text-xs font-medium text-slate-500">Semaine en cours</span>
+            </div>
+            <p className="text-xs text-slate-400 mb-6">
+              Total hebdomadaire : <strong className="text-slate-700 dark:text-slate-300">{formatPrice(weeklyTotalRevenue)}</strong> ({weeklyTotalOrders} commande{weeklyTotalOrders > 1 ? 's' : ''})
+            </p>
 
-          <div className="space-y-4">
-            {channels.map((ch) => {
-              const pct = totalTrafficVisits > 0 ? Math.round((ch.count / totalTrafficVisits) * 100) : 0
-              return (
-                <div key={ch.name} className="space-y-1.5 p-3 rounded-2xl bg-slate-50/70 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-lg">{ch.icon}</span>
-                      <div>
-                        <span className="font-bold text-slate-900 dark:text-white">{ch.name}</span>
-                        <p className="text-[10px] text-slate-400">{ch.desc}</p>
-                      </div>
+            <div className="h-52 w-full flex items-end justify-between gap-2 sm:gap-3 pt-6 pb-2 border-b border-slate-100 dark:border-slate-800">
+              {dailyChart.map((d) => {
+                const heightPct = maxDayRevenue > 0 && d.total > 0
+                  ? Math.max(Math.round((d.total / maxDayRevenue) * 100), 10)
+                  : 4
+
+                return (
+                  <div key={d.dateStr} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 pointer-events-none bg-slate-900 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-lg shadow-md whitespace-nowrap border border-slate-800">
+                      <p>{d.total > 0 ? formatPrice(d.total) : '0 FCFA'}</p>
+                      <p className="text-[10px] text-amber-400 font-normal">{d.count} commande(s)</p>
                     </div>
-                    <div className="text-right">
-                      <span className="font-black text-slate-900 dark:text-white text-sm">{pct}%</span>
-                      <p className="text-[10px] text-slate-400 font-medium">{ch.count} visite(s)</p>
+
+                    <div className="w-full max-w-[42px] rounded-t-md bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-end h-full">
+                      <div
+                        style={{ height: `${heightPct}%` }}
+                        className={`w-full rounded-t-md transition-all duration-300 ${
+                          d.total > 0
+                            ? 'bg-amber-500 dark:bg-amber-400'
+                            : 'bg-slate-200 dark:bg-slate-700/60'
+                        }`}
+                      />
                     </div>
+                    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400 capitalize">
+                      {d.label}
+                    </span>
                   </div>
-                  <div className={`h-2.5 w-full rounded-full ${ch.barBg} overflow-hidden mt-2`}>
-                    <div style={{ width: `${pct}%` }} className={`h-full rounded-full ${ch.color} transition-all duration-700`} />
-                  </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-[11px] text-slate-400">
+            <span>Montant en FCFA par jour civil</span>
+            <span>Mise à jour automatique</span>
           </div>
         </div>
 
-        {/* ── APPAREILS & SMARTPHONES (Mobile Android vs iPhone vs PC) ── */}
-        <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between">
+        {/* Canaux d'Acquisition (4 cols) */}
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
           <div>
-            <h2 className="text-base font-bold text-[var(--color-navy-900)] dark:text-white flex items-center gap-2 mb-1">
-              <Smartphone className="h-5 w-5 text-indigo-500" />
-              <span>Appareils Utilisés</span>
-            </h2>
-            <p className="text-xs text-slate-400 mb-6">Répartition par type d'écran et système</p>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Share2 className="h-4 w-4 text-amber-500" />
+                <span>Origine du Trafic</span>
+              </h2>
+              <span className="text-xs font-medium text-slate-500">{totalTrafficVisits} visite(s)</span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Canaux détectés lors de l'accès à BRICELO
+            </p>
 
-            <div className="space-y-5">
-              {deviceList.map((dev) => {
-                const Icon = dev.icon
+            <div className="space-y-3">
+              {channels.map((ch) => {
+                const pct = totalTrafficVisits > 0 ? Math.round((ch.count / totalTrafficVisits) * 100) : 0
                 return (
-                  <div key={dev.label} className="space-y-1.5">
+                  <div key={ch.name} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                        <Icon className="h-3.5 w-3.5 text-slate-400" />
-                        <span>{dev.label}</span>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                        {ch.name}
                       </span>
-                      <span className="font-black text-slate-900 dark:text-white">{dev.percent}%</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 text-[11px]">{ch.count}</span>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 min-w-[32px] text-right">
+                          {pct}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                      <div style={{ width: `${dev.percent}%` }} className={`h-full rounded-full ${dev.color} transition-all duration-700`} />
+                    <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        style={{ width: `${pct}%` }}
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          ch.count > 0 ? 'bg-amber-500' : 'bg-transparent'
+                        }`}
+                      />
                     </div>
                   </div>
                 )
@@ -356,210 +399,217 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="mt-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800/50 text-xs">
-            <span className="font-bold text-slate-800 dark:text-slate-200">ℹ️ Appareils détectés :</span>
-            <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-              {totalDevices > 0
-                ? `${totalDevices} session(s) analysée(s) en direct selon les types d'écrans de vos utilisateurs.`
-                : 'En attente des premières visites de clients sur le site.'}
-            </p>
+          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
+            Trafic local / dev exclu du comptage.
           </div>
         </div>
       </div>
 
-      {/* ── ENTONNOIR DE CONVERSION E-COMMERCE (Funnel d'Achat) ── */}
-      <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-          <h2 className="text-base sm:text-lg font-bold text-[var(--color-navy-900)] dark:text-white flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-emerald-500" />
-            <span>Entonnoir de Conversion d'Achat (Funnel)</span>
-          </h2>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 self-start sm:self-auto">
-            Parcours Client Complet
-          </span>
-        </div>
-        <p className="text-xs text-slate-400 mb-8 max-w-2xl">
-          Visualisez précisément où vos visiteurs avancent et où ils abandonnent dans le processus de commande.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 relative">
-          {funnelSteps.map((f, i) => (
-            <div
-              key={f.step}
-              className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-800 flex flex-col justify-between relative group hover:border-amber-400/50 transition-all"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="h-6 w-6 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[11px] flex items-center justify-center">
-                    {f.step}
-                  </span>
-                  <span className="text-xs font-black text-slate-900 dark:text-white">{f.percent}%</span>
-                </div>
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 leading-snug">{f.label}</p>
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-200/50 dark:border-slate-800">
-                <p className="text-lg font-black text-[var(--color-navy-900)] dark:text-white">{f.count}</p>
-                <p className="text-[10px] text-slate-400">utilisateurs</p>
-                <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 mt-2 overflow-hidden">
-                  <div style={{ width: `${f.percent}%` }} className={`h-full rounded-full ${f.color}`} />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── VILLES AU CAMEROUN & GRAPHIQUE 7 JOURS ── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Graphique 7 jours */}
-        <div className="lg:col-span-2 bg-white dark:bg-[var(--color-navy-950)] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-base font-bold text-[var(--color-navy-900)] dark:text-white flex items-center gap-2">
-                <BarChart3 className="h-5 w-5 text-amber-500" />
-                <span>Commandes & Ventes Journalières (7 Derniers Jours)</span>
-              </h2>
-              <p className="text-xs text-slate-400 mt-0.5">Montant cumulé en FCFA par journée</p>
-            </div>
-            <span className="text-xs font-bold text-slate-500">7 derniers jours</span>
+      {/* ── SECTION SECONDAIRE : FUNNEL & APPAREILS ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Entonnoir (8 cols) */}
+        <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-500" />
+              <span>Entonnoir de Conversion E-commerce</span>
+            </h2>
+            <span className="text-xs text-slate-500 font-medium">Parcours d'achat</span>
           </div>
+          <p className="text-xs text-slate-400 mb-6">
+            Progression des utilisateurs de la visite initiale jusqu'à la commande finalisée
+          </p>
 
-          <div className="h-56 w-full flex items-end justify-between gap-2 sm:gap-4 pt-6 pb-2 border-b border-slate-100 dark:border-slate-800">
-            {dailyChart.map((d) => {
-              const heightPercent = maxDayRevenue > 0 && d.total > 0
-                ? Math.max(Math.round((d.total / maxDayRevenue) * 100), 12)
-                : 6
-
-              return (
-                <div key={d.dateStr} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group relative">
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 pointer-events-none bg-[var(--color-navy-950)] text-white text-[11px] font-bold px-2.5 py-1.5 rounded-lg shadow-lg whitespace-nowrap border border-slate-800">
-                    <p>{d.total > 0 ? formatPrice(d.total) : '0 FCFA'}</p>
-                    <p className="text-[10px] text-amber-400 font-normal">{d.count} commande(s)</p>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            {funnelSteps.map((f) => (
+              <div
+                key={f.step}
+                className="p-3.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Étape {f.step}
+                    </span>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                      {f.percent}%
+                    </span>
                   </div>
-                  <div className="w-full max-w-[48px] rounded-t-xl bg-slate-100 dark:bg-slate-800 overflow-hidden flex items-end h-full">
+                  <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-snug">
+                    {f.label}
+                  </p>
+                </div>
+
+                <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-700/60">
+                  <p className="text-base font-bold text-slate-900 dark:text-white">{f.count}</p>
+                  <div className="h-1 w-full rounded-full bg-slate-200 dark:bg-slate-700 mt-1.5 overflow-hidden">
                     <div
-                      style={{ height: `${heightPercent}%` }}
-                      className={`w-full rounded-t-xl transition-all duration-500 ${
-                        d.total > 0
-                          ? 'bg-gradient-to-t from-amber-600 to-amber-400 group-hover:brightness-110'
-                          : 'bg-slate-200 dark:bg-slate-700/60'
-                      }`}
+                      style={{ width: `${f.percent}%` }}
+                      className="h-full rounded-full bg-emerald-500"
                     />
                   </div>
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 capitalize">
-                    {d.label}
-                  </span>
                 </div>
-              )
-            })}
-          </div>
-
-          <div className="mt-4 flex items-center justify-between text-xs text-slate-400">
-            <span>Barres proportionnelles au chiffre d'affaires</span>
-            <span className="font-bold text-[var(--color-navy-900)] dark:text-white">
-              Semaine : {formatPrice(dailyChart.reduce((s, d) => s + d.total, 0))}
-            </span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Villes au Cameroun */}
-        <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs flex flex-col justify-between">
+        {/* Appareils (4 cols) */}
+        <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
           <div>
-            <h2 className="text-base font-bold text-[var(--color-navy-900)] dark:text-white flex items-center gap-2 mb-1">
-              <MapPin className="h-5 w-5 text-rose-500" />
-              <span>Localisation des Visiteurs & Commandes</span>
-            </h2>
-            <p className="text-xs text-slate-400 mb-5">Villes principales au Cameroun</p>
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Smartphone className="h-4 w-4 text-indigo-500" />
+                <span>Appareils Utilisés</span>
+              </h2>
+              <span className="text-xs text-slate-500 font-medium">{totalDevices} session(s)</span>
+            </div>
+            <p className="text-xs text-slate-400 mb-4">
+              Répartition par type d'équipement
+            </p>
 
-            <div className="space-y-3">
-              {Object.keys(cityCounts).length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
-                  Aucune ville enregistrée pour le moment.
-                </div>
-              ) : (
-                Object.entries(cityCounts).map(([cityName, count]) => {
-                  const pct = Math.round((count / Math.max(totalCityReports, 1)) * 100)
-                  return (
-                    <div key={cityName} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-2.5">
-                        <span className="text-base">📍</span>
-                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200">{cityName}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-black text-slate-900 dark:text-white">{pct}%</span>
-                        <span className="text-slate-400 font-medium">({count})</span>
+            <div className="space-y-3.5">
+              {deviceList.map((dev) => {
+                const Icon = dev.icon
+                return (
+                  <div key={dev.label} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                        <Icon className="h-3.5 w-3.5 text-slate-400" />
+                        <span>{dev.label}</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-slate-400 text-[11px]">({dev.count})</span>
+                        <span className="font-semibold text-slate-900 dark:text-white min-w-[30px] text-right">
+                          {dev.percent}%
+                        </span>
                       </div>
                     </div>
-                  )
-                })
-              )}
+                    <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        style={{ width: `${dev.percent}%` }}
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          dev.count > 0 ? 'bg-indigo-500' : 'bg-transparent'
+                        }`}
+                      />
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
 
-          <p className="mt-4 text-[11px] text-slate-400 text-center">
-            🇨🇲 Localisations réelles issues des adresses de commande.
-          </p>
+          <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-400">
+            {totalDevices === 0
+              ? 'En attente de sessions enregistrées.'
+              : 'Données basées sur le user-agent des visiteurs.'}
+          </div>
         </div>
       </div>
 
-      {/* ── TOP PRODUITS LES PLUS DEMANDÉS ── */}
-      <div className="bg-white dark:bg-[var(--color-navy-950)] rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-xs">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h2 className="text-base font-bold text-[var(--color-navy-900)] dark:text-white flex items-center gap-2">
-              <Package className="h-5 w-5 text-amber-500" />
-              <span>Articles & Produits les Plus Populaires</span>
+      {/* ── SECTION TERTIAIRE : VILLES & TOP PRODUITS ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Villes de commande (5 cols) */}
+        <div className="lg:col-span-5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-rose-500" />
+              <span>Villes & Localisation (Cameroun)</span>
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">Produits générant le plus de visites et de commandes</p>
+            <span className="text-xs text-slate-500 font-medium">{totalCityReports} adresse(s)</span>
           </div>
-          <Link
-            href="/admin/produits"
-            className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
-          >
-            <span>Catalogue</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          <p className="text-xs text-slate-400 mb-4">
+            Villes réelles issues des adresses de commande
+          </p>
+
+          <div className="space-y-2.5">
+            {Object.keys(cityCounts).length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-400">
+                Aucune adresse de commande enregistrée pour le moment.
+              </div>
+            ) : (
+              Object.entries(cityCounts).map(([cityName, count]) => {
+                const pct = Math.round((count / Math.max(totalCityReports, 1)) * 100)
+                return (
+                  <div
+                    key={cityName}
+                    className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs"
+                  >
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      {cityName}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 text-[11px]">{count} commande(s)</span>
+                      <span className="font-bold text-slate-700 dark:text-slate-300 min-w-[32px] text-right">
+                        {pct}%
+                      </span>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
         </div>
 
-        <div className="divide-y divide-slate-100 dark:divide-slate-800">
-          {topProducts.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-400">
-              Aucun article commandé pour le moment.
-            </div>
-          ) : (
-            topProducts.map((p, idx) => (
-              <div key={p.id} className="py-3.5 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5 min-w-0">
-                  <span className="font-black text-sm text-slate-300 dark:text-slate-600 w-5 text-center">
-                    #{idx + 1}
-                  </span>
-                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 overflow-hidden relative shrink-0 border border-slate-200 dark:border-slate-700">
-                    <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-[var(--color-navy-900)] dark:text-white truncate">
-                      {p.name}
-                    </p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">
-                      Prix unitaire : {formatPrice(p.price)}
-                    </p>
-                  </div>
-                </div>
+        {/* Top Produits Vendus (7 cols) */}
+        <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-5 sm:p-6 shadow-2xs">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Package className="h-4 w-4 text-amber-500" />
+              <span>Articles les Plus Vendus</span>
+            </h2>
+            <Link
+              href="/admin/produits"
+              className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1"
+            >
+              <span>Catalogue</span>
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <p className="text-xs text-slate-400 mb-4">
+            Produits ayant généré des ventes réelles dans les commandes
+          </p>
 
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-black text-amber-600 dark:text-amber-400">
-                    {p.unitsSold} commande{p.unitsSold > 1 ? 's' : ''}
-                  </p>
-                  <p className="text-[11px] text-slate-500 font-semibold">
-                    {formatPrice(p.totalGenerated)}
-                  </p>
-                </div>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {topProducts.length === 0 ? (
+              <div className="py-10 text-center text-xs text-slate-400">
+                Aucun article commandé pour le moment.
               </div>
-            ))
-          )}
+            ) : (
+              topProducts.map((p, idx) => (
+                <div key={p.id} className="py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="text-xs font-semibold text-slate-400 w-4 text-center">
+                      #{idx + 1}
+                    </span>
+                    <div className="h-10 w-10 rounded-lg bg-slate-100 dark:bg-slate-800 overflow-hidden relative shrink-0 border border-slate-200 dark:border-slate-700">
+                      <Image src={p.image} alt={p.name} fill className="object-cover" unoptimized />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                        {p.name}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {formatPrice(p.price)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white">
+                      {p.unitsSold} vente{p.unitsSold > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                      {formatPrice(p.totalGenerated)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>
   )
 }
+
