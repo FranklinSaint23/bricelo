@@ -28,9 +28,12 @@ export function BriceloTracker() {
 
     // 1. Récupération ou création des identifiants anonymes
     let visitorId = localStorage.getItem('bricelo_vid')
+    let isReturning = false
     if (!visitorId) {
       visitorId = 'v_' + Math.random().toString(36).substring(2, 12) + Date.now().toString(36)
       localStorage.setItem('bricelo_vid', visitorId)
+    } else {
+      isReturning = true
     }
 
     let sessionId = sessionStorage.getItem('bricelo_sid')
@@ -42,6 +45,8 @@ export function BriceloTracker() {
     // 2. Détection du canal d'acquisition (D'où vient le visiteur)
     const ref = document.referrer.toLowerCase()
     const urlParams = searchParams?.toString().toLowerCase() || ''
+    const utmSource = searchParams?.get('utm_source') || undefined
+    const utmCampaign = searchParams?.get('utm_campaign') || undefined
 
     let channel: 'WhatsApp' | 'Facebook' | 'Instagram' | 'TikTok' | 'Google' | 'Direct' | 'Autre' = 'Direct'
 
@@ -73,8 +78,8 @@ export function BriceloTracker() {
 
     // Navigateur
     let browser = 'Autre'
-    if (ua.includes('chrome')) browser = 'Chrome'
-    else if (ua.includes('safari')) browser = 'Safari'
+    if (ua.includes('chrome') && !ua.includes('edg')) browser = 'Chrome'
+    else if (ua.includes('safari') && !ua.includes('chrome')) browser = 'Safari'
     else if (ua.includes('firefox')) browser = 'Firefox'
     else if (ua.includes('edg')) browser = 'Edge'
 
@@ -91,47 +96,100 @@ export function BriceloTracker() {
 
     const currentUrl = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '')
 
-    // Éviter les doubles envois immédiats sur la même URL
-    if (lastTrackedPath.current === currentUrl) return
-    lastTrackedPath.current = currentUrl
+    // Éviter les doubles envois immédiats de page_view sur la même URL
+    const isNewPageView = lastTrackedPath.current !== currentUrl
+    if (isNewPageView) {
+      lastTrackedPath.current = currentUrl
 
-    const payload = {
-      type: 'page_view',
-      path: pathname,
-      visitor_id: visitorId,
-      session_id: sessionId,
-      channel,
-      device,
-      browser,
-      city,
+      const pageViewPayload = {
+        type: 'page_view',
+        path: pathname,
+        visitor_id: visitorId,
+        session_id: sessionId,
+        is_returning: isReturning,
+        channel,
+        device,
+        browser,
+        utm_source: utmSource,
+        utm_campaign: utmCampaign,
+        city,
+      }
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/analytics/collect', JSON.stringify(pageViewPayload))
+      } else {
+        fetch('/api/analytics/collect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(pageViewPayload),
+          keepalive: true,
+        }).catch(() => {})
+      }
     }
 
-    // Envoi fluide en arrière-plan sans bloquer l'UI
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon('/api/analytics/collect', JSON.stringify(payload))
-    } else {
-      fetch('/api/analytics/collect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        keepalive: true,
-      }).catch(() => {})
+    // 5. Suivi du TEMPS SUR LA PAGE & ENGAGEMENT (Style Google Analytics)
+    let lastHeartbeatTime = Date.now()
+
+    const sendEngagementTime = (isFinal = false) => {
+      const now = Date.now()
+      const elapsedSeconds = Math.round((now - lastHeartbeatTime) / 1000)
+      if (elapsedSeconds < 2) return // Trop court pour être comptabilisé
+
+      lastHeartbeatTime = now
+      const heartbeatPayload = {
+        type: 'heartbeat',
+        path: pathname,
+        visitor_id: visitorId,
+        session_id: sessionId,
+        duration_seconds: elapsedSeconds,
+        channel,
+        device,
+        browser,
+        city,
+      }
+
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/analytics/collect', JSON.stringify(heartbeatPayload))
+      } else {
+        fetch('/api/analytics/collect', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(heartbeatPayload),
+          keepalive: true,
+        }).catch(() => {})
+      }
     }
 
-    // Ping régulier de présence (toutes les 2 minutes pour le compteur en direct)
-    const interval = setInterval(() => {
-      fetch('/api/analytics/collect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...payload,
-          type: 'ping',
-        }),
-        keepalive: true,
-      }).catch(() => {})
-    }, 120000)
+    // Battement de cœur toutes les 15 secondes si l'onglet est actif
+    const heartbeatInterval = setInterval(() => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        sendEngagementTime(false)
+      }
+    }, 15000)
 
-    return () => clearInterval(interval)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        sendEngagementTime(true)
+      } else {
+        lastHeartbeatTime = Date.now()
+      }
+    }
+
+    const handleBeforeUnload = () => {
+      sendEngagementTime(true)
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    window.addEventListener('pagehide', handleBeforeUnload)
+
+    return () => {
+      clearInterval(heartbeatInterval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      window.removeEventListener('pagehide', handleBeforeUnload)
+      sendEngagementTime(true)
+    }
   }, [pathname, searchParams])
 
   return null

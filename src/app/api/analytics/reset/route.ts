@@ -11,9 +11,24 @@ export async function POST(request: NextRequest) {
     const emptyAnalytics = {
       today_date: todayStr,
       live_sessions: {},
+      sessions: {
+        total: 0,
+        today: 0,
+        active_ids: {},
+      },
       visitors: {
         total: 0,
         today: 0,
+        session_page_views: {},
+      },
+      audience: {
+        new_visitors: 0,
+        returning_visitors: 0,
+      },
+      engagement: {
+        total_seconds: 0,
+        session_seconds: {},
+        engaged_sessions: {},
       },
       channels: {
         whatsapp: 0,
@@ -24,11 +39,19 @@ export async function POST(request: NextRequest) {
         direct: 0,
         other: 0,
       },
+      campaigns: {},
       devices: {
         android: 0,
         ios: 0,
         desktop: 0,
         tablet: 0,
+      },
+      browsers: {
+        chrome: 0,
+        safari: 0,
+        firefox: 0,
+        edge: 0,
+        other: 0,
       },
       cities: {},
       top_pages: {},

@@ -54,11 +54,30 @@ export function ProductNavigationLoader() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/40 dark:bg-black/40 backdrop-blur-sm pointer-events-none transition-all duration-150 animate-in fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/25 dark:bg-black/50 backdrop-blur-md pointer-events-none transition-all duration-200 animate-in fade-in"
       aria-hidden="true"
     >
-      {/* Spinner style Facebook : simple anneau jaune vif pur qui tourne dans le vide, sans modal ni boîte */}
-      <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-full border-[3.5px] border-amber-400/25 border-t-amber-500 animate-spin" />
+      {/* Spinner style Facebook : simple arc jaune vif pur tournant dans les airs sans modal ni boîte */}
+      <div className="relative flex items-center justify-center">
+        <svg
+          className="h-12 w-12 animate-spin text-amber-500 drop-shadow-[0_2px_10px_rgba(245,158,11,0.45)]"
+          viewBox="0 0 50 50"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <circle
+            cx="25"
+            cy="25"
+            r="19"
+            fill="none"
+            stroke="#F59E0B"
+            strokeWidth="4.5"
+            strokeLinecap="round"
+            strokeDasharray="80 150"
+            strokeDashoffset="0"
+          />
+        </svg>
+      </div>
     </div>
   )
 }
