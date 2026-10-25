@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       .from('system_settings')
       .select('value')
       .eq('key', 'bricelo_analytics_store')
-      .single()
+      .maybeSingle()
 
     const raw = (record?.value as any) || {}
 

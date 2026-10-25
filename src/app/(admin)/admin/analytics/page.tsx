@@ -21,30 +21,50 @@ export default async function AdminAnalyticsPage() {
 
   const supabase = await createClient()
 
-  // 1. Récupération des données Supabase
-  const [
-    { data: ordersData },
-    { data: paymentsData },
-    { data: usersData },
-    { data: storesData },
-    { data: productsData },
-    { data: orderItemsData },
-    { data: analyticsRecord },
-  ] = await Promise.all([
-    supabase
-      .from('orders')
-      .select('id, total, status, created_at, shipping_address, user:users(full_name, email)')
-      .order('created_at', { ascending: false }),
-    supabase
-      .from('payments')
-      .select('id, amount, status, provider, created_at, metadata')
-      .order('created_at', { ascending: false }),
-    supabase.from('users').select('id, role, created_at'),
-    supabase.from('stores').select('id, name, is_active'),
-    supabase.from('products').select('id, name, slug, price, images, stock, is_active').eq('is_active', true),
-    supabase.from('order_items').select('id, order_id, product_id, quantity, unit_price, total_price, snapshot'),
-    supabase.from('system_settings').select('value').eq('key', 'bricelo_analytics_store').single(),
-  ])
+  // 1. Récupération des données Supabase avec tolérance aux pannes
+  let ordersData: any[] = []
+  let paymentsData: any[] = []
+  let usersData: any[] = []
+  let storesData: any[] = []
+  let productsData: any[] = []
+  let orderItemsData: any[] = []
+  let analyticsRecord: any = null
+
+  try {
+    const [
+      ordersRes,
+      paymentsRes,
+      usersRes,
+      storesRes,
+      productsRes,
+      orderItemsRes,
+      analyticsRes,
+    ] = await Promise.all([
+      supabase
+        .from('orders')
+        .select('id, total, status, created_at, shipping_address, user:users(full_name, email)')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('payments')
+        .select('id, amount, status, provider, created_at, metadata')
+        .order('created_at', { ascending: false }),
+      supabase.from('users').select('id, role, created_at'),
+      supabase.from('stores').select('id, name, is_active'),
+      supabase.from('products').select('id, name, slug, price, images, stock, is_active').eq('is_active', true),
+      supabase.from('order_items').select('id, order_id, product_id, quantity, unit_price, total_price, snapshot'),
+      supabase.from('system_settings').select('value').eq('key', 'bricelo_analytics_store').maybeSingle(),
+    ])
+
+    ordersData = ordersRes?.data ?? []
+    paymentsData = paymentsRes?.data ?? []
+    usersData = usersRes?.data ?? []
+    storesData = storesRes?.data ?? []
+    productsData = productsRes?.data ?? []
+    orderItemsData = orderItemsRes?.data ?? []
+    analyticsRecord = analyticsRes?.data ?? null
+  } catch (err) {
+    console.error('Erreur chargement analytics:', err)
+  }
 
   const orders = ordersData ?? []
   const payments = paymentsData ?? []
@@ -102,8 +122,7 @@ export default async function AdminAnalyticsPage() {
   // 7. Graphique des 7 derniers jours
   const daysMap = new Map<string, { label: string; dateStr: string; count: number; total: number }>()
   for (let i = 6; i >= 0; i--) {
-    const d = new Date()
-    d.setDate(now - i * 86400000)
+    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
     const key = d.toISOString().split('T')[0]
     const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
     daysMap.set(key, { label: dayLabel, dateStr: key, count: 0, total: 0 })
@@ -137,6 +156,7 @@ export default async function AdminAnalyticsPage() {
   const productSalesMap = new Map<string, { id: string; name: string; slug: string; image: string; price: number; unitsSold: number; totalGenerated: number }>()
   orderItems.forEach((item) => {
     const pId = item.product_id
+    if (!pId) return
     const snapshot = item.snapshot as any
     const name = snapshot?.name || 'Produit'
     const image = snapshot?.images?.[0] || '/placeholder.png'
