@@ -131,20 +131,31 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
 
       // Nettoyer instance précédente si existante
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove()
+        try {
+          mapInstanceRef.current.remove()
+        } catch {}
         mapInstanceRef.current = null
+      }
+      if ((mapContainerRef.current as any)._leaflet_id) {
+        (mapContainerRef.current as any)._leaflet_id = null
       }
 
       // Coordonnées centrales du Cameroun
       const cameroonCenter: [number, number] = [5.2, 12.0]
-      const map = L.map(mapContainerRef.current, {
-        center: cameroonCenter,
-        zoom: 6.2,
-        minZoom: 5.5,
-        maxZoom: 14,
-        zoomControl: false,
-        attributionControl: false,
-      })
+      let map: any = null
+      try {
+        map = L.map(mapContainerRef.current, {
+          center: cameroonCenter,
+          zoom: 6.2,
+          minZoom: 5.5,
+          maxZoom: 14,
+          zoomControl: false,
+          attributionControl: false,
+        })
+      } catch (mapErr) {
+        console.error('Erreur initialisation Leaflet:', mapErr)
+        return
+      }
 
       // Tuiles OpenStreetMap (CartoDB Voyager moderne et clair)
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {

@@ -13,7 +13,7 @@ import {
 import { formatPrice } from '@/lib/utils'
 import { AnalyticsHeaderActions } from '@/components/admin/analytics-header-actions'
 import { AnalyticsPeriodSelector, type PeriodType, PERIODS } from '@/components/admin/analytics-period-selector'
-import { AnalyticsMap } from '@/components/admin/analytics-map'
+import { AnalyticsMapClient } from '@/components/admin/analytics-map-client'
 
 export const dynamic = 'force-dynamic'
 
@@ -950,7 +950,7 @@ export default async function AdminAnalyticsPage(props: PageProps) {
       </div>
 
       {/* ── SECTION CARTE INTERACTIVE OPENSTREETMAP (CAMEROUN LIVE & GÉOGRAPHIE) ── */}
-      <AnalyticsMap liveSessions={liveSessionsMap} cityCounts={cityCounts} totalOrders={totalOrders} />
+      <AnalyticsMapClient liveSessions={liveSessionsMap} cityCounts={cityCounts} totalOrders={totalOrders} />
 
       {/* ── SECTION : VILLES CAMEROUN & TOP PRODUITS VENDUS ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
