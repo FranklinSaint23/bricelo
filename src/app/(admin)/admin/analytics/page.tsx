@@ -12,7 +12,8 @@ import {
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { AnalyticsHeaderActions } from '@/components/admin/analytics-header-actions'
-import { AnalyticsPeriodSelector, type PeriodType, PERIODS } from '@/components/admin/analytics-period-selector'
+import { AnalyticsPeriodSelector } from '@/components/admin/analytics-period-selector'
+import { PERIODS, type PeriodType, getPeriodConfig } from '@/lib/analytics-constants'
 import { AnalyticsMapClient } from '@/components/admin/analytics-map-client'
 
 export const dynamic = 'force-dynamic'
@@ -134,7 +135,7 @@ export default async function AdminAnalyticsPage(props: PageProps) {
     periodStart = startOfYear.getTime()
   }
 
-  const currentPeriodConfig = PERIODS.find((p) => p.id === period) || PERIODS[5]
+  const currentPeriodConfig = getPeriodConfig(period)
   const periodLabel = currentPeriodConfig.label
 
   // 4. Filtrage des Commandes et Paiements selon la période
