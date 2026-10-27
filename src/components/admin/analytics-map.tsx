@@ -43,7 +43,7 @@ interface AnalyticsMapProps {
   totalOrders: number
 }
 
-export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: AnalyticsMapProps) {
+export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders = 0 }: AnalyticsMapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<any>(null)
   const [selectedCity, setSelectedCity] = useState<string | null>(null)
@@ -55,12 +55,12 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
   const liveByCity: Record<string, number> = {}
 
   let totalActive = 0
-  Object.values(liveSessions).forEach((sess: any) => {
+  Object.values(liveSessions || {}).forEach((sess: any) => {
     const ts = typeof sess === 'number' ? sess : (sess?.timestamp || 0)
     if (ts >= cutoff) {
       totalActive += 1
       const rawCity = sess?.city || 'Douala'
-      const normCity = rawCity.trim()
+      const normCity = decodeURIComponent(rawCity).trim()
       liveByCity[normCity] = (liveByCity[normCity] || 0) + 1
     }
   })
@@ -69,17 +69,14 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
   const cityDataList: CityData[] = []
   const knownCities = new Set<string>()
 
-  // Ajouter les villes des sessions en direct
   Object.keys(liveByCity).forEach((cityName) => {
     knownCities.add(cityName)
   })
 
-  // Ajouter les villes des commandes
-  Object.keys(cityCounts).forEach((cityName) => {
+  Object.keys(cityCounts || {}).forEach((cityName) => {
     knownCities.add(cityName)
   })
 
-  // S'assurer que Douala et Yaoundé figurent toujours sur la carte
   knownCities.add('Douala')
   knownCities.add('Yaoundé')
 
@@ -96,7 +93,6 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
     })
   })
 
-  // Dédupliquer par nom de ville normalisé
   const uniqueCitiesMap = new Map<string, CityData>()
   cityDataList.forEach((c) => {
     if (uniqueCitiesMap.has(c.name)) {
@@ -110,24 +106,14 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
   })
   const cities = Array.from(uniqueCitiesMap.values())
 
-  // Initialisation de la carte Leaflet OpenStreetMap
+  // Initialisation de Leaflet OpenStreetMap 100% côté client via injection script pour éviter tout crash SSR
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current) return
 
     let isMounted = true
 
-    // Import dynamique côté client de Leaflet
-    import('leaflet').then((L) => {
+    const initMap = (L: any) => {
       if (!isMounted || !mapContainerRef.current) return
-
-      // Injecter le CSS de Leaflet si non présent
-      if (!document.getElementById('leaflet-css')) {
-        const link = document.createElement('link')
-        link.id = 'leaflet-css'
-        link.rel = 'stylesheet'
-        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
-        document.head.appendChild(link)
-      }
 
       // Nettoyer instance précédente si existante
       if (mapInstanceRef.current) {
@@ -140,7 +126,6 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
         (mapContainerRef.current as any)._leaflet_id = null
       }
 
-      // Coordonnées centrales du Cameroun
       const cameroonCenter: [number, number] = [5.2, 12.0]
       let map: any = null
       try {
@@ -157,21 +142,18 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
         return
       }
 
-      // Tuiles OpenStreetMap (CartoDB Voyager moderne et clair)
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap contributors',
         subdomains: 'abcd',
         maxZoom: 19,
       }).addTo(map)
 
-      // Bouton de contrôle de zoom en haut à droite
       L.control.zoom({ position: 'topright' }).addTo(map)
 
       // Ajout des marqueurs sur la carte
       cities.forEach((city) => {
         const isLive = city.liveCount > 0
 
-        // Si le visiteur est EN DIRECT : Point BLEU vif pulsant
         if (isLive) {
           const liveIcon = L.divIcon({
             className: 'osm-live-marker',
@@ -196,7 +178,7 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
             <div style="font-family: inherit; padding: 2px;">
               <h4 style="margin: 0; font-size: 13px; font-weight: bold; color: #0f172a;">${city.name}</h4>
               <p style="margin: 2px 0 6px; font-size: 11px; color: #64748b;">Région du ${city.region}</p>
-              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: #2563eb; background: #eff6ff; padding: 4px 8px; rounded: 6px;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: #2563eb; background: #eff6ff; padding: 4px 8px; border-radius: 6px;">
                 <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #2563eb;"></span>
                 <span>${city.liveCount} visiteur(s) en direct</span>
               </div>
@@ -204,7 +186,6 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
             </div>
           `)
         } else {
-          // Marqueur discret pour les villes enregistrées hors-ligne
           const staticIcon = L.divIcon({
             className: 'osm-static-marker',
             html: `
@@ -232,18 +213,49 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
 
       mapInstanceRef.current = map
       setMapLoaded(true)
-    })
+    }
+
+    // Charger CSS Leaflet
+    if (!document.getElementById('leaflet-css')) {
+      const link = document.createElement('link')
+      link.id = 'leaflet-css'
+      link.rel = 'stylesheet'
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(link)
+    }
+
+    // Charger script Leaflet depuis CDN si absent
+    if ((window as any).L) {
+      initMap((window as any).L)
+    } else {
+      const existingScript = document.getElementById('leaflet-script') as HTMLScriptElement | null
+      if (existingScript) {
+        existingScript.addEventListener('load', () => {
+          if ((window as any).L) initMap((window as any).L)
+        })
+      } else {
+        const script = document.createElement('script')
+        script.id = 'leaflet-script'
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+        script.async = true
+        script.onload = () => {
+          if ((window as any).L) initMap((window as any).L)
+        }
+        document.body.appendChild(script)
+      }
+    }
 
     return () => {
       isMounted = false
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove()
+        try {
+          mapInstanceRef.current.remove()
+        } catch {}
         mapInstanceRef.current = null
       }
     }
   }, [liveSessions, cityCounts])
 
-  // Fonction de zoom instantané sur une ville
   const handleFlyToCity = (city: CityData) => {
     setSelectedCity(city.name)
     if (mapInstanceRef.current) {
@@ -251,7 +263,6 @@ export function AnalyticsMap({ liveSessions, cityCounts, totalOrders }: Analytic
     }
   }
 
-  // Recentrer sur l'ensemble du Cameroun
   const handleResetView = () => {
     setSelectedCity(null)
     if (mapInstanceRef.current) {

@@ -35,14 +35,15 @@ interface PageProps {
 }
 
 export default async function AdminAnalyticsPage(props: PageProps) {
-  const searchParams = props.searchParams ? await props.searchParams : {}
-  const period: PeriodType = (searchParams?.period as PeriodType) || 'all'
+  try {
+    const searchParams = props?.searchParams ? await props.searchParams : {}
+    const period: PeriodType = (searchParams?.period as PeriodType) || 'all'
 
-  const headersList = await headers()
-  const userId = headersList.get('x-user-id')
-  if (!userId) redirect('/login')
+    const headersList = await headers()
+    const userId = headersList.get('x-user-id')
+    if (!userId) redirect('/login')
 
-  const supabase = await createClient()
+    const supabase = await createClient()
 
   // 1. Récupération des données Supabase réelles
   let ordersData: any[] = []
@@ -1106,4 +1107,26 @@ export default async function AdminAnalyticsPage(props: PageProps) {
       )}
     </div>
   )
+  } catch (err: any) {
+    if ((err as any)?.digest?.includes('NEXT_REDIRECT') || (err as any)?.message === 'NEXT_REDIRECT') {
+      throw err
+    }
+    console.error('Fatal AdminAnalyticsPage error:', err)
+    return (
+      <div className="p-6 max-w-4xl mx-auto space-y-4">
+        <div className="p-6 bg-amber-50 dark:bg-slate-900 border border-amber-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white">
+          <h2 className="font-bold text-base mb-1 text-amber-700 dark:text-amber-400">Diagnostic Analytics</h2>
+          <p className="text-xs text-slate-500 mb-3">Une erreur est survenue lors de la compilation des données :</p>
+          <pre className="p-3 bg-slate-100 dark:bg-slate-800 rounded border border-slate-200 dark:border-slate-700 text-xs overflow-x-auto text-rose-600 font-mono">
+            {err?.stack || err?.message || String(err)}
+          </pre>
+          <div className="mt-4">
+            <Link href="/admin/analytics" className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow transition-colors inline-block">
+              Actualiser la page
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
