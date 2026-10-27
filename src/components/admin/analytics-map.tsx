@@ -132,17 +132,21 @@ export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders =
         (mapContainerRef.current as any)._leaflet_id = null
       }
 
-      const cameroonCenter: [number, number] = [5.2, 12.0]
+      const CAMEROON_BOUNDS: [[number, number], [number, number]] = [
+        [1.5, 8.2],   // Sud-Ouest (Frontière Sud Cameroun)
+        [13.2, 16.4], // Nord-Est (Extrême-Nord / Lac Tchad)
+      ]
       let map: any = null
       try {
         map = L.map(mapContainerRef.current, {
-          center: cameroonCenter,
-          zoom: 6.2,
-          minZoom: 5.5,
-          maxZoom: 14,
+          maxBounds: CAMEROON_BOUNDS,
+          maxBoundsViscosity: 1.0,
+          minZoom: 5.8,
+          maxZoom: 16,
           zoomControl: false,
           attributionControl: false,
         })
+        map.fitBounds(CAMEROON_BOUNDS, { padding: [10, 10] })
       } catch (mapErr) {
         console.error('Erreur initialisation Leaflet:', mapErr)
         return
@@ -272,7 +276,10 @@ export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders =
   const handleResetView = () => {
     setSelectedCity(null)
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([5.2, 12.0], 6.2, { duration: 1 })
+      mapInstanceRef.current.fitBounds([
+        [1.5, 8.2],
+        [13.2, 16.4],
+      ], { padding: [10, 10], duration: 1 })
     }
   }
 
