@@ -4,6 +4,7 @@ import { useState, useTransition, Fragment } from 'react'
 import { Plus, Pencil, Trash2, Check, AlertCircle, Tag, Package, Image as ImageIcon } from 'lucide-react'
 import { CategoryIcon } from '@/components/ui/category-icon'
 import { createCategory, updateCategory, deleteCategory } from '@/app/(admin)/admin/categories/actions'
+import { showGlobalLoader, hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 
 interface Category {
   id: string
@@ -44,6 +45,7 @@ export function CategoryAdmin({ categories, countMap }: Props) {
   const [editImageUrl, setEditImageUrl] = useState('')
 
   function flash(msg: string, type: 'ok' | 'err') {
+    hideGlobalLoader()
     if (type === 'ok') { setSuccess(msg); setError(null) }
     else { setError(msg); setSuccess(null) }
     setTimeout(() => { setSuccess(null); setError(null) }, 3500)
@@ -59,6 +61,7 @@ export function CategoryAdmin({ categories, countMap }: Props) {
 
   function handleAdd(e: React.FormEvent) {
     e.preventDefault()
+    showGlobalLoader()
     const fd = new FormData()
     fd.set('name', addName)
     fd.set('slug', addSlug)
@@ -80,6 +83,7 @@ export function CategoryAdmin({ categories, countMap }: Props) {
   function handleEdit(e: React.FormEvent) {
     e.preventDefault()
     if (!editId) return
+    showGlobalLoader()
     const fd = new FormData()
     fd.set('name', editName)
     fd.set('slug', editSlug)
@@ -93,6 +97,7 @@ export function CategoryAdmin({ categories, countMap }: Props) {
   }
 
   function handleDelete(id: string) {
+    showGlobalLoader()
     startTransition(async () => {
       const res = await deleteCategory(id)
       if ('error' in res) { flash(res.error ?? 'Erreur', 'err') }

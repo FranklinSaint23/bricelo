@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
+import { hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 
 interface Props {
   userId: string
@@ -31,8 +32,14 @@ export function ProfileForm({ userId, initialData }: Props) {
       .update({ full_name: fullName.trim(), phone: phone.trim() })
       .eq('id', userId)
 
-    if (err) { setError(err.message) }
-    else { setSuccess(true); router.refresh() }
+    if (err) {
+      setError(err.message)
+      hideGlobalLoader()
+    } else {
+      setSuccess(true)
+      hideGlobalLoader()
+      router.refresh()
+    }
     setLoading(false)
   }
 

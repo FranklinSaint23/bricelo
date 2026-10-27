@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardBody } from '@/components/ui/card'
 import { useLanguage } from '@/components/providers/language-provider'
+import { hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 import { linkGuestOrders } from './actions'
 
 export default function RegisterPage() {
@@ -28,11 +29,13 @@ export default function RegisterPage() {
 
     if (!email.trim() && !phone.trim()) {
       setError(t.contactRequired)
+      hideGlobalLoader()
       return
     }
 
     if (password.length < 8) {
       setError(lang === 'fr' ? 'Le mot de passe doit contenir au moins 8 caractères.' : 'Password must be at least 8 characters.')
+      hideGlobalLoader()
       return
     }
 
@@ -58,6 +61,7 @@ export default function RegisterPage() {
       })
 
       if (err) {
+        hideGlobalLoader()
         if (err.message.includes('Database error') || err.message.includes('saving new user') || err.message.includes('already registered')) {
           setError(lang === 'fr' 
             ? 'Cet e-mail ou numéro de téléphone est déjà associé à un compte. Veuillez vous connecter.' 
@@ -86,11 +90,13 @@ export default function RegisterPage() {
         router.push('/')
         router.refresh()
       } else if (email.trim()) {
+        hideGlobalLoader()
         setSuccess(true)
       } else {
         router.push('/login?registered=1')
       }
     } catch (e: any) {
+      hideGlobalLoader()
       setError(e.message || 'Erreur lors de la création du compte')
     } finally {
       setLoading(false)

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardBody } from '@/components/ui/card'
 import { useLanguage } from '@/components/providers/language-provider'
+import { hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 
 function LoginForm() {
   const searchParams = useSearchParams()
@@ -33,6 +34,7 @@ function LoginForm() {
     if (!rawValue) {
       setError(t.contactRequired)
       setLoading(false)
+      hideGlobalLoader()
       return
     }
 
@@ -76,6 +78,7 @@ function LoginForm() {
 
       if (err) {
         setError(lang === 'fr' ? 'Identifiants incorrects ou compte inexistant.' : 'Invalid credentials or non-existent account.')
+        hideGlobalLoader()
         return
       }
 
@@ -84,6 +87,7 @@ function LoginForm() {
       }
     } catch (catchedErr: any) {
       setError(catchedErr.message || 'Erreur de connexion.')
+      hideGlobalLoader()
     } finally {
       setLoading(false)
     }

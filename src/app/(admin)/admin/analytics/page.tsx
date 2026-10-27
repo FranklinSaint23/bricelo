@@ -8,10 +8,12 @@ import {
   BarChart3, Smartphone, Laptop, CheckCircle2,
   Share2, ArrowRight, Eye, DollarSign,
   MapPin, Activity, ChevronRight, Clock, Compass, Target,
-  UserCheck, UserPlus, Layers
+  UserCheck, UserPlus, Layers, Calendar
 } from 'lucide-react'
 import { formatPrice } from '@/lib/utils'
 import { AnalyticsHeaderActions } from '@/components/admin/analytics-header-actions'
+import { AnalyticsPeriodSelector, type PeriodType, PERIODS } from '@/components/admin/analytics-period-selector'
+import { AnalyticsMap } from '@/components/admin/analytics-map'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,7 +30,14 @@ function formatDuration(seconds: number): string {
   return `${hours}h ${remMins}m`
 }
 
-export default async function AdminAnalyticsPage() {
+interface PageProps {
+  searchParams?: Promise<{ period?: string }>
+}
+
+export default async function AdminAnalyticsPage(props: PageProps) {
+  const searchParams = props.searchParams ? await props.searchParams : {}
+  const period: PeriodType = (searchParams?.period as PeriodType) || 'all'
+
   const headersList = await headers()
   const userId = headersList.get('x-user-id')
   if (!userId) redirect('/login')
@@ -92,66 +101,209 @@ export default async function AdminAnalyticsPage() {
   const now = Date.now()
   const cutoff = now - 5 * 60 * 1000 // 5 minutes
   const liveSessionsMap = rawAnalytics.live_sessions || {}
-  const activeNow = Object.values(liveSessionsMap).filter((ts: any) => Number(ts) >= cutoff).length
+  const activeNow = Object.values(liveSessionsMap).filter((item: any) => {
+    const ts = typeof item === 'number' ? item : (item?.timestamp || 0)
+    return Number(ts) >= cutoff
+  }).length
 
-  // 3. Calculs financiers réels
-  const totalOrders = orders.length
-  const totalRevenue = orders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
+  // 3. Calcul de la fenêtre temporelle selon la période sélectionnée
+  const todayDateObj = new Date()
+  const todayStr = todayDateObj.toISOString().split('T')[0]
+
+  const yesterdayDateObj = new Date(now - 24 * 60 * 60 * 1000)
+  const yesterdayStr = yesterdayDateObj.toISOString().split('T')[0]
+
+  let periodStart = 0
+  let periodEnd = now
+
+  if (period === 'today') {
+    const startOfToday = new Date(todayDateObj.getFullYear(), todayDateObj.getMonth(), todayDateObj.getDate(), 0, 0, 0, 0)
+    periodStart = startOfToday.getTime()
+  } else if (period === 'yesterday') {
+    const startOfYesterday = new Date(yesterdayDateObj.getFullYear(), yesterdayDateObj.getMonth(), yesterdayDateObj.getDate(), 0, 0, 0, 0)
+    const endOfYesterday = new Date(yesterdayDateObj.getFullYear(), yesterdayDateObj.getMonth(), yesterdayDateObj.getDate(), 23, 59, 59, 999)
+    periodStart = startOfYesterday.getTime()
+    periodEnd = endOfYesterday.getTime()
+  } else if (period === 'week') {
+    periodStart = now - 7 * 24 * 60 * 60 * 1000
+  } else if (period === 'month') {
+    periodStart = now - 30 * 24 * 60 * 60 * 1000
+  } else if (period === 'year') {
+    const startOfYear = new Date(todayDateObj.getFullYear(), 0, 1, 0, 0, 0, 0)
+    periodStart = startOfYear.getTime()
+  }
+
+  const currentPeriodConfig = PERIODS.find((p) => p.id === period) || PERIODS[5]
+  const periodLabel = currentPeriodConfig.label
+
+  // 4. Filtrage des Commandes et Paiements selon la période
+  const filteredOrders = orders.filter((o) => {
+    if (!o.created_at) return false
+    const t = new Date(o.created_at).getTime()
+    return t >= periodStart && t <= periodEnd
+  })
+
+  const filteredPayments = payments.filter((p) => {
+    if (!p.created_at) return false
+    const t = new Date(p.created_at).getTime()
+    return t >= periodStart && t <= periodEnd
+  })
+
+  const totalOrders = filteredOrders.length
+  const totalRevenue = filteredOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0)
   const averageBasket = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0
-  const successfulPayments = payments.filter((p) => p.status === 'success')
+  const successfulPayments = filteredPayments.filter((p) => p.status === 'success')
   const collectedRevenue = successfulPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
 
-  // 4. Métriques Google Analytics : Sessions, Engagement & Durée
+  // 5. Agrégation du trafic, engagement & audience selon la période
   const rawEngagement = rawAnalytics.engagement || {}
   const rawSessions = rawAnalytics.sessions || {}
   const rawAudience = rawAnalytics.audience || {}
+  const rawDailyHistory = rawAnalytics.daily_history || {}
 
-  const totalPageViews = Number(rawAnalytics.visitors?.total) || 0
-  const todayPageViews = Number(rawAnalytics.visitors?.today) || 0
-  const totalSessions = Math.max(Number(rawSessions.total) || (totalPageViews > 0 ? Math.ceil(totalPageViews / 2) : 0), 0)
-  const todaySessions = Math.max(Number(rawSessions.today) || todayPageViews, 0)
+  let totalPageViews = 0
+  let totalSessions = 0
+  let totalEngagementSeconds = 0
+  let newVisitors = 0
+  let returningVisitors = 0
+  let storedTopPages: Record<string, any> = {}
+  let storedChannels: Record<string, any> = {}
+  let storedDevices: Record<string, any> = {}
+  let storedBrowsers: Record<string, any> = {}
+  let storedCities: Record<string, any> = {}
 
-  // Temps total & Durée moyenne de session (Engagement Time)
-  const totalEngagementSeconds = Number(rawEngagement.total_seconds) || 0
+  if (period === 'all') {
+    totalPageViews = Number(rawAnalytics.visitors?.total) || 0
+    totalSessions = Math.max(Number(rawSessions.total) || (totalPageViews > 0 ? Math.ceil(totalPageViews / 2) : 0), 0)
+    totalEngagementSeconds = Number(rawEngagement.total_seconds) || 0
+    newVisitors = Number(rawAudience.new_visitors) || 0
+    returningVisitors = Number(rawAudience.returning_visitors) || 0
+    storedTopPages = rawAnalytics.top_pages || {}
+    storedChannels = rawAnalytics.channels || {}
+    storedDevices = rawAnalytics.devices || {}
+    storedBrowsers = rawAnalytics.browsers || {}
+    storedCities = rawAnalytics.cities || {}
+  } else if (period === 'today') {
+    const dayRec = rawDailyHistory[todayStr]
+    totalPageViews = dayRec?.views ?? (Number(rawAnalytics.visitors?.today) || 0)
+    totalSessions = dayRec?.sessions ?? (Number(rawSessions.today) || totalPageViews)
+    totalEngagementSeconds = dayRec?.total_seconds ?? (dayRec ? 0 : Number(rawEngagement.total_seconds) || 0)
+    newVisitors = dayRec?.new_visitors ?? 0
+    returningVisitors = dayRec?.returning_visitors ?? 0
+    storedTopPages = dayRec?.top_pages ?? rawAnalytics.top_pages ?? {}
+    storedChannels = dayRec?.channels ?? (totalPageViews > 0 ? (rawAnalytics.channels ?? {}) : {})
+    storedDevices = dayRec?.devices ?? (totalPageViews > 0 ? (rawAnalytics.devices ?? {}) : {})
+    storedBrowsers = dayRec?.browsers ?? (totalPageViews > 0 ? (rawAnalytics.browsers ?? {}) : {})
+    storedCities = dayRec?.cities ?? {}
+  } else if (period === 'yesterday') {
+    const dayRec = rawDailyHistory[yesterdayStr]
+    totalPageViews = dayRec?.views ?? 0
+    totalSessions = dayRec?.sessions ?? 0
+    totalEngagementSeconds = dayRec?.total_seconds ?? 0
+    newVisitors = dayRec?.new_visitors ?? 0
+    returningVisitors = dayRec?.returning_visitors ?? 0
+    storedTopPages = dayRec?.top_pages ?? {}
+    storedChannels = dayRec?.channels ?? {}
+    storedDevices = dayRec?.devices ?? {}
+    storedBrowsers = dayRec?.browsers ?? {}
+    storedCities = dayRec?.cities ?? {}
+  } else {
+    // 'week', 'month', 'year'
+    let aggPageViews = 0
+    let aggSessions = 0
+    let aggSeconds = 0
+    let aggNewVisitors = 0
+    let aggReturningVisitors = 0
+    const aggTopPages: Record<string, { views: number; total_seconds: number }> = {}
+    const aggChannels: Record<string, number> = {}
+    const aggDevices: Record<string, number> = {}
+    const aggBrowsers: Record<string, number> = {}
+    const aggCities: Record<string, number> = {}
+
+    Object.entries(rawDailyHistory).forEach(([dateStr, rec]: [string, any]) => {
+      if (!rec) return
+      const t = new Date(dateStr + 'T12:00:00Z').getTime()
+      if (t >= periodStart && t <= periodEnd) {
+        aggPageViews += Number(rec.views) || 0
+        aggSessions += Number(rec.sessions) || 0
+        aggSeconds += Number(rec.total_seconds) || 0
+        aggNewVisitors += Number(rec.new_visitors) || 0
+        aggReturningVisitors += Number(rec.returning_visitors) || 0
+
+        if (rec.top_pages) {
+          Object.entries(rec.top_pages).forEach(([p, val]: [string, any]) => {
+            if (!aggTopPages[p]) aggTopPages[p] = { views: 0, total_seconds: 0 }
+            aggTopPages[p].views += typeof val === 'number' ? val : (Number(val?.views) || 0)
+            aggTopPages[p].total_seconds += typeof val === 'object' ? (Number(val?.total_seconds) || 0) : 0
+          })
+        }
+        if (rec.channels) {
+          Object.entries(rec.channels).forEach(([ch, count]: [string, any]) => {
+            aggChannels[ch] = (aggChannels[ch] || 0) + (Number(count) || 0)
+          })
+        }
+        if (rec.devices) {
+          Object.entries(rec.devices).forEach(([dev, count]: [string, any]) => {
+            aggDevices[dev] = (aggDevices[dev] || 0) + (Number(count) || 0)
+          })
+        }
+        if (rec.browsers) {
+          Object.entries(rec.browsers).forEach(([br, count]: [string, any]) => {
+            aggBrowsers[br] = (aggBrowsers[br] || 0) + (Number(count) || 0)
+          })
+        }
+        if (rec.cities) {
+          Object.entries(rec.cities).forEach(([city, count]: [string, any]) => {
+            aggCities[city] = (aggCities[city] || 0) + (Number(count) || 0)
+          })
+        }
+      }
+    })
+
+    totalPageViews = aggPageViews > 0 ? aggPageViews : (period === 'week' || period === 'month' || period === 'year' ? Number(rawAnalytics.visitors?.total) || 0 : 0)
+    totalSessions = aggSessions > 0 ? aggSessions : (totalPageViews > 0 ? Math.ceil(totalPageViews / 2) : 0)
+    totalEngagementSeconds = aggSeconds > 0 ? aggSeconds : (aggPageViews > 0 ? 0 : Number(rawEngagement.total_seconds) || 0)
+    newVisitors = aggNewVisitors > 0 ? aggNewVisitors : Number(rawAudience.new_visitors) || 0
+    returningVisitors = aggReturningVisitors > 0 ? aggReturningVisitors : Number(rawAudience.returning_visitors) || 0
+    storedTopPages = Object.keys(aggTopPages).length > 0 ? aggTopPages : (rawAnalytics.top_pages || {})
+    storedChannels = Object.keys(aggChannels).length > 0 ? aggChannels : (rawAnalytics.channels || {})
+    storedDevices = Object.keys(aggDevices).length > 0 ? aggDevices : (rawAnalytics.devices || {})
+    storedBrowsers = Object.keys(aggBrowsers).length > 0 ? aggBrowsers : (rawAnalytics.browsers || {})
+    storedCities = Object.keys(aggCities).length > 0 ? aggCities : (rawAnalytics.cities || {})
+  }
+
+  // Temps moyen par session & Taux de rebond
   const avgSessionSeconds = totalSessions > 0 ? Math.round(totalEngagementSeconds / totalSessions) : 0
-
-  // Sessions engagées & Taux de rebond (Bounce Rate)
   const engagedSessionsMap = rawEngagement.engaged_sessions || {}
   const engagedSessionsCount = Object.keys(engagedSessionsMap).length
   const engagementRate = totalSessions > 0 ? Math.min(100, Math.round((engagedSessionsCount / totalSessions) * 100)) : 0
   const bounceRate = totalSessions > 0 ? Math.max(0, 100 - engagementRate) : 0
-
-  // Pages par session
   const pagesPerSession = totalSessions > 0 ? (totalPageViews / totalSessions).toFixed(1) : '1.0'
 
   // Audience : Nouveaux vs Récurrents
-  const newVisitors = Number(rawAudience.new_visitors) || 0
-  const returningVisitors = Number(rawAudience.returning_visitors) || 0
   const totalAudience = newVisitors + returningVisitors
   const newVisitorsPct = totalAudience > 0 ? Math.round((newVisitors / totalAudience) * 100) : (totalPageViews > 0 ? 100 : 0)
   const returningVisitorsPct = totalAudience > 0 ? Math.round((returningVisitors / totalAudience) * 100) : 0
 
-  // 5. Pages les plus visitées avec Temps Moyen par page (Google Analytics Pages & Screens)
-  const storedTopPages = rawAnalytics.top_pages || {}
+  // 6. Pages les plus visitées (Google Analytics Pages & Screens)
   const pagesList: Array<{ path: string; views: number; totalSeconds: number; avgSeconds: number; pct: number }> = []
   Object.entries(storedTopPages).forEach(([p, val]: [string, any]) => {
     const views = typeof val === 'number' ? val : (Number(val?.views) || 0)
-    const totalSeconds = typeof val === 'object' ? (Number(val?.total_seconds) || 0) : 0
-    const avgSeconds = views > 0 ? Math.round(totalSeconds / views) : 0
+    const totalSecs = typeof val === 'object' ? (Number(val?.total_seconds) || 0) : 0
+    const avgSecs = views > 0 ? Math.round(totalSecs / views) : 0
     if (views > 0) {
       pagesList.push({
         path: p,
         views,
-        totalSeconds,
-        avgSeconds,
+        totalSeconds: totalSecs,
+        avgSeconds: avgSecs,
         pct: totalPageViews > 0 ? Math.round((views / totalPageViews) * 100) : 0,
       })
     }
   })
   pagesList.sort((a, b) => b.views - a.views)
 
-  // 6. Sources d'Acquisition réelles
-  const storedChannels = rawAnalytics.channels || {}
+  // 7. Sources d'Acquisition
   const channels = [
     { name: 'Accès Direct', count: Number(storedChannels.direct) || 0, desc: 'Trafic direct (bricelo.com)' },
     { name: 'WhatsApp', count: Number(storedChannels.whatsapp) || 0, desc: 'Liens partagés sur WhatsApp' },
@@ -168,8 +320,7 @@ export default async function AdminAnalyticsPage() {
     .map(([camp, count]) => ({ name: camp, count: Number(count) || 0 }))
     .sort((a, b) => b.count - a.count)
 
-  // 7. Appareils & Navigateurs réels
-  const storedDevices = rawAnalytics.devices || {}
+  // 8. Appareils & Navigateurs
   const androidCount = Number(storedDevices.android) || 0
   const iosCount = Number(storedDevices.ios) || 0
   const desktopCount = Number(storedDevices.desktop) || 0
@@ -183,7 +334,6 @@ export default async function AdminAnalyticsPage() {
     { label: 'Tablettes', count: tabletCount, percent: totalDevices > 0 ? Math.round((tabletCount / totalDevices) * 100) : 0, icon: Smartphone },
   ]
 
-  const storedBrowsers = rawAnalytics.browsers || {}
   const chromeCount = Number(storedBrowsers.chrome) || 0
   const safariCount = Number(storedBrowsers.safari) || 0
   const firefoxCount = Number(storedBrowsers.firefox) || 0
@@ -199,7 +349,7 @@ export default async function AdminAnalyticsPage() {
     { name: 'Autre', count: otherBrowserCount, pct: totalBrowsers > 0 ? Math.round((otherBrowserCount / totalBrowsers) * 100) : 0 },
   ].filter(b => b.count > 0 || totalBrowsers === 0)
 
-  // 8. Entonnoir de Vente (Conversion Funnel réel)
+  // 9. Entonnoir de Vente (Funnel de conversion)
   const storedFunnel = rawAnalytics.funnel || {}
   const funnelVisitors = Math.max(totalPageViews, totalTrafficVisits)
   const funnelBase = Math.max(funnelVisitors, 1)
@@ -216,52 +366,101 @@ export default async function AdminAnalyticsPage() {
     { step: '5', label: 'Commandes', count: funnelOrdersCompleted, percent: funnelVisitors > 0 ? Math.min(100, Math.round((funnelOrdersCompleted / funnelBase) * 100)) : 0 },
   ]
 
-  // 9. Graphique des 7 derniers jours réels
-  const daysMap = new Map<string, { label: string; dateStr: string; count: number; total: number }>()
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
-    const key = d.toISOString().split('T')[0]
-    const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
-    daysMap.set(key, { label: dayLabel, dateStr: key, count: 0, total: 0 })
-  }
-  orders.forEach((o) => {
-    if (!o.created_at) return
-    const key = o.created_at.split('T')[0]
-    if (daysMap.has(key)) {
-      const entry = daysMap.get(key)!
-      entry.count += 1
-      entry.total += Number(o.total) || 0
-    }
-  })
-  const dailyChart = Array.from(daysMap.values())
-  const maxDayRevenue = Math.max(...dailyChart.map((d) => d.total), 1)
-  const weeklyTotalRevenue = dailyChart.reduce((s, d) => s + d.total, 0)
-  const weeklyTotalOrders = dailyChart.reduce((s, d) => s + d.count, 0)
+  // 10. Graphique dynamique adapté à la période sélectionnée
+  let chartTitle = 'Activité des 7 derniers jours'
+  let chartSubtitle = 'Chiffre d’affaires et commandes quotidiennes'
+  const chartItems: Array<{ label: string; count: number; total: number; id: string }> = []
 
-  // 10. Répartition par Villes réelles au Cameroun
+  if (period === 'today' || period === 'yesterday') {
+    const isToday = period === 'today'
+    chartTitle = isToday ? "Activité d'Aujourd'hui par tranches horaires" : "Activité d'Hier par tranches horaires"
+    chartSubtitle = 'Volume des commandes réparties sur les 24 heures de la journée'
+
+    const slotLabels = ['00h-03h', '03h-06h', '06h-09h', '09h-12h', '12h-15h', '15h-18h', '18h-21h', '21h-24h']
+    const slots = slotLabels.map((l, idx) => ({ id: `slot_${idx}`, label: l, count: 0, total: 0 }))
+
+    filteredOrders.forEach((o) => {
+      if (!o.created_at) return
+      const d = new Date(o.created_at)
+      const h = d.getHours()
+      const slotIdx = Math.min(Math.floor(h / 3), 7)
+      slots[slotIdx].count += 1
+      slots[slotIdx].total += Number(o.total) || 0
+    })
+
+    chartItems.push(...slots)
+  } else if (period === 'year' || period === 'all') {
+    chartTitle = period === 'year' ? "Activité mensuelle de l'année" : "Activité mensuelle globale"
+    chartSubtitle = 'Évolution du chiffre d’affaires et commandes mois par mois'
+
+    const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+    const months = monthNames.map((m, idx) => ({ id: `m_${idx}`, label: m, count: 0, total: 0 }))
+
+    filteredOrders.forEach((o) => {
+      if (!o.created_at) return
+      const d = new Date(o.created_at)
+      const mIdx = d.getMonth()
+      months[mIdx].count += 1
+      months[mIdx].total += Number(o.total) || 0
+    })
+
+    chartItems.push(...months)
+  } else {
+    // 'week' ou 'month'
+    const daysCount = period === 'month' ? 14 : 7
+    chartTitle = period === 'month' ? 'Activité des 14 derniers jours' : 'Activité des 7 derniers jours'
+    chartSubtitle = 'Chiffre d’affaires et commandes quotidiennes'
+
+    const daysMap = new Map<string, { id: string; label: string; count: number; total: number }>()
+    for (let i = daysCount - 1; i >= 0; i--) {
+      const d = new Date(now - i * 24 * 60 * 60 * 1000)
+      const key = d.toISOString().split('T')[0]
+      const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' })
+      daysMap.set(key, { id: key, label: dayLabel, count: 0, total: 0 })
+    }
+
+    filteredOrders.forEach((o) => {
+      if (!o.created_at) return
+      const key = o.created_at.split('T')[0]
+      if (daysMap.has(key)) {
+        const entry = daysMap.get(key)!
+        entry.count += 1
+        entry.total += Number(o.total) || 0
+      }
+    })
+
+    chartItems.push(...Array.from(daysMap.values()))
+  }
+
+  const maxChartRevenue = Math.max(...chartItems.map((d) => d.total), 1)
+  const chartTotalRevenue = chartItems.reduce((s, d) => s + d.total, 0)
+  const chartTotalOrders = chartItems.reduce((s, d) => s + d.count, 0)
+
+  // 11. Répartition par Villes réelles au Cameroun
   const cityCounts: Record<string, number> = {}
-  const storedCities = rawAnalytics.cities || {}
   Object.entries(storedCities).forEach(([cityName, count]) => {
     if (cityName && Number(count) > 0) {
       cityCounts[cityName] = (cityCounts[cityName] || 0) + Number(count)
     }
   })
-  orders.forEach((o) => {
+  filteredOrders.forEach((o) => {
     const c = (o.shipping_address as any)?.city
     if (c) cityCounts[c] = (cityCounts[c] || 0) + 1
   })
   const totalCityReports = Object.values(cityCounts).reduce((a, b) => a + b, 0)
 
-  // 11. Top Produits vendus réels (avec récupération robuste de l'image de snapshot ou du produit)
+  // 12. Top Produits vendus réels selon la période
+  const filteredOrderIds = new Set(filteredOrders.map((o) => o.id))
+  const itemsToAnalyze = period === 'all' ? orderItems : orderItems.filter((i) => filteredOrderIds.has(i.order_id))
+
   const productSalesMap = new Map<string, { id: string; name: string; slug: string; image: string | null; price: number; unitsSold: number; totalGenerated: number }>()
-  orderItems.forEach((item) => {
+  itemsToAnalyze.forEach((item) => {
     const pId = item.product_id
     if (!pId) return
     const snapshot = item.snapshot as any
     const productFromDb = products.find((prod) => prod.id === pId)
 
     const name = snapshot?.name || productFromDb?.name || 'Produit'
-    // Récupération de l'image : snapshot.image (format direct), snapshot.images[0] ou produit en base
     const image = snapshot?.image || snapshot?.images?.[0] || productFromDb?.images?.[0] || null
     const slug = snapshot?.slug || productFromDb?.slug || ''
     const price = Number(item.unit_price) || Number(productFromDb?.price) || 0
@@ -287,12 +486,12 @@ export default async function AdminAnalyticsPage() {
   })
   const topProducts = Array.from(productSalesMap.values()).slice(0, 5)
 
-  // 12. Activité récente en direct
+  // 13. Activité récente en direct
   const recentActivities = Array.isArray(rawAnalytics.recent_activity) ? rawAnalytics.recent_activity.slice(0, 8) : []
 
   return (
     <div className="p-3.5 sm:p-6 lg:p-8 space-y-5 sm:space-y-6 max-w-7xl mx-auto w-full min-w-0 overflow-x-hidden">
-      {/* ── EN-TÊTE RESPONSIVE ── */}
+      {/* ── EN-TÊTE RESPONSIVE AVEC FILTRES DE PÉRIODE ── */}
       <div className="flex flex-col gap-3 pb-4 border-b border-slate-200/80 dark:border-slate-800">
         <div className="flex items-center gap-1.5 text-xs text-slate-500 flex-wrap">
           <Link href="/admin" className="hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
@@ -302,7 +501,7 @@ export default async function AdminAnalyticsPage() {
           <span className="text-slate-700 dark:text-slate-300 font-medium truncate">Analytics Suite</span>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
               <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
@@ -314,13 +513,18 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Mesures de trafic, temps d'engagement, rétention et conversions.
+              Mesures de trafic, géolocalisation OpenStreetMap, temps d'engagement et conversion des ventes.
             </p>
           </div>
 
-          <div className="shrink-0 self-start sm:self-auto">
+          <div className="shrink-0 self-start lg:self-auto flex items-center gap-2 flex-wrap">
             <AnalyticsHeaderActions />
           </div>
+        </div>
+
+        {/* ── BARRE DE SÉLECTION TEMPORELLE (AUJOURD'HUI / HIER / HEBDO / MENSUELLE / ANNUELLE) ── */}
+        <div className="pt-2">
+          <AnalyticsPeriodSelector currentPeriod={period} />
         </div>
       </div>
 
@@ -413,7 +617,7 @@ export default async function AdminAnalyticsPage() {
             <span className="text-xs font-medium text-slate-500 shrink-0">{totalPageViews} vues</span>
           </div>
           <p className="text-xs text-slate-400 mb-4 truncate">
-            Durée moyenne de lecture passée sur chaque écran
+            Durée moyenne de lecture passée sur chaque écran ({periodLabel})
           </p>
 
           <div className="w-full overflow-x-auto">
@@ -430,7 +634,7 @@ export default async function AdminAnalyticsPage() {
                 {pagesList.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="py-6 text-center text-slate-400 text-xs">
-                      Aucune page enregistrée pour l'instant.
+                      Aucune page enregistrée pour cette période ({periodLabel}).
                     </td>
                   </tr>
                 ) : (
@@ -459,44 +663,42 @@ export default async function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Rétention Audience : Nouveaux vs Récurrents (4 cols) */}
+        {/* Fidélité : Nouveaux vs Récurrents (4 cols) */}
         <div className="lg:col-span-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
                 <Users className="h-4 w-4 text-indigo-500 shrink-0" />
-                <span className="truncate">Fidélité Audience</span>
+                <span className="truncate">Fidélité de l'Audience</span>
               </h2>
-              <span className="text-xs font-medium text-slate-500 shrink-0">Rétention</span>
+              <span className="text-xs font-medium text-slate-500 shrink-0">{totalAudience} profil(s)</span>
             </div>
             <p className="text-xs text-slate-400 mb-4 truncate">
-              Nouveaux visiteurs vs Clients fidèles
+              Rétention des acheteurs et visiteurs
             </p>
 
-            <div className="space-y-3 sm:space-y-4">
-              {/* Nouveaux Visiteurs */}
-              <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+            <div className="space-y-4">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                  <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
                     <UserPlus className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                     <span>Nouveaux Visiteurs</span>
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-white">{newVisitorsPct}%</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{newVisitors} ({newVisitorsPct}%)</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                   <div style={{ width: `${newVisitorsPct}%` }} className="h-full rounded-full bg-emerald-500" />
                 </div>
-                <p className="text-[10px] text-slate-400 pt-0.5">Première découverte de BRICELO</p>
+                <p className="text-[10px] text-slate-400 pt-0.5">Première découverte de Bricelo</p>
               </div>
 
-              {/* Visiteurs Récurrents */}
-              <div className="space-y-1.5 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="flex items-center gap-1.5 font-medium text-slate-800 dark:text-slate-200">
+                  <span className="flex items-center gap-1.5 text-slate-700 dark:text-slate-300 font-medium">
                     <UserCheck className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
-                    <span>Clients Fidèles (Récurrents)</span>
+                    <span>Visiteurs Récurrents</span>
                   </span>
-                  <span className="font-bold text-slate-900 dark:text-white">{returningVisitorsPct}%</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{returningVisitors} ({returningVisitorsPct}%)</span>
                 </div>
                 <div className="h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                   <div style={{ width: `${returningVisitorsPct}%` }} className="h-full rounded-full bg-indigo-500" />
@@ -513,30 +715,30 @@ export default async function AdminAnalyticsPage() {
         </div>
       </div>
 
-      {/* ── SECTION : GRAPHIQUE 7 JOURS & ACQUISITION DE TRAFIC ── */}
+      {/* ── SECTION : GRAPHIQUE SELON PÉRIODE & ACQUISITION DE TRAFIC ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
-        {/* Graphique hebdomadaire (8 cols) */}
+        {/* Graphique d'activité dynamique (8 cols) */}
         <div className="lg:col-span-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 shadow-2xs flex flex-col justify-between min-w-0">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
                 <BarChart3 className="h-4 w-4 text-amber-500 shrink-0" />
-                <span className="truncate">Ventes Quotidiennes (7 Derniers Jours)</span>
+                <span className="truncate">{chartTitle}</span>
               </h2>
-              <span className="text-xs font-medium text-slate-500 shrink-0">Commandes</span>
+              <span className="text-xs font-medium text-slate-500 shrink-0">Ventes réelles</span>
             </div>
             <p className="text-xs text-slate-400 mb-5 truncate">
-              Total hebdo : <strong className="text-slate-700 dark:text-slate-300">{formatPrice(weeklyTotalRevenue)}</strong> ({weeklyTotalOrders} commande{weeklyTotalOrders > 1 ? 's' : ''})
+              {chartSubtitle} : <strong className="text-slate-700 dark:text-slate-300">{formatPrice(chartTotalRevenue)}</strong> ({chartTotalOrders} commande{chartTotalOrders > 1 ? 's' : ''})
             </p>
 
             <div className="h-40 sm:h-52 w-full flex items-end justify-between gap-1 sm:gap-3 pt-4 pb-2 border-b border-slate-100 dark:border-slate-800">
-              {dailyChart.map((d) => {
-                const heightPct = maxDayRevenue > 0 && d.total > 0
-                  ? Math.max(Math.round((d.total / maxDayRevenue) * 100), 10)
+              {chartItems.map((d) => {
+                const heightPct = maxChartRevenue > 0 && d.total > 0
+                  ? Math.max(Math.round((d.total / maxChartRevenue) * 100), 10)
                   : 4
 
                 return (
-                  <div key={d.dateStr} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative min-w-0">
+                  <div key={d.id} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative min-w-0">
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 pointer-events-none bg-slate-900 text-white text-[10px] font-semibold px-2 py-1 rounded shadow-md whitespace-nowrap border border-slate-800">
                       <p>{d.total > 0 ? formatPrice(d.total) : '0 FCFA'}</p>
                       <p className="text-[9px] text-amber-400 font-normal">{d.count} commande(s)</p>
@@ -562,7 +764,7 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="mt-3 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-400">
-            <span>Montant en FCFA par jour</span>
+            <span>Montant en FCFA</span>
             <span>Direct DB</span>
           </div>
         </div>
@@ -578,7 +780,7 @@ export default async function AdminAnalyticsPage() {
               <span className="text-xs font-medium text-slate-500 shrink-0">{totalTrafficVisits} visite(s)</span>
             </div>
             <p className="text-xs text-slate-400 mb-4 truncate">
-              Origine du trafic des visiteurs
+              Origine du trafic ({periodLabel})
             </p>
 
             <div className="space-y-2.5 sm:space-y-3">
@@ -747,6 +949,9 @@ export default async function AdminAnalyticsPage() {
         </div>
       </div>
 
+      {/* ── SECTION CARTE INTERACTIVE OPENSTREETMAP (CAMEROUN LIVE & GÉOGRAPHIE) ── */}
+      <AnalyticsMap liveSessions={liveSessionsMap} cityCounts={cityCounts} totalOrders={totalOrders} />
+
       {/* ── SECTION : VILLES CAMEROUN & TOP PRODUITS VENDUS ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
         {/* Villes de commande réelles (5 cols) */}
@@ -754,18 +959,18 @@ export default async function AdminAnalyticsPage() {
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
               <MapPin className="h-4 w-4 text-rose-500 shrink-0" />
-              <span className="truncate">Géographie Réelle (Cameroun)</span>
+              <span className="truncate">Villes ({periodLabel})</span>
             </h2>
             <span className="text-xs text-slate-500 font-medium shrink-0">{totalCityReports} adresse(s)</span>
           </div>
           <p className="text-xs text-slate-400 mb-4 truncate">
-            Villes confirmées lors de la commande des clients
+            Villes confirmées lors des commandes des clients
           </p>
 
           <div className="space-y-2">
             {Object.keys(cityCounts).length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
-                Aucune adresse de commande enregistrée pour le moment.
+                Aucune adresse de commande enregistrée pour cette période.
               </div>
             ) : (
               Object.entries(cityCounts).map(([cityName, count]) => {
@@ -796,7 +1001,7 @@ export default async function AdminAnalyticsPage() {
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 truncate">
               <Package className="h-4 w-4 text-amber-500 shrink-0" />
-              <span className="truncate">Articles les Plus Vendus</span>
+              <span className="truncate">Articles les Plus Vendus ({periodLabel})</span>
             </h2>
             <Link
               href="/admin/produits"
@@ -813,7 +1018,7 @@ export default async function AdminAnalyticsPage() {
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {topProducts.length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-400">
-                Aucun article commandé pour le moment.
+                Aucun article commandé pour cette période.
               </div>
             ) : (
               topProducts.map((p, idx) => (

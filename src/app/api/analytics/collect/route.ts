@@ -64,11 +64,26 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const currentLive = raw.live_sessions || {}
-    currentLive[payload.session_id] = now
+    // Inférence de la ville si présente dans les en-têtes (Vercel ou Cloudflare)
+    const headerCity =
+      request.headers.get('x-vercel-ip-city') ||
+      request.headers.get('cf-ipcity') ||
+      undefined
+    const effectiveCity = payload.city || headerCity || undefined
+
+    const currentLive: Record<string, any> = raw.live_sessions || {}
+    currentLive[payload.session_id] = {
+      timestamp: now,
+      city: effectiveCity,
+      path: cleanPath,
+      device: payload.device,
+      channel: payload.channel,
+    }
     const cutoff = now - 5 * 60 * 1000 // 5 minutes
     Object.keys(currentLive).forEach((sid) => {
-      if (currentLive[sid] < cutoff) {
+      const item = currentLive[sid]
+      const ts = typeof item === 'number' ? item : (item?.timestamp || 0)
+      if (ts < cutoff) {
         delete currentLive[sid]
       }
     })
@@ -78,6 +93,7 @@ export async function POST(request: NextRequest) {
     const rawAudience = raw.audience || {}
     const rawBrowsers = raw.browsers || {}
     const rawCampaigns = raw.campaigns || {}
+    const rawDailyHistory = raw.daily_history || {}
 
     // Détection nouvelle session
     const isNewSession = !rawSessions.active_ids || !rawSessions.active_ids[payload.session_id]
@@ -131,9 +147,60 @@ export async function POST(request: NextRequest) {
       rawCampaigns[campKey] = (rawCampaigns[campKey] || 0) + 1
     }
 
+    // Historique Quotidien (Daily History pour filtres Aujourd'hui, Hier, 7j, 30j, Année)
+    const currentHour = String(new Date().getHours()).padStart(2, '0')
+    if (!rawDailyHistory[todayStr]) {
+      rawDailyHistory[todayStr] = {
+        date: todayStr,
+        views: 0,
+        sessions: 0,
+        new_visitors: 0,
+        returning_visitors: 0,
+        total_seconds: 0,
+        engaged_sessions: 0,
+        channels: {},
+        devices: {},
+        browsers: {},
+        cities: {},
+        top_pages: {},
+        hours: {},
+      }
+    }
+    const todayRecord = rawDailyHistory[todayStr]
+
+    if (payload.type === 'page_view') {
+      todayRecord.views = (todayRecord.views || 0) + 1
+      todayRecord.hours[currentHour] = (todayRecord.hours[currentHour] || 0) + 1
+      if (isNewSession) todayRecord.sessions = (todayRecord.sessions || 0) + 1
+      if (payload.is_returning) {
+        todayRecord.returning_visitors = (todayRecord.returning_visitors || 0) + 1
+      } else {
+        todayRecord.new_visitors = (todayRecord.new_visitors || 0) + 1
+      }
+      todayRecord.channels[payload.channel] = (todayRecord.channels[payload.channel] || 0) + 1
+      todayRecord.devices[payload.device] = (todayRecord.devices[payload.device] || 0) + 1
+      todayRecord.browsers[browserKey] = (todayRecord.browsers[browserKey] || 0) + 1
+      if (effectiveCity) {
+        todayRecord.cities[effectiveCity] = (todayRecord.cities[effectiveCity] || 0) + 1
+      }
+      if (!todayRecord.top_pages[cleanPath]) {
+        todayRecord.top_pages[cleanPath] = { views: 0, total_seconds: 0 }
+      }
+      todayRecord.top_pages[cleanPath].views += 1
+    }
+
+    if (addedSeconds > 0) {
+      todayRecord.total_seconds = (todayRecord.total_seconds || 0) + addedSeconds
+      if (!todayRecord.top_pages[cleanPath]) {
+        todayRecord.top_pages[cleanPath] = { views: 0, total_seconds: 0 }
+      }
+      todayRecord.top_pages[cleanPath].total_seconds += addedSeconds
+    }
+
     const analytics = {
       today_date: todayStr,
       live_sessions: currentLive,
+      daily_history: rawDailyHistory,
       sessions: {
         total: (rawSessions.total || 0) + (isNewSession ? 1 : 0),
         today: (isNewDay ? 0 : (rawSessions.today || 0)) + (isNewSession ? 1 : 0),

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input, Textarea } from '@/components/ui/input'
 import { slugify } from '@/lib/utils'
+import { hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 
 export default function BoutiquePage() {
   const router = useRouter()
@@ -51,8 +52,10 @@ export default function BoutiquePage() {
       .eq('id', store.id)
     if (err) {
       setError(err.message)
+      hideGlobalLoader()
     } else {
       setSuccess(true)
+      hideGlobalLoader()
       setTimeout(() => setSuccess(false), 3000)
     }
     setSaving(false)

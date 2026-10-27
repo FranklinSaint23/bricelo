@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { useLanguage } from '@/components/providers/language-provider'
 import { createClient } from '@/lib/supabase/client'
 import { sendOrderNotificationEmail } from '@/lib/notifications'
+import { hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 import type { Address } from '@/types'
 import type { PaymentSettings } from '@/lib/settings'
 
@@ -173,6 +174,12 @@ export function CheckoutForm({ addresses, userId, paymentSettings }: Props) {
       }
     }
 
+    if (shippingAddress?.city && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('bricelo_user_city', shippingAddress.city)
+      } catch {}
+    }
+
     setLoading(true)
     const supabase = createClient()
 
@@ -313,6 +320,7 @@ export function CheckoutForm({ addresses, userId, paymentSettings }: Props) {
     } catch (err: any) {
       setError(err.message ?? t.error)
       setLoading(false)
+      hideGlobalLoader()
     }
   }
 

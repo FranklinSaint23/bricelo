@@ -14,6 +14,7 @@ import Image from 'next/image'
 import { VariantMatrixEditor } from '@/components/vendor/variant-matrix-editor'
 import { saveProductOptionsAndVariants } from '@/lib/product-variant-saver'
 import { ProductOption, AdvancedProductVariant } from '@/types/variants'
+import { hideGlobalLoader } from '@/components/ui/product-navigation-loader'
 
 interface Category { id: string; name: string }
 
@@ -215,9 +216,10 @@ export function ProductForm({
     e.preventDefault()
     setError(null)
 
-    if (!name.trim()) { setError('Le nom du produit est requis.'); return }
+    if (!name.trim()) { setError('Le nom du produit est requis.'); hideGlobalLoader(); return }
     if (productType !== 'variable' && (!price || isNaN(Number(price)) || Number(price) <= 0)) {
       setError('Le prix de base doit être un nombre positif.')
+      hideGlobalLoader()
       return
     }
 
@@ -254,11 +256,11 @@ export function ProductForm({
         .select('id')
         .single()
 
-      if (err || !newProd) { setError(err?.message || 'Erreur création produit'); setLoading(false); return }
+      if (err || !newProd) { setError(err?.message || 'Erreur création produit'); setLoading(false); hideGlobalLoader(); return }
       productId = newProd.id
     } else {
       const { error: err } = await supabase.from('products').update(payload).eq('id', productId!)
-      if (err) { setError(err.message); setLoading(false); return }
+      if (err) { setError(err.message); setLoading(false); hideGlobalLoader(); return }
     }
 
     // --- Enregistrement relationnel des Options & Variantes ---
