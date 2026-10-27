@@ -59,9 +59,13 @@ export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders =
     const ts = typeof sess === 'number' ? sess : (sess?.timestamp || 0)
     if (ts >= cutoff) {
       totalActive += 1
-      const rawCity = sess?.city || 'Douala'
-      const normCity = decodeURIComponent(rawCity).trim()
-      liveByCity[normCity] = (liveByCity[normCity] || 0) + 1
+      const rawCity = sess?.city
+      if (rawCity && typeof rawCity === 'string') {
+        const normCity = decodeURIComponent(rawCity).trim()
+        if (normCity && normCity !== 'undefined' && normCity !== 'null') {
+          liveByCity[normCity] = (liveByCity[normCity] || 0) + 1
+        }
+      }
     }
   })
 
@@ -77,11 +81,13 @@ export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders =
     knownCities.add(cityName)
   })
 
-  knownCities.add('Douala')
+  // Toujours proposer les deux métropoles phares pour la navigation
   knownCities.add('Yaoundé')
+  knownCities.add('Douala')
 
   knownCities.forEach((cName) => {
-    const coords = CAMEROON_CITIES[cName] || CAMEROON_CITIES['Douala']
+    const coords = CAMEROON_CITIES[cName]
+    if (!coords) return
     cityDataList.push({
       name: coords.name,
       region: coords.region,

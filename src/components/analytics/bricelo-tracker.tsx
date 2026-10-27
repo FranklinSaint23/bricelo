@@ -83,15 +83,69 @@ export function BriceloTracker() {
     else if (ua.includes('firefox')) browser = 'Firefox'
     else if (ua.includes('edg')) browser = 'Edge'
 
-    // 4. Ville du client (uniquement si enregistrée lors d'une commande ou profil)
+    // 4. Ville du client (localStorage > Géolocalisation HTML5 > Commandes / Profil)
     let city: string | undefined = undefined
     try {
       const storedCity = localStorage.getItem('bricelo_user_city')
-      if (storedCity) {
+      if (storedCity && storedCity !== 'undefined' && storedCity !== 'null') {
         city = storedCity
       }
     } catch {
       // Ignore
+    }
+
+    // Détection GPS précise si la ville n'est pas encore enregistrée
+    if (!city && typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      try {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords
+            const CITIES_REF = [
+              { name: 'Yaoundé', lat: 3.8480, lng: 11.5021 },
+              { name: 'Douala', lat: 4.0511, lng: 9.7679 },
+              { name: 'Bafoussam', lat: 5.4778, lng: 10.4176 },
+              { name: 'Bamenda', lat: 5.9631, lng: 10.1591 },
+              { name: 'Garoua', lat: 9.3014, lng: 13.3977 },
+              { name: 'Maroua', lat: 10.5956, lng: 14.3247 },
+              { name: 'Ngaoundéré', lat: 7.3195, lng: 13.5841 },
+              { name: 'Kribi', lat: 2.9392, lng: 9.9103 },
+              { name: 'Limbe', lat: 4.0244, lng: 9.2140 },
+              { name: 'Buea', lat: 4.1560, lng: 9.2435 },
+            ]
+            let closest = 'Yaoundé'
+            let minD = Infinity
+            CITIES_REF.forEach((c) => {
+              const d = Math.hypot(latitude - c.lat, longitude - c.lng)
+              if (d < minD) {
+                minD = d
+                closest = c.name
+              }
+            })
+            try {
+              localStorage.setItem('bricelo_user_city', closest)
+            } catch {}
+            // Envoyer la mise à jour immédiate de la ville réelle
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(
+                '/api/analytics/collect',
+                JSON.stringify({
+                  type: 'heartbeat',
+                  path: pathname,
+                  visitor_id: visitorId,
+                  session_id: sessionId,
+                  duration_seconds: 1,
+                  city: closest,
+                  channel,
+                  device,
+                  browser,
+                })
+              )
+            }
+          },
+          () => {},
+          { timeout: 5000, maximumAge: 3600000, enableHighAccuracy: false }
+        )
+      } catch {}
     }
 
     const currentUrl = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '')

@@ -64,12 +64,29 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Inférence de la ville si présente dans les en-têtes (Vercel ou Cloudflare)
+    // Inférence de la ville si présente dans le payload ou les en-têtes (Vercel / Cloudflare)
     const headerCity =
       request.headers.get('x-vercel-ip-city') ||
       request.headers.get('cf-ipcity') ||
       undefined
-    const effectiveCity = payload.city || headerCity || undefined
+    const headerRegion = request.headers.get('x-vercel-ip-country-region')
+
+    let effectiveCity: string | undefined = payload.city
+    if (!effectiveCity) {
+      if (headerRegion === 'CE' || headerRegion === 'Centre') {
+        effectiveCity = 'Yaoundé'
+      } else if (headerRegion === 'LT' || headerRegion === 'Littoral') {
+        effectiveCity = 'Douala'
+      } else if (headerRegion === 'OU' || headerRegion === 'Ouest') {
+        effectiveCity = 'Bafoussam'
+      } else if (headerRegion === 'NO' || headerRegion === 'Nord') {
+        effectiveCity = 'Garoua'
+      } else if (headerRegion === 'EN') {
+        effectiveCity = 'Maroua'
+      } else if (headerCity) {
+        effectiveCity = decodeURIComponent(headerCity)
+      }
+    }
 
     const currentLive: Record<string, any> = raw.live_sessions || {}
     currentLive[payload.session_id] = {
