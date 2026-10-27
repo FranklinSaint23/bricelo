@@ -142,10 +142,10 @@ export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders =
         return
       }
 
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        subdomains: 'abcd',
-        maxZoom: 19,
+      L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        subdomains: 'abc',
+        maxZoom: 20,
       }).addTo(map)
 
       L.control.zoom({ position: 'topright' }).addTo(map)
