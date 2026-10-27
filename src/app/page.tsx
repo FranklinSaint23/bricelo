@@ -45,13 +45,13 @@ export default async function HomePage() {
     .order('created_at', { ascending: false })
     .limit(10)
 
-  // Tous les produits (grille principale)
+  // Tous les produits (regroupés par catégorie)
   const { data: allProducts } = await supabase
     .from('products')
-    .select('id, name, slug, price, compare_at_price, promo_ends_at, images, rating, review_count, stock, is_featured, promotion_label, is_new, store:stores(id, name, slug), variants:product_variants(id, price, compare_at_price, stock_quantity, direct_price, price_adjustment, created_at, images:variant_images(url))')
+    .select('id, name, slug, price, compare_at_price, promo_ends_at, images, rating, review_count, stock, is_featured, promotion_label, is_new, category_id, store:stores(id, name, slug), category:categories(id, name, slug), variants:product_variants(id, price, compare_at_price, stock_quantity, direct_price, price_adjustment, created_at, images:variant_images(url))')
     .eq('is_active', true)
     .order('created_at', { ascending: false })
-    .limit(40)
+    .limit(100)
 
   // Produits en promo (compare_at_price défini)
   const { data: promoProducts } = await supabase
