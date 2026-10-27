@@ -515,7 +515,7 @@ export default async function AdminAnalyticsPage(props: PageProps) {
               </div>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Mesures de trafic, géolocalisation OpenStreetMap, temps d'engagement et conversion des ventes.
+              Mesures de trafic, cartographie en direct, temps d'engagement et conversion des ventes.
             </p>
           </div>
 

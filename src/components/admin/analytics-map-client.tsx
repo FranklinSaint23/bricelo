@@ -10,7 +10,7 @@ const MapComponent = dynamic(
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/80 dark:border-slate-800 p-6 shadow-2xs h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-2.5 text-slate-400">
           <div className="h-8 w-8 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
-          <span className="text-xs font-medium">Chargement de la cartographie OpenStreetMap Cameroun...</span>
+          <span className="text-xs font-medium">Chargement de la carte du Cameroun...</span>
         </div>
       </div>
     ),

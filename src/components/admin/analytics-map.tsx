@@ -293,10 +293,10 @@ export function AnalyticsMap({ liveSessions = {}, cityCounts = {}, totalOrders =
           <div className="flex items-center gap-2">
             <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <MapPin className="h-4 w-4 text-blue-600" />
-              <span>Cartographie OpenStreetMap des Visiteurs & Commandes</span>
+              <span>Carte des Visiteurs & Commandes</span>
             </h2>
             <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/70 border border-blue-200 dark:border-blue-800/80 px-2 py-0.5 rounded-full">
-              OpenStreetMap Cameroun
+              Cameroun
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
