@@ -19,10 +19,61 @@ export function ProductNavigationLoader() {
   const [loading, setLoading] = useState(false)
   const pathname = usePathname()
 
-  // Dès que la route change, on masque le spinner
+  // Dès que la route change, on masque le spinner et libère l'écran
   useEffect(() => {
     setLoading(false)
   }, [pathname])
+
+  // Verrouillage STRICT et COMPLET du défilement lorsque le spinner est actif
+  useEffect(() => {
+    if (!loading) return
+
+    // 1. Sauvegarder les styles d'origine
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    const originalBodyTouchAction = document.body.style.touchAction
+    const originalHtmlTouchAction = document.documentElement.style.touchAction
+    const originalBodyOverscroll = document.body.style.overscrollBehavior
+    const originalHtmlOverscroll = document.documentElement.style.overscrollBehavior
+
+    // 2. Figer complètement le fond (desktop, iOS et Android)
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+    document.documentElement.style.touchAction = 'none'
+    document.body.style.overscrollBehavior = 'none'
+    document.documentElement.style.overscrollBehavior = 'none'
+
+    // 3. Interdire tout événement de défilement (tactile + molette + touches)
+    const preventScroll = (e: Event) => {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
+    const preventKeyScroll = (e: KeyboardEvent) => {
+      const scrollKeys = ['Space', 'PageUp', 'PageDown', 'End', 'Home', 'ArrowUp', 'ArrowDown']
+      if (scrollKeys.includes(e.code)) {
+        e.preventDefault()
+      }
+    }
+
+    window.addEventListener('wheel', preventScroll, { passive: false })
+    window.addEventListener('touchmove', preventScroll, { passive: false })
+    window.addEventListener('keydown', preventKeyScroll, { passive: false })
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = originalHtmlOverflow
+      document.body.style.touchAction = originalBodyTouchAction
+      document.documentElement.style.touchAction = originalHtmlTouchAction
+      document.body.style.overscrollBehavior = originalBodyOverscroll
+      document.documentElement.style.overscrollBehavior = originalHtmlOverscroll
+
+      window.removeEventListener('wheel', preventScroll)
+      window.removeEventListener('touchmove', preventScroll)
+      window.removeEventListener('keydown', preventKeyScroll)
+    }
+  }, [loading])
 
   // Écoute des événements manuels et des clics / soumissions
   useEffect(() => {
@@ -36,7 +87,7 @@ export function ProductNavigationLoader() {
     ;(window as any).__bricelo_show_loader = handleShow
     ;(window as any).__bricelo_hide_loader = handleHide
 
-    // 1. Détection des clics sur les liens principaux de navigation
+    // 1. Détection des clics sur les liens de navigation
     const handleClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest('a')
       if (!target) return
@@ -47,19 +98,16 @@ export function ProductNavigationLoader() {
       // Ignorer les clics avec touches modificatrices (nouvel onglet)
       if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button === 1) return
 
-      // Clics vers les fiches produits, boutiques, catalogue, panier, checkout, auth, espaces vendeur et admin
-      const isImportantLink =
-        href.startsWith('/produit/') ||
-        href.startsWith('/boutique/') ||
-        href.startsWith('/catalogue') ||
-        href.startsWith('/checkout') ||
-        href.startsWith('/panier') ||
-        href.startsWith('/login') ||
-        href.startsWith('/register') ||
-        href.startsWith('/vendeur') ||
-        href.startsWith('/admin')
+      // Toute navigation interne vers une autre route (produits, boutiques, catalogue, catégories, compte, etc.)
+      const isInternalNavigation =
+        href.startsWith('/') &&
+        !href.startsWith('/#') &&
+        !href.startsWith('//') &&
+        href !== '#' &&
+        !target.hasAttribute('download') &&
+        target.target !== '_blank'
 
-      if (isImportantLink && href !== pathname) {
+      if (isInternalNavigation && href !== pathname) {
         setLoading(true)
       }
     }
@@ -103,11 +151,23 @@ export function ProductNavigationLoader() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/25 dark:bg-black/50 backdrop-blur-md pointer-events-none transition-all duration-200 animate-in fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/25 dark:bg-black/50 backdrop-blur-md pointer-events-auto touch-none select-none overscroll-none cursor-wait transition-all duration-200 animate-in fade-in"
       aria-hidden="true"
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+      onWheel={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
     >
       {/* Spinner style Facebook : simple arc jaune vif pur tournant dans les airs sans modal ni boîte */}
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center pointer-events-none">
         <svg
           className="h-12 w-12 sm:h-14 sm:w-14 animate-spin text-amber-500 drop-shadow-[0_2px_12px_rgba(245,158,11,0.5)]"
           viewBox="0 0 50 50"

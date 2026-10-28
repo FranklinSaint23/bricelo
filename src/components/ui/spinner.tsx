@@ -1,3 +1,6 @@
+'use client'
+
+import { useEffect } from 'react'
 import { cn } from '@/lib/utils'
 
 interface SpinnerProps {
@@ -22,8 +25,48 @@ export function Spinner({ size = 'md', className }: SpinnerProps) {
 }
 
 export function PageLoader() {
+  useEffect(() => {
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    const originalBodyTouchAction = document.body.style.touchAction
+
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+
+    const preventScroll = (e: Event) => {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+
+    window.addEventListener('wheel', preventScroll, { passive: false })
+    window.addEventListener('touchmove', preventScroll, { passive: false })
+
+    return () => {
+      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = originalHtmlOverflow
+      document.body.style.touchAction = originalBodyTouchAction
+      window.removeEventListener('wheel', preventScroll)
+      window.removeEventListener('touchmove', preventScroll)
+    }
+  }, [])
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm pointer-events-auto touch-none select-none overscroll-none cursor-wait"
+      onClick={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+      onTouchMove={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+      onWheel={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
+    >
       <Spinner size="lg" />
     </div>
   )
