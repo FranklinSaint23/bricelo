@@ -17,9 +17,34 @@ interface VendorStoreShareCardProps {
   }
 }
 
+function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new window.Image()
+    img.crossOrigin = 'anonymous'
+    img.onload = () => resolve(img)
+    img.onerror = (e) => reject(e)
+    img.src = src
+  })
+}
+
+function drawRoundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath()
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, r)
+  } else {
+    ctx.moveTo(x + r, y)
+    ctx.arcTo(x + w, y, x + w, y + h, r)
+    ctx.arcTo(x + w, y + h, x, y + h, r)
+    ctx.arcTo(x, y + h, x, y, r)
+    ctx.arcTo(x, y, x + w, y, r)
+    ctx.closePath()
+  }
+}
+
 export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
   const [copied, setCopied] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState<string>('')
+  const [isGeneratingPoster, setIsGeneratingPoster] = useState(false)
   const [showPrintModal, setShowPrintModal] = useState(false)
 
   // URL absolue de la boutique
@@ -29,7 +54,7 @@ export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
   // Générer le QR code haute définition
   useEffect(() => {
     QRCode.toDataURL(storeUrl, {
-      width: 400,
+      width: 480,
       margin: 2,
       color: {
         dark: '#0D1B2E',
@@ -53,7 +78,161 @@ export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
-  function handleDownloadQr() {
+  // Télécharger l'affiche complète (avec le texte sous le carré)
+  async function handleDownloadPoster() {
+    if (!qrDataUrl || isGeneratingPoster) return
+    setIsGeneratingPoster(true)
+
+    try {
+      const canvas = document.createElement('canvas')
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+
+      const width = 1200
+      const height = 1600
+      canvas.width = width
+      canvas.height = height
+
+      // 1. Fond blanc pur et propre
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, width, height)
+
+      // Bordure extérieure raffinée
+      ctx.strokeStyle = '#E2E8F0'
+      ctx.lineWidth = 10
+      drawRoundedRect(ctx, 20, 20, width - 40, height - 40, 32)
+      ctx.stroke()
+
+      // Bandeau d'en-tête bleu nuit Bricélo
+      ctx.fillStyle = '#0D1B2E'
+      ctx.save()
+      ctx.beginPath()
+      drawRoundedRect(ctx, 20, 20, width - 40, 130, 32)
+      ctx.clip()
+      ctx.fillRect(20, 20, width - 40, 130)
+      ctx.restore()
+
+      // Texte en-tête BRICÉLO
+      ctx.fillStyle = '#F59E0B'
+      ctx.font = 'bold 24px system-ui, -apple-system, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText('BRICÉLO  •  BOUTIQUE OFFICIELLE CERTIFIÉE', width / 2, 85)
+
+      let currentY = 195
+
+      // 2. Logo rond de la boutique (si présent)
+      if (store.logo_url) {
+        try {
+          const logoImg = await loadImage(store.logo_url)
+          const logoSize = 130
+          const logoX = (width - logoSize) / 2
+          const logoY = currentY
+
+          ctx.save()
+          ctx.beginPath()
+          ctx.arc(width / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2)
+          ctx.clip()
+          ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
+          ctx.restore()
+
+          // Bordure du logo
+          ctx.strokeStyle = '#E2E8F0'
+          ctx.lineWidth = 5
+          ctx.beginPath()
+          ctx.arc(width / 2, logoY + logoSize / 2, logoSize / 2, 0, Math.PI * 2)
+          ctx.stroke()
+
+          currentY += logoSize + 30
+        } catch {
+          currentY += 25
+        }
+      } else {
+        currentY += 35
+      }
+
+      // 3. Nom officiel de la boutique
+      ctx.fillStyle = '#0D1B2E'
+      ctx.font = '900 52px system-ui, -apple-system, sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'alphabetic'
+      const storeName = store.name.length > 32 ? store.name.substring(0, 30) + '...' : store.name
+      ctx.fillText(storeName, width / 2, currentY)
+      currentY += 46
+
+      // Slogan / description
+      ctx.fillStyle = '#64748B'
+      ctx.font = '500 24px system-ui, -apple-system, sans-serif'
+      ctx.fillText('Retrouvez tous nos produits & commandez en direct sur internet', width / 2, currentY)
+      currentY += 60
+
+      // 4. Cadre élégant pour le QR Code
+      const qrBoxSize = 580
+      const qrBoxX = (width - qrBoxSize) / 2
+      const qrBoxY = currentY
+
+      ctx.fillStyle = '#F8FAFC'
+      drawRoundedRect(ctx, qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 36)
+      ctx.fill()
+      ctx.strokeStyle = '#CBD5E1'
+      ctx.lineWidth = 4
+      ctx.stroke()
+
+      // Dessin du QR Code à l'intérieur
+      const qrImg = await loadImage(qrDataUrl)
+      const qrPadding = 35
+      ctx.drawImage(qrImg, qrBoxX + qrPadding, qrBoxY + qrPadding, qrBoxSize - (qrPadding * 2), qrBoxSize - (qrPadding * 2))
+
+      currentY = qrBoxY + qrBoxSize + 60
+
+      // 5. 🎯 TEXTE DIRECTEMENT SOUS LE CARRÉ DU QR CODE
+      ctx.fillStyle = '#0D1B2E'
+      ctx.font = '900 40px system-ui, -apple-system, sans-serif'
+      ctx.fillText('Scannez pour visiter ma boutique', width / 2, currentY)
+      currentY += 46
+
+      ctx.fillStyle = '#2563EB'
+      ctx.font = 'bold 26px monospace, system-ui, sans-serif'
+      ctx.fillText(`bricelo.com/boutique/${store.slug}`, width / 2, currentY)
+      currentY += 42
+
+      ctx.fillStyle = '#64748B'
+      ctx.font = '500 22px system-ui, -apple-system, sans-serif'
+
+      // 6. Pied de page avec garanties
+      const footerY = height - 90
+      ctx.strokeStyle = '#E2E8F0'
+      ctx.lineWidth = 2
+      ctx.beginPath()
+      ctx.moveTo(80, footerY - 45)
+      ctx.lineTo(width - 80, footerY - 45)
+      ctx.stroke()
+
+      ctx.fillStyle = '#0F172A'
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif'
+      ctx.fillText('✓ Produits 100% Authentiques   •   ✓ Paiement Sécurisé   •   ✓ Livraison Rapide', width / 2, footerY)
+
+      // Export Blob & Téléchargement
+      canvas.toBlob((blob) => {
+        if (!blob) return
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `affiche-boutique-${store.slug}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }, 'image/png')
+    } catch (err) {
+      console.error('Erreur lors de la génération de l\'affiche PNG:', err)
+    } finally {
+      setIsGeneratingPoster(false)
+    }
+  }
+
+  // Télécharger le QR code brut (carré seul)
+  function handleDownloadRawQr() {
     if (!qrDataUrl) return
     const a = document.createElement('a')
     a.href = qrDataUrl
@@ -88,7 +267,7 @@ export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
 
       {/* Bloc principal avec 2 colonnes : Actions & QR Code + Mockup WhatsApp */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        
+
         {/* COLONNE GAUCHE (7 cols) : Liens, Bouton WhatsApp & QR Code */}
         <div className="lg:col-span-7 flex flex-col gap-5">
           {/* Boîte Lien Unique */}
@@ -136,7 +315,7 @@ export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
 
           {/* Boîte QR Code Physique */}
           <div className="bg-white rounded-2xl border border-[var(--color-slate-200)] p-5 shadow-xs flex flex-col sm:flex-row items-center gap-5">
-            <div className="relative p-2 rounded-2xl bg-white border-2 border-slate-200 shadow-md shrink-0">
+            <div className="relative p-3 rounded-2xl bg-white border-2 border-slate-200 shadow-md shrink-0 flex flex-col items-center">
               {qrDataUrl ? (
                 <img src={qrDataUrl} alt={`QR Code ${store.name}`} className="h-32 w-32 object-contain rounded-lg" />
               ) : (
@@ -144,32 +323,49 @@ export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
                   <QrCode className="h-8 w-8 text-slate-300 animate-pulse" />
                 </div>
               )}
+              {/* Texte directement sous le carré */}
+              <span className="text-[11px] font-extrabold text-[var(--color-navy-900)] mt-2 text-center max-w-[140px] leading-tight">
+                Scannez pour visiter ma boutique
+              </span>
             </div>
 
             <div className="flex-1 text-center sm:text-left">
               <h3 className="font-bold text-sm text-[var(--color-navy-900)] flex items-center justify-center sm:justify-start gap-1.5">
                 <QrCode className="h-4 w-4 text-[var(--color-accent)]" />
-                <span>QR Code de comptoir magasin</span>
+                <span>QR Code & Affiche de comptoir</span>
               </h3>
               <p className="text-xs text-[var(--color-slate-500)] mt-1 leading-relaxed">
-                Vos clients scannent ce code avec l’appareil photo de leur téléphone pour voir tout votre catalogue sans installer d’application.
+                Vos clients scannent ce code avec leur téléphone pour voir tout votre catalogue sans installer d’application.
               </p>
-              <div className="flex items-center justify-center sm:justify-start gap-2.5 mt-3.5 flex-wrap">
+              <div className="flex items-center justify-center sm:justify-start gap-2 mt-3.5 flex-wrap">
                 <button
                   type="button"
-                  onClick={handleDownloadQr}
-                  className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+                  onClick={handleDownloadPoster}
+                  disabled={isGeneratingPoster || !qrDataUrl}
+                  className="px-4 py-2.5 rounded-xl bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-800)] text-white text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95 disabled:opacity-50"
+                  title="Télécharger l'affiche prête à imprimer avec logo, QR Code et texte d'invitation"
                 >
                   <Download className="h-3.5 w-3.5" />
-                  <span>Télécharger PNG</span>
+                  <span>{isGeneratingPoster ? 'Génération...' : "Télécharger l'affiche"}</span>
                 </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadRawQr}
+                  className="px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  title="Télécharger uniquement le code carré sans l'affiche"
+                >
+                  <QrCode className="h-3.5 w-3.5" />
+                  <span>QR seul</span>
+                </button>
+
                 <button
                   type="button"
                   onClick={handlePrintFlyer}
-                  className="px-3.5 py-2 rounded-xl bg-[var(--color-navy-900)] hover:bg-[var(--color-navy-800)] text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs"
+                  className="px-3 py-2.5 rounded-xl border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs cursor-pointer"
                 >
                   <Printer className="h-3.5 w-3.5" />
-                  <span>Imprimer l&apos;affiche A4</span>
+                  <span>Imprimer A4</span>
                 </button>
               </div>
             </div>
@@ -279,7 +475,7 @@ export function VendorStoreShareCard({ store }: VendorStoreShareCardProps) {
             </div>
 
             <p className="text-xl font-extrabold text-slate-900 mb-1">
-              📱 Scannez avec votre téléphone pour commander
+              Scannez pour visiter ma boutique
             </p>
             <p className="text-sm font-mono text-slate-500">{storeUrl}</p>
           </div>
