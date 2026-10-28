@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, ShoppingCart, Star, Loader2 } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { cn, formatPrice } from '@/lib/utils'
+import { cn, formatPrice, getProductUrl } from '@/lib/utils'
 import { PromoTimer } from '@/components/ui/promo-timer'
 import { useLanguage } from '@/components/providers/language-provider'
 import type { Product } from '@/types'
@@ -95,7 +95,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
     )}>
       {/* Image */}
       <Link
-        href={`/produit/${product.slug}`}
+        href={getProductUrl(product)}
         className="block relative overflow-hidden bg-[var(--color-slate-50)]"
         style={{ aspectRatio: '1/1' }}
       >
@@ -173,7 +173,7 @@ export function ProductCard({ product, className }: ProductCardProps) {
           </Link>
         )}
 
-        <Link href={`/produit/${product.slug}`}>
+        <Link href={getProductUrl(product)}>
           <h3 className="text-sm font-medium text-[var(--color-navy-900)] line-clamp-2 leading-snug hover:text-[var(--color-accent)] transition-colors">
             {product.name}
           </h3>

@@ -37,7 +37,7 @@ export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
       )}
     >
       {src ? (
-        <Image src={src} alt={name ?? 'Avatar'} fill className="object-cover" sizes="80px" />
+        <Image src={src} alt={name ?? 'Avatar'} fill className="object-cover" sizes="80px" unoptimized />
       ) : (
         getInitials(name)
       )}

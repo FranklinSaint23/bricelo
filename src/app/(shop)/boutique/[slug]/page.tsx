@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
@@ -8,6 +9,36 @@ import { FacebookVerifiedBadge } from '@/components/ui/facebook-verified-badge'
 import type { Product } from '@/types'
 
 interface Props { params: Promise<{ slug: string }> }
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params
+  const supabase = await createClient()
+  const { data: store } = await supabase.from('stores').select('*').eq('slug', slug).single()
+  if (!store) return { title: 'Boutique introuvable' }
+
+  const title = `Boutique officielle ${store.name} | BRICÉLO`
+  const description = store.description?.slice(0, 160) || `Découvrez la boutique officielle de ${store.name} sur Bricelo. Produits authentiques certifiés, prix directs et livraison rapide partout au Cameroun.`
+  const images = store.logo_url ? [store.logo_url] : (store.banner_url ? [store.banner_url] : ['/icons/icon-512x512.png'])
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: `https://bricelo.com/boutique/${store.slug}`,
+      siteName: 'BRICÉLO',
+      images: images.map(url => ({ url, width: 600, height: 600, alt: store.name })),
+      type: 'profile',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+      images,
+    },
+  }
+}
 
 export default async function StorePage({ params }: Props) {
   const { slug } = await params
@@ -36,7 +67,7 @@ export default async function StorePage({ params }: Props) {
       {/* Banner */}
       <div className="relative h-48 sm:h-64 bg-[var(--color-navy-900)] overflow-hidden">
         {store.banner_url && (
-          <Image src={store.banner_url} alt={store.name} fill className="object-cover opacity-60" sizes="100vw" />
+          <Image src={store.banner_url} alt={store.name} fill className="object-cover opacity-60" sizes="100vw" unoptimized />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[var(--color-navy-900)]/80" />
       </div>
@@ -46,7 +77,7 @@ export default async function StorePage({ params }: Props) {
         <div className="relative -mt-10 sm:-mt-14 flex flex-col sm:flex-row items-start sm:items-end gap-3 sm:gap-5 pb-6 border-b border-[var(--color-slate-200)]">
           <div className="relative h-20 w-20 sm:h-28 sm:w-28 rounded-2xl overflow-hidden bg-white border-4 border-white shadow-xl shrink-0">
             {store.logo_url
-              ? <Image src={store.logo_url} alt={store.name} fill className="object-cover" sizes="112px" />
+              ? <Image src={store.logo_url} alt={store.name} fill className="object-cover" sizes="112px" unoptimized />
               : <div className="w-full h-full flex items-center justify-center bg-slate-100"><Store className="h-10 w-10 text-slate-400" /></div>
             }
           </div>

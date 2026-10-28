@@ -146,6 +146,7 @@ export function ProductDetailClient({ product, options, variants }: Props) {
             isAvailable={isAvailable}
           />
 
+
           {/* Garanties */}
           <ProductGuarantees />
 

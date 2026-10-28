@@ -34,3 +34,14 @@ export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text
   return text.slice(0, maxLength).trimEnd() + '…'
 }
+
+export function getProductUrl(
+  product: { slug: string; store?: { slug?: string | null } | null; store_slug?: string | null } | string,
+  storeSlug?: string | null
+): string {
+  if (typeof product === 'string') {
+    return storeSlug ? `/boutique/${storeSlug}/produit/${product}` : `/produit/${product}`
+  }
+  const sSlug = storeSlug || product.store?.slug || product.store_slug
+  return sSlug ? `/boutique/${sSlug}/produit/${product.slug}` : `/produit/${product.slug}`
+}
